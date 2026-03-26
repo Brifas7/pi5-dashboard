@@ -1,0 +1,9 @@
+nano ~/pi5-dashboard/.gitignore
+```
+
+Paste:
+```
+__pycache__/
+*.pyc
+.env
+venv/
