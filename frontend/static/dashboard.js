@@ -138,6 +138,21 @@ document.addEventListener("DOMContentLoaded", () => {
     updateClock();
     setInterval(updateClock, 1000);
 
-    // Placeholder system values - will pull from API later
-    updateSystemGauges(23, 34, 41, 56);
+// Fetch live system stats every 3 seconds
+    async function fetchSystemStats() {
+        try {
+            const res = await fetch("/api/system");
+            const data = await res.json();
+            updateSystemGauges(
+                Math.round(data.cpu),
+                Math.round(data.hailo),
+                Math.round(data.ram),
+                Math.round(data.storage)
+            );
+        } catch (e) {
+            console.error("Failed to fetch system stats:", e);
+        }
+    }
+    fetchSystemStats();
+    setInterval(fetchSystemStats, 3000);
 });
