@@ -8,6 +8,7 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { width: 100vw; height: 100vh; overflow: hidden; font-family: 'Rajdhani', sans-serif; display: flex; flex-direction: column; background: #051c35; }
 @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+#exit-zone { position: fixed; top: 0; right: 0; width: 60px; height: 60px; z-index: 9999; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -35,6 +36,8 @@ body { width: 100vw; height: 100vh; overflow: hidden; font-family: 'Rajdhani', s
   </defs>
   <rect width="100%" height="100%" fill="url(#base)" filter="url(#watercolor)"/>
 </svg>
+
+<div id="exit-zone" title=""></div>
 
 <div style="position:relative;z-index:1;display:flex;flex-direction:column;width:100%;height:100%;">
 
@@ -110,6 +113,20 @@ body { width: 100vw; height: 100vh; overflow: hidden; font-family: 'Rajdhani', s
 </div>
 
 <script>
+let tapCount = 0;
+let tapTimer = null;
+document.getElementById('exit-zone').addEventListener('click', function() {
+  tapCount++;
+  if(tapCount === 1) {
+    tapTimer = setTimeout(() => { tapCount = 0; }, 3000);
+  }
+  if(tapCount >= 3) {
+    clearTimeout(tapTimer);
+    tapCount = 0;
+    fetch('http://localhost:8000/api/exit-kiosk', {method:'POST'});
+  }
+});
+
 function timeAgo(ts) {
   const diff = Math.floor(Date.now()/1000 - ts);
   if(diff < 60) return diff + 's ago';
