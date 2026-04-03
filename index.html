@@ -6,78 +6,130 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { width: 100vw; height: 100vh; overflow: hidden; background: #0042f9; font-family: 'Rajdhani', sans-serif; display: flex; flex-direction: column; }
+body { width: 100vw; height: 100vh; overflow: hidden; font-family: 'Rajdhani', sans-serif; display: flex; flex-direction: column; background: #051c35; }
 @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
 </style>
 </head>
 <body>
-<div id="notif" style="background:rgba(0,47,178,0.45);border-bottom:1px solid rgba(30,90,255,0.4);padding:10px 24px;display:flex;gap:32px;align-items:center;font-size:15px;color:#a0b8e8;">
-  <div style="display:flex;align-items:center;gap:10px;">
-    <div style="width:10px;height:10px;border-radius:50%;background:#1e5aff;animation:pulse 2s infinite;"></div>
-    <span><b style="color:#e0e8ff">Front East</b> — Person Detected — 2m ago</span>
+
+<svg style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <filter id="watercolor" x="-50%" y="-50%" width="200%" height="200%" filterUnits="objectBoundingBox">
+      <feTurbulence type="fractalNoise" baseFrequency="0.011" numOctaves="7" seed="42" result="turbLarge"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.038" numOctaves="4" seed="98" result="turbFine"/>
+      <feBlend in="turbLarge" in2="turbFine" mode="multiply" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="14" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
+      <feGaussianBlur in="noise" stdDeviation="7" result="blurred"/>
+      <feColorMatrix in="blurred" type="matrix" values="0 0 0 0 0.04 0 0 0 0 0.14 0 0 0 0 0.29 0 0 0 1 0" result="colored"/>
+      <feComponentTransfer in="colored" result="final">
+        <feFuncR type="linear" slope="1.08" intercept="0"/>
+        <feFuncG type="linear" slope="1.08" intercept="0"/>
+        <feFuncB type="linear" slope="1.12" intercept="0"/>
+      </feComponentTransfer>
+    </filter>
+    <linearGradient id="base" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#051c35"/>
+      <stop offset="45%" stop-color="#0a2545"/>
+      <stop offset="100%" stop-color="#132e4f"/>
+    </linearGradient>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#base)" filter="url(#watercolor)"/>
+</svg>
+
+<div style="position:relative;z-index:1;display:flex;flex-direction:column;width:100%;height:100%;">
+
+  <!-- Notification Bar -->
+  <div style="background:rgba(0,47,178,0.45);border-bottom:1px solid rgba(30,90,255,0.4);padding:18px 28px;display:flex;gap:36px;align-items:center;font-size:16px;color:#a0b8e8;min-height:70px;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:12px;height:12px;border-radius:50%;background:#1e5aff;animation:pulse 2s infinite;flex-shrink:0;"></div>
+      <span><b style="color:#e0e8ff">Front East</b> — Person Detected — 2m ago</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:12px;height:12px;border-radius:50%;background:#22c55e;flex-shrink:0;"></div>
+      <span><b style="color:#e0e8ff">Back West</b> — Vehicle Detected — 16m ago</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:12px;height:12px;border-radius:50%;background:#22c55e;flex-shrink:0;"></div>
+      <span><b style="color:#e0e8ff">Front West</b> — Package Delivery — 39m ago</span>
+    </div>
   </div>
-  <div style="display:flex;align-items:center;gap:10px;">
-    <div style="width:10px;height:10px;border-radius:50%;background:#22c55e;"></div>
-    <span><b style="color:#e0e8ff">Back West</b> — Vehicle Detected — 16m ago</span>
-  </div>
-</div>
-<div style="display:flex;flex:1;padding:16px 24px;gap:24px;">
-  <div style="display:flex;flex-direction:column;gap:14px;width:170px;justify-content:center;">
-    <button onclick="" style="background:rgba(30,90,255,0.18);border:1px solid rgba(30,90,255,0.4);border-radius:16px;padding:18px 12px;color:#e0e8ff;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;">
-      <span style="font-size:28px;">📷</span><span style="font-size:17px;font-weight:700;">Cameras</span>
-    </button>
-    <button onclick="" style="background:rgba(30,90,255,0.18);border:1px solid rgba(30,90,255,0.4);border-radius:16px;padding:18px 12px;color:#e0e8ff;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;">
-      <span style="font-size:28px;">💡</span><span style="font-size:17px;font-weight:700;">Lighting</span>
-    </button>
-    <button onclick="" style="background:rgba(30,90,255,0.18);border:1px solid rgba(30,90,255,0.4);border-radius:16px;padding:18px 12px;color:#e0e8ff;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;">
-      <span style="font-size:28px;">⚙️</span><span style="font-size:17px;font-weight:700;">Operations</span>
-    </button>
-    <button onclick="" style="background:rgba(30,90,255,0.18);border:1px solid rgba(30,90,255,0.4);border-radius:16px;padding:18px 12px;color:#e0e8ff;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;">
-      <span style="font-size:28px;">🌡</span><span style="font-size:17px;font-weight:700;">Sensors</span>
-    </button>
-    <button onclick="" style="background:rgba(30,90,255,0.18);border:1px solid rgba(30,90,255,0.4);border-radius:16px;padding:18px 12px;color:#e0e8ff;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;">
-      <span style="font-size:28px;">🔧</span><span style="font-size:17px;font-weight:700;">Settings</span>
-    </button>
-  </div>
-  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-    <canvas id="clock" width="480" height="480"></canvas>
-    <div id="timetext" style="font-family:'Orbitron',monospace;font-size:52px;font-weight:700;color:#e0e8ff;margin-top:20px;letter-spacing:5px;text-shadow:0 0 18px rgba(30,90,255,0.6);"></div>
-    <div id="datetext" style="font-family:'Rajdhani',sans-serif;font-size:22px;color:#8ea4d4;margin-top:6px;letter-spacing:3px;font-weight:600;"></div>
-  </div>
-  <div style="width:220px;display:flex;flex-direction:column;gap:14px;justify-content:center;">
-    <div style="background:rgba(30,90,255,0.14);border:1px solid rgba(30,90,255,0.35);border-radius:16px;padding:16px;">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div style="display:flex;flex-direction:column;align-items:center;padding:10px 6px;background:rgba(30,90,255,0.18);border-radius:10px;border:1px solid rgba(30,90,255,0.35);">
-          <div style="font-size:13px;color:#8ea4d4;text-transform:uppercase;letter-spacing:1px;">Temp</div>
-          <div id="w-temp" style="font-family:'Orbitron',monospace;font-size:20px;color:#e0e8ff;font-weight:700;">--</div>
+
+  <!-- Main Content -->
+  <div style="display:flex;flex:1;padding:20px 28px;gap:28px;min-height:0;">
+
+    <!-- Left Column - Nav -->
+    <div style="display:flex;flex-direction:column;gap:14px;width:220px;flex-shrink:0;">
+      <button onclick="" style="background:rgba(30,90,255,0.18);border:1px solid rgba(30,90,255,0.4);border-radius:16px;padding:20px 12px;color:#e0e8ff;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:7px;width:100%;">
+        <span style="font-size:30px;">📷</span><span style="font-size:18px;font-weight:700;">Cameras</span>
+      </button>
+      <button onclick="" style="background:rgba(30,90,255,0.18);border:1px solid rgba(30,90,255,0.4);border-radius:16px;padding:20px 12px;color:#e0e8ff;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:7px;width:100%;">
+        <span style="font-size:30px;">💡</span><span style="font-size:18px;font-weight:700;">Lighting</span>
+      </button>
+      <button onclick="" style="background:rgba(30,90,255,0.18);border:1px solid rgba(30,90,255,0.4);border-radius:16px;padding:20px 12px;color:#e0e8ff;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:7px;width:100%;">
+        <span style="font-size:30px;">⚙️</span><span style="font-size:18px;font-weight:700;">Operations</span>
+      </button>
+      <button onclick="" style="background:rgba(30,90,255,0.18);border:1px solid rgba(30,90,255,0.4);border-radius:16px;padding:20px 12px;color:#e0e8ff;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:7px;width:100%;">
+        <span style="font-size:30px;">🌡</span><span style="font-size:18px;font-weight:700;">Sensors</span>
+      </button>
+      <button onclick="" style="background:rgba(30,90,255,0.18);border:1px solid rgba(30,90,255,0.4);border-radius:16px;padding:20px 12px;color:#e0e8ff;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:7px;width:100%;">
+        <span style="font-size:30px;">🔧</span><span style="font-size:18px;font-weight:700;">Settings</span>
+      </button>
+    </div>
+
+    <!-- Center Column - Clock -->
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;">
+      <canvas id="clock" width="660" height="660"></canvas>
+      <div id="timetext" style="font-family:'Orbitron',monospace;font-size:58px;font-weight:700;color:#e0e8ff;margin-top:18px;letter-spacing:5px;text-shadow:0 0 18px rgba(30,90,255,0.6);"></div>
+      <div id="datetext" style="font-family:'Rajdhani',sans-serif;font-size:24px;color:#8ea4d4;margin-top:6px;letter-spacing:3px;font-weight:600;"></div>
+    </div>
+
+    <!-- Right Column -->
+    <div style="display:flex;flex-direction:column;gap:14px;width:280px;flex-shrink:0;">
+
+      <!-- Weather Widget -->
+      <div style="background:rgba(30,90,255,0.14);border:1px solid rgba(30,90,255,0.35);border-radius:16px;padding:18px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div style="display:flex;flex-direction:column;align-items:center;padding:12px 8px;background:rgba(30,90,255,0.18);border-radius:10px;border:1px solid rgba(30,90,255,0.35);">
+            <div style="font-size:14px;color:#8ea4d4;text-transform:uppercase;letter-spacing:1px;">Temp</div>
+            <div id="w-temp" style="font-family:'Orbitron',monospace;font-size:22px;color:#e0e8ff;font-weight:700;">--</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;padding:12px 8px;background:rgba(30,90,255,0.18);border-radius:10px;border:1px solid rgba(30,90,255,0.35);">
+            <div style="font-size:14px;color:#8ea4d4;text-transform:uppercase;letter-spacing:1px;">Humid</div>
+            <div id="w-humid" style="font-family:'Orbitron',monospace;font-size:22px;color:#e0e8ff;font-weight:700;">--</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;padding:12px 8px;background:rgba(30,90,255,0.18);border-radius:10px;border:1px solid rgba(30,90,255,0.35);">
+            <div style="font-size:14px;color:#8ea4d4;text-transform:uppercase;letter-spacing:1px;">Pres</div>
+            <div id="w-pres" style="font-family:'Orbitron',monospace;font-size:22px;color:#e0e8ff;font-weight:700;">--</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;padding:12px 8px;background:rgba(30,90,255,0.18);border-radius:10px;border:1px solid rgba(30,90,255,0.35);">
+            <div style="font-size:14px;color:#8ea4d4;text-transform:uppercase;letter-spacing:1px;">AQI</div>
+            <div id="w-aqi" style="font-family:'Orbitron',monospace;font-size:22px;color:#e0e8ff;font-weight:700;">--</div>
+          </div>
         </div>
-        <div style="display:flex;flex-direction:column;align-items:center;padding:10px 6px;background:rgba(30,90,255,0.18);border-radius:10px;border:1px solid rgba(30,90,255,0.35);">
-          <div style="font-size:13px;color:#8ea4d4;text-transform:uppercase;letter-spacing:1px;">Humid</div>
-          <div id="w-humid" style="font-family:'Orbitron',monospace;font-size:20px;color:#e0e8ff;font-weight:700;">--</div>
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:center;padding:10px 6px;background:rgba(30,90,255,0.18);border-radius:10px;border:1px solid rgba(30,90,255,0.35);">
-          <div style="font-size:13px;color:#8ea4d4;text-transform:uppercase;letter-spacing:1px;">Pres</div>
-          <div id="w-pres" style="font-family:'Orbitron',monospace;font-size:20px;color:#e0e8ff;font-weight:700;">--</div>
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:center;padding:10px 6px;background:rgba(30,90,255,0.18);border-radius:10px;border:1px solid rgba(30,90,255,0.35);">
-          <div style="font-size:13px;color:#8ea4d4;text-transform:uppercase;letter-spacing:1px;">AQI</div>
-          <div id="w-aqi" style="font-family:'Orbitron',monospace;font-size:20px;color:#e0e8ff;font-weight:700;">--</div>
+        <div style="display:flex;align-items:center;justify-content:center;margin-top:14px;gap:8px;">
+          <span style="font-size:24px;">🌙</span>
+          <span id="moon-phase" style="font-size:17px;color:#8ea4d4;font-weight:600;">--</span>
         </div>
       </div>
-      <div style="display:flex;align-items:center;justify-content:center;margin-top:12px;gap:8px;">
-        <span style="font-size:22px;">🌙</span>
-        <span id="moon-phase" style="font-size:16px;color:#8ea4d4;font-weight:600;">--</span>
+
+      <!-- System Gauges -->
+      <div style="background:rgba(30,90,255,0.14);border:1px solid rgba(30,90,255,0.35);border-radius:16px;padding:18px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;" id="gauges"></div>
       </div>
+
+      <!-- Spacer -->
+      <div style="flex:1;"></div>
+
+      <!-- Automation Button pinned to bottom -->
+      <button style="background:rgba(30,90,255,0.18);border:1px solid rgba(30,90,255,0.4);border-radius:16px;padding:26px 12px;color:#e0e8ff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;width:100%;">
+        <span style="font-size:28px;">⚡</span>
+        <span style="font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;letter-spacing:1px;">AUTOMATION</span>
+      </button>
     </div>
-    <div style="background:rgba(30,90,255,0.14);border:1px solid rgba(30,90,255,0.35);border-radius:16px;padding:16px;">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" id="gauges"></div>
-    </div>
-    <button style="background:rgba(30,90,255,0.18);border:1px solid rgba(30,90,255,0.4);border-radius:16px;padding:22px 12px;color:#e0e8ff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">
-      <span style="font-size:26px;">⚡</span>
-      <span style="font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;letter-spacing:1px;">AUTOMATION</span>
-    </button>
+
   </div>
 </div>
+
 <script>
 function buildGauges(data) {
   const gaugeData = [
@@ -91,7 +143,7 @@ function buildGauges(data) {
   const circ = 226.2;
   gaugeData.forEach(g => {
     const dash = (g.value/100)*circ;
-    gaugesEl.innerHTML += `<div style="display:flex;flex-direction:column;align-items:center;gap:6px;"><div style="position:relative;width:90px;height:90px;"><svg width="90" height="90" viewBox="0 0 90 90"><circle cx="45" cy="45" r="36" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="7"/><circle cx="45" cy="45" r="36" fill="none" stroke="#1e5aff" stroke-width="7" stroke-dasharray="${dash} ${circ}" stroke-linecap="round" transform="rotate(-90 45 45)"/></svg><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Orbitron',monospace;font-size:17px;color:#e0e8ff;font-weight:700;">${g.value}%</div></div><div style="font-size:14px;color:#8ea4d4;font-weight:600;text-transform:uppercase;letter-spacing:1px;">${g.label}</div></div>`;
+    gaugesEl.innerHTML += `<div style="display:flex;flex-direction:column;align-items:center;gap:6px;"><div style="position:relative;width:100px;height:100px;"><svg width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="8"/><circle cx="50" cy="50" r="40" fill="none" stroke="#1e5aff" stroke-width="8" stroke-dasharray="${(g.value/100)*251.2} 251.2" stroke-linecap="round" transform="rotate(-90 50 50)"/></svg><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Orbitron',monospace;font-size:18px;color:#e0e8ff;font-weight:700;">${g.value}%</div></div><div style="font-size:15px;color:#8ea4d4;font-weight:600;text-transform:uppercase;letter-spacing:1px;">${g.label}</div></div>`;
   });
 }
 
@@ -110,7 +162,7 @@ setInterval(fetchStats, 5000);
 
 const canvas = document.getElementById('clock');
 const ctx = canvas.getContext('2d');
-const C = 480, R = C/2;
+const C = 660, R = C/2;
 
 function drawClock() {
   const now = new Date();
@@ -124,13 +176,13 @@ function drawClock() {
   for(let i=0;i<60;i++){
     const ang=(i*6-90)*Math.PI/180;
     const isMaj=i%5===0;
-    const len=isMaj?22:11;
-    const r1=R-20, r2=r1-len;
+    const len=isMaj?28:14;
+    const r1=R-22, r2=r1-len;
     ctx.beginPath();
     ctx.moveTo(R+r1*Math.cos(ang),R+r1*Math.sin(ang));
     ctx.lineTo(R+r2*Math.cos(ang),R+r2*Math.sin(ang));
     ctx.strokeStyle=isMaj?'#1e5aff':'rgba(30,90,255,0.35)';
-    ctx.lineWidth=isMaj?3.5:1.5;
+    ctx.lineWidth=isMaj?4:2;
     ctx.stroke();
   }
   const nums=[
@@ -140,14 +192,14 @@ function drawClock() {
   ];
   nums.forEach(n=>{
     const rad=(n.a-90)*Math.PI/180;
-    ctx.font='bold 26px Orbitron';
+    ctx.font='bold 32px Orbitron';
     ctx.fillStyle='#e0e8ff';
     ctx.textAlign='center';
     ctx.textBaseline='middle';
-    ctx.fillText(n.o, R+176*Math.cos(rad), R+176*Math.sin(rad));
-    ctx.font='400 14px Orbitron';
+    ctx.fillText(n.o, R+242*Math.cos(rad), R+242*Math.sin(rad));
+    ctx.font='400 18px Orbitron';
     ctx.fillStyle='#1e5aff';
-    ctx.fillText(n.i, R+128*Math.cos(rad), R+128*Math.sin(rad));
+    ctx.fillText(n.i, R+178*Math.cos(rad), R+178*Math.sin(rad));
   });
   const hourDeg=((hrs%12)*30+mins*0.5-90)*Math.PI/180;
   const minDeg=(mins*6+secs*0.1-90)*Math.PI/180;
@@ -155,24 +207,24 @@ function drawClock() {
   ctx.lineCap='round';
   ctx.beginPath();
   ctx.moveTo(R,R);
-  ctx.lineTo(R+118*Math.cos(hourDeg),R+118*Math.sin(hourDeg));
+  ctx.lineTo(R+162*Math.cos(hourDeg),R+162*Math.sin(hourDeg));
   ctx.strokeStyle='#4080ff';
-  ctx.lineWidth=8;
+  ctx.lineWidth=10;
   ctx.stroke();
   ctx.beginPath();
   ctx.moveTo(R,R);
-  ctx.lineTo(R+160*Math.cos(minDeg),R+160*Math.sin(minDeg));
+  ctx.lineTo(R+220*Math.cos(minDeg),R+220*Math.sin(minDeg));
   ctx.strokeStyle='#4080ff';
-  ctx.lineWidth=5;
+  ctx.lineWidth=6;
   ctx.stroke();
   ctx.beginPath();
   ctx.moveTo(R,R);
-  ctx.lineTo(R+182*Math.cos(secDeg),R+182*Math.sin(secDeg));
+  ctx.lineTo(R+248*Math.cos(secDeg),R+248*Math.sin(secDeg));
   ctx.strokeStyle='#ef4444';
-  ctx.lineWidth=2;
+  ctx.lineWidth=2.5;
   ctx.stroke();
   ctx.beginPath();
-  ctx.arc(R,R,11,0,Math.PI*2);
+  ctx.arc(R,R,14,0,Math.PI*2);
   ctx.fillStyle='#4080ff';
   ctx.fill();
   const h24=String(hrs).padStart(2,'0');
