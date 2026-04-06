@@ -103,7 +103,7 @@ body { width: 100vw; height: 100vh; overflow: hidden; font-family: 'Rajdhani', s
 
       <div style="flex:1;"></div>
 
-      <button style="background:rgba(30,90,255,0.18);border:1px solid rgba(30,90,255,0.4);border-radius:16px;padding:26px 12px;color:#e0e8ff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;width:100%;">
+      <button onclick="autoOpen()" style="background:rgba(30,90,255,0.18);border:1px solid rgba(30,90,255,0.4);border-radius:16px;padding:26px 12px;color:#e0e8ff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;width:100%;">
         <span style="font-size:28px;">⚡</span>
         <span style="font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;letter-spacing:1px;">AUTOMATION</span>
       </button>
@@ -113,6 +113,9 @@ body { width: 100vw; height: 100vh; overflow: hidden; font-family: 'Rajdhani', s
 </div>
 
 <script>
+const _HOST=window.location.hostname;
+const _GO2RTC="http://"+_HOST+":1984";
+const _FRIGATE="http://"+_HOST+":5000";
 let tapCount = 0;
 let tapTimer = null;
 document.getElementById('exit-zone').addEventListener('click', function() {
@@ -123,7 +126,7 @@ document.getElementById('exit-zone').addEventListener('click', function() {
   if(tapCount >= 3) {
     clearTimeout(tapTimer);
     tapCount = 0;
-    fetch('http://localhost:8000/api/exit-kiosk', {method:'POST'});
+    fetch('/api/exit-kiosk', {method:'POST'});
   }
 });
 
@@ -145,7 +148,7 @@ function camName(s) {
 
 async function fetchEvents() {
   try {
-    const res = await fetch('http://localhost:8000/api/events');
+    const res = await fetch('/api/events');
     const events = await res.json();
     const bar = document.getElementById('notif-bar');
     if(!events || events.length === 0) {
@@ -181,7 +184,7 @@ function buildGauges(data) {
 
 async function fetchStats() {
   try {
-    const res = await fetch('http://localhost:8000/api/system');
+    const res = await fetch('/api/system');
     const data = await res.json();
     buildGauges(data);
   } catch(e) {
@@ -197,7 +200,7 @@ setInterval(fetchSolar, 3600000);
 
 async function fetchSolar() {
   try {
-    const r = await fetch('http://localhost:8000/api/solar');
+    const r = await fetch('/api/solar');
     const d = await r.json();
     const el = document.getElementById('moon-phase');
     if (el) el.textContent = d.moon_icon + ' ' + d.moon_phase_name;
@@ -455,6 +458,7 @@ function _camScreen(id) {
 }
 function _camStopStreams() {
   if (window._camHls) { window._camHls.destroy(); window._camHls = null; }
+  if (window._camPc) { window._camPc.close(); window._camPc = null; }
   const container = document.getElementById('cam-live-container');
   if (container) container.innerHTML = '';
   document.querySelectorAll('.cam-split-img').forEach(i => { i.src = ''; });
@@ -467,7 +471,7 @@ async function camOpen() {
   overlay.style.flexDirection = 'column';
   _camScreen('list');
   try {
-    const r = await fetch('http://localhost:8000/api/cameras');
+    const r = await fetch('/api/cameras');
     const data = await r.json();
     _cam.cameras = data.cameras || [];
   } catch(e) { _cam.cameras = []; }
@@ -483,44 +487,22 @@ function _camRenderList() {
       <div class="cam-dot ${cam.online ? 'cam-dot-on' : 'cam-dot-off'}"></div>
       <span class="cam-feed-name">${_camFmt(cam.name)}</span>
       ${!cam.online ? '<span class="cam-offline-label">OFFLINE</span>' : ''}
-      <img class="cam-thumb" src="http://localhost:5000/api/${cam.name}/latest.jpg?t=${Date.now()}" onerror="this.style.visibility='hidden'" alt="" />
+      <img class="cam-thumb" src=_FRIGATE+"/api/${cam.name}/latest.jpg?t=${Date.now()}" onerror="this.style.visibility='hidden'" alt="" />
     </div>
   `).join('');
 }
 function camOpenLive(idx) { _cam.currentIdx = idx; _camScreen('live'); _camLoadLive(); }
-async function _camLoadLive() {
-  const cam = _cam.cameras[_cam.currentIdx];
-  if (!cam) return;
-  document.getElementById('cam-live-title').textContent = _camFmt(cam.name);
-  const container = document.getElementById('cam-live-container');
-  container.innerHTML = '';
-  const video = document.createElement('video');
-  video.autoplay = true;
-  video.muted = true;
-  video.playsInline = true;
-  video.controls = true;
-  video.style.cssText = 'width:100%;height:100%;object-fit:contain;border-radius:8px;border:1px solid rgba(30,90,255,0.3);background:#000;';
-  container.appendChild(video);
-  const masterUrl = 'http://localhost:1984/api/stream.m3u8?src=' + cam.name;
-  try {
-    const r = await fetch(masterUrl);
-    const text = await r.text();
-    const lines = text.split('\n');
-    const variantLine = lines.find(l => l.includes('playlist.m3u8'));
-    const url = variantLine
-      ? 'http://localhost:1984' + (variantLine.startsWith('/') ? variantLine : '/api/hls/' + variantLine).trim()
-      : masterUrl;
-    if (Hls.isSupported()) {
-      const hls = new Hls({ lowLatencyMode: false, debug: false });
-      window._camHls = hls;
-      hls.loadSource(url);
-      hls.attachMedia(video);
-      hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = url;
-      video.play();
-    }
-  } catch(e) { console.error('HLS load error:', e); }
+async function _camLoadLive(){
+  const cam=_cam.cameras[_cam.currentIdx];
+  document.getElementById('cam-live-title').textContent=_camFmt(cam.name);
+  const c=document.getElementById('cam-live-container');
+  c.innerHTML='';
+  const v=document.createElement('video');
+  v.autoplay=true;v.muted=true;v.playsInline=true;v.controls=true;
+  v.style.cssText='width:100%;height:100%;object-fit:contain;border-radius:8px;border:1px solid rgba(30,90,255,0.3);background:#000;';
+  v.src=_GO2RTC+'/api/stream.mp4?src='+cam.name;
+  c.appendChild(v);
+  v.play().catch(e=>console.error('play error:',e));
 }
 function camCycle(dir) {
   _camStopStreams();
@@ -551,7 +533,7 @@ function camLaunchSplit() {
     const cam = _cam.cameras[idx];
     return `<div class="cam-split-cell">
       <div class="cam-split-cell-label">${_camFmt(cam.name)}</div>
-      <img class="cam-split-img" src="http://localhost:1984/api/frame.jpeg?src=${cam.name}" style="width:100%;height:100%;object-fit:cover;display:block;" alt="" />
+      <img class="cam-split-img" src=_GO2RTC+"/api/frame.jpeg?src=${cam.name}" style="width:100%;height:100%;object-fit:cover;display:block;" alt="" />
     </div>`;
   }).join('');
   _camScreen('split-view');
@@ -563,7 +545,7 @@ async function camShowClips() {
   document.getElementById('cam-bulk-bar').style.display = 'none';
   document.getElementById('cam-clip-list').innerHTML = '<div class="cam-loading">Loading clips...</div>';
   try {
-    const r = await fetch('http://localhost:8000/api/clips?limit=100');
+    const r = await fetch('/api/clips?limit=100');
     const data = await r.json();
     _cam.clips = data.clips || [];
     const camFilter = document.getElementById('cam-filter-camera');
@@ -614,7 +596,7 @@ function camToggleClipSelect(id) {
 function _camUpdateBulkBar() { const btn = document.getElementById('cam-bulk-delete-btn'); if (btn) btn.textContent = `DELETE SELECTED (${_cam.selectedClips.size})`; }
 async function camDeleteClip(id) {
   if (!confirm('Delete this clip?')) return;
-  await fetch(`http://localhost:8000/api/clips/${id}`, { method:'DELETE' }).catch(() => {});
+  await fetch(`/api/clips/${id}`, { method:'DELETE' }).catch(() => {});
   _cam.clips = _cam.clips.filter(c => c.id !== id);
   camApplyFilters();
 }
@@ -622,7 +604,7 @@ async function camBulkDelete() {
   if (_cam.selectedClips.size === 0) return;
   if (!confirm(`Delete ${_cam.selectedClips.size} clip(s)?`)) return;
   const ids = [..._cam.selectedClips];
-  await Promise.all(ids.map(id => fetch(`http://localhost:8000/api/clips/${id}`, { method:'DELETE' }).catch(() => {})));
+  await Promise.all(ids.map(id => fetch(`/api/clips/${id}`, { method:'DELETE' }).catch(() => {})));
   _cam.clips = _cam.clips.filter(c => !ids.includes(c.id));
   _cam.selectedClips.clear(); camToggleSelectMode(); camApplyFilters();
 }
@@ -636,216 +618,6 @@ function camShowSettings() { alert('Camera settings — coming in Settings subme
 </script>
 
 <script src="hls.min.js"></script>
-
-<!-- ============================================================
-     LIGHTING SUBMENU
-     ============================================================ -->
-<style>
-  #light-overlay { font-family: 'Rajdhani', sans-serif; color: #e0e8ff; }
-  .light-header { display:flex; align-items:center; justify-content:space-between; padding:16px 24px; flex-shrink:0; background:rgba(10,20,60,0.7); border-bottom:1px solid rgba(30,90,255,0.25); }
-  .light-title { font-size:20px; font-weight:700; letter-spacing:2px; color:#e0e8ff; }
-  .light-btn { background:rgba(30,90,255,0.15); border:1px solid rgba(30,90,255,0.35); color:#e0e8ff; border-radius:8px; padding:8px 18px; font-family:'Rajdhani',sans-serif; font-size:14px; font-weight:700; letter-spacing:1px; cursor:pointer; transition:background 0.2s; }
-  .light-btn:hover { background:rgba(30,90,255,0.3); }
-  .light-btn-close { background:rgba(220,40,40,0.12); border-color:rgba(220,40,40,0.35); color:#fca5a5; }
-  .light-btn-close:hover { background:rgba(220,40,40,0.28); }
-  .light-screen { display:none; flex-direction:column; height:100%; }
-  .light-screen.active { display:flex; }
-  .light-empty { padding:60px 40px; text-align:center; color:#8ea4d4; font-size:16px; font-weight:600; letter-spacing:1px; line-height:2; }
-  .light-empty-icon { font-size:48px; display:block; margin-bottom:16px; opacity:0.4; }
-  .light-device-item { display:flex; align-items:center; gap:16px; background:rgba(30,90,255,0.1); border:1px solid rgba(30,90,255,0.25); border-radius:10px; padding:16px 20px; cursor:pointer; transition:background 0.2s; }
-  .light-device-item:hover { background:rgba(30,90,255,0.2); }
-  .light-device-name { font-size:18px; font-weight:700; flex:1; }
-  .light-device-state { font-size:13px; font-weight:700; letter-spacing:1px; }
-  .light-device-state.on { color:#22c55e; }
-  .light-device-state.off { color:#8ea4d4; }
-  .light-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
-  .light-dot.on { background:#22c55e; box-shadow:0 0 6px rgba(34,197,94,0.7); }
-  .light-dot.off { background:#475569; }
-  .light-brightness-bar { height:6px; border-radius:3px; background:rgba(30,90,255,0.2); flex:1; max-width:120px; overflow:hidden; }
-  .light-brightness-fill { height:100%; border-radius:3px; background:#1e5aff; box-shadow:0 0 6px rgba(30,90,255,0.5); transition:width 0.3s; }
-  .light-control-body { flex:1; padding:28px; display:flex; flex-direction:column; gap:28px; overflow-y:auto; }
-  .light-control-section { background:rgba(30,90,255,0.08); border:1px solid rgba(30,90,255,0.2); border-radius:12px; padding:20px 24px; display:flex; flex-direction:column; gap:16px; }
-  .light-section-label { font-size:11px; font-weight:700; letter-spacing:2px; color:#8ea4d4; text-transform:uppercase; }
-  .light-toggle-row { display:flex; align-items:center; justify-content:space-between; }
-  .light-toggle-label { font-size:18px; font-weight:700; }
-  .light-toggle { position:relative; width:56px; height:28px; cursor:pointer; }
-  .light-toggle input { opacity:0; width:0; height:0; }
-  .light-toggle-slider { position:absolute; inset:0; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); border-radius:28px; transition:0.3s; }
-  .light-toggle-slider:before { content:''; position:absolute; height:20px; width:20px; left:3px; bottom:3px; background:#8ea4d4; border-radius:50%; transition:0.3s; }
-  .light-toggle input:checked + .light-toggle-slider { background:rgba(34,197,94,0.3); border-color:rgba(34,197,94,0.5); }
-  .light-toggle input:checked + .light-toggle-slider:before { transform:translateX(28px); background:#22c55e; box-shadow:0 0 8px rgba(34,197,94,0.7); }
-  .light-slider-row { display:flex; flex-direction:column; gap:10px; }
-  .light-slider-label-row { display:flex; justify-content:space-between; align-items:center; }
-  .light-slider { -webkit-appearance:none; width:100%; height:6px; border-radius:3px; background:rgba(30,90,255,0.2); outline:none; cursor:pointer; }
-  .light-slider::-webkit-slider-thumb { -webkit-appearance:none; width:22px; height:22px; border-radius:50%; background:#1e5aff; box-shadow:0 0 8px rgba(30,90,255,0.6); cursor:pointer; }
-  .light-color-row { display:flex; flex-direction:column; gap:12px; }
-  .light-color-swatches { display:flex; gap:10px; flex-wrap:wrap; }
-  .light-swatch { width:36px; height:36px; border-radius:50%; cursor:pointer; border:2px solid transparent; transition:all 0.2s; }
-  .light-swatch:hover, .light-swatch.active { border-color:#fff; transform:scale(1.15); }
-  .light-color-input { width:48px; height:36px; border-radius:8px; border:1px solid rgba(30,90,255,0.3); cursor:pointer; background:none; padding:2px; }
-</style>
-<div id="light-overlay" style="display:none; position:fixed; inset:0; background:rgba(4,10,35,0.97); z-index:1000; flex-direction:column;">
-
-  <!-- LIST SCREEN -->
-  <div id="light-screen-list" class="light-screen">
-    <div class="light-header">
-      <span class="light-title">💡 LIGHTING</span>
-      <button class="light-btn light-btn-close" onclick="lightClose()">✕ CLOSE</button>
-    </div>
-    <div style="flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:12px;" id="light-device-list"></div>
-  </div>
-
-  <!-- CONTROL SCREEN -->
-  <div id="light-screen-control" class="light-screen">
-    <div class="light-header">
-      <span id="light-control-title" class="light-title"></span>
-      <div style="display:flex; gap:10px;">
-        <button class="light-btn" onclick="lightBackToList()">◀ BACK</button>
-        <button class="light-btn light-btn-close" onclick="lightClose()">✕ CLOSE</button>
-      </div>
-    </div>
-    <div class="light-control-body">
-
-      <!-- On/Off -->
-      <div class="light-control-section">
-        <div class="light-section-label">POWER</div>
-        <div class="light-toggle-row">
-          <span class="light-toggle-label" id="light-power-label">OFF</span>
-          <label class="light-toggle">
-            <input type="checkbox" id="light-power-toggle" onchange="lightTogglePower(this)">
-            <span class="light-toggle-slider"></span>
-          </label>
-        </div>
-      </div>
- <!-- Dimmer -->
-      <div class="light-control-section" id="light-dimmer-section">
-        <div class="light-section-label">BRIGHTNESS</div>
-        <div class="light-slider-row">
-          <div class="light-slider-label-row">
-            <span style="font-size:14px; color:#8ea4d4;">0%</span>
-            <span id="light-brightness-val" style="font-family:'Orbitron',monospace; font-size:18px; font-weight:700;">100%</span>
-            <span style="font-size:14px; color:#8ea4d4;">100%</span>
-          </div>
-          <input type="range" min="0" max="100" value="100" class="light-slider" id="light-brightness-slider" oninput="lightBrightnessChange(this.value)">
-        </div>
-      </div>
-
-      <!-- Color -->
-      <div class="light-control-section" id="light-color-section">
-        <div class="light-section-label">COLOR</div>
-        <div class="light-color-row">
-          <div class="light-color-swatches">
-            <div class="light-swatch" style="background:#ffffff;" onclick="lightSetColor('#ffffff')" title="White"></div>
-            <div class="light-swatch" style="background:#ffd580;" onclick="lightSetColor('#ffd580')" title="Warm White"></div>
-            <div class="light-swatch" style="background:#ff6b35;" onclick="lightSetColor('#ff6b35')" title="Warm Orange"></div>
-            <div class="light-swatch" style="background:#ef4444;" onclick="lightSetColor('#ef4444')" title="Red"></div>
-            <div class="light-swatch" style="background:#22c55e;" onclick="lightSetColor('#22c55e')" title="Green"></div>
-            <div class="light-swatch" style="background:#3b82f6;" onclick="lightSetColor('#3b82f6')" title="Blue"></div>
-            <div class="light-swatch" style="background:#a855f7;" onclick="lightSetColor('#a855f7')" title="Purple"></div>
-            <div class="light-swatch" style="background:#06b6d4;" onclick="lightSetColor('#06b6d4')" title="Cyan"></div>
-            <input type="color" class="light-color-input" id="light-color-picker" value="#ffffff" onchange="lightSetColor(this.value)" title="Custom">
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-</div>
-
-<script>
-// ============================================================
-//  LIGHTING SUBMENU
-// ============================================================
-
-const _light = {
-  devices: [],
-  currentDevice: null
-};
-
-function _lightFmt(name) {
-  return name.replace(/[-_]/g, ' ').replace(/\w/g, c => c.toUpperCase());
-}
-function lightClose() {
-  document.getElementById('light-overlay').style.display = 'none';
-}
-
-function lightBackToList() {
-  _lightScreen('list');
-  _lightRenderList();
-}
-
-function _lightRenderList() {
-  const el = document.getElementById('light-device-list');
-  if (!el) return;
-  if (_light.devices.length === 0) {
-    el.innerHTML = `
-      <div class="light-empty">
-        <span class="light-empty-icon">💡</span>
-        No lighting devices registered.<br>
-        Devices will appear here automatically<br>
-        when connected via MQTT.
-      </div>`;
-    return;
-  }
-  el.innerHTML = _light.devices.map((dev, i) => {
-    const isOn = dev.state === 'on';
-    const brightness = dev.brightness !== undefined ? dev.brightness : 100;
-    return `
-      <div class="light-device-item" onclick="lightOpenControl(${i})">
-        <div class="light-dot ${isOn ? 'on' : 'off'}"></div>
-        <span class="light-device-name">${_lightFmt(dev.name)}</span>
-        ${dev.type === 'dimmer' || dev.type === 'rgb' ? `
-          <div class="light-brightness-bar">
-            <div class="light-brightness-fill" style="width:${isOn ? brightness : 0}%"></div>
-          </div>` : ''}
-        <span class="light-device-state ${isOn ? 'on' : 'off'}">${isOn ? 'ON' : 'OFF'}</span>
-      </div>`;
-  }).join('');
-}async function lightTogglePower(el) {
-  const dev = _light.currentDevice;
-  if (!dev) return;
-  const state = el.checked ? 'on' : 'off';
-  document.getElementById('light-power-label').textContent = state.toUpperCase();
-  dev.state = state;
-  try {
-    await fetch(`http://localhost:8000/api/lights/${dev.id}/control`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ action: 'state', value: state })
-    });
-  } catch(e) {}
-}
-
-async function lightBrightnessChange(val) {
-  document.getElementById('light-brightness-val').textContent = val + '%';
-  const dev = _light.currentDevice;
-  if (!dev) return;
-  dev.brightness = parseInt(val);
-  try {
-    await fetch(`http://localhost:8000/api/lights/${dev.id}/control`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ action: 'brightness', value: parseInt(val) })
-    });
-  } catch(e) {}
-}
-
-async function lightSetColor(hex) {
-  document.querySelectorAll('.light-swatch').forEach(s => s.classList.remove('active'));
-  const dev = _light.currentDevice;
-  if (!dev) return;
-  dev.color = hex;
-  document.getElementById('light-color-picker').value = hex;
-  try {
-    await fetch(`http://localhost:8000/api/lights/${dev.id}/control`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ action: 'color', value: hex })
-    });
-  } catch(e) {}
-}
-</script>
 
 
 <!-- LIGHTING SUBMENU -->
@@ -966,7 +738,7 @@ async function lightOpen() {
   overlay.style.flexDirection = 'column';
   _lightScreen('list');
   try {
-    const r = await fetch('http://localhost:8000/api/lights');
+    const r = await fetch('/api/lights');
     const data = await r.json();
     _light.devices = data.devices || [];
   } catch(e) { _light.devices = []; }
@@ -1017,7 +789,7 @@ async function lightTogglePower(el) {
   document.getElementById('light-power-label').textContent = state.toUpperCase();
   dev.state = state;
   try {
-    await fetch('http://localhost:8000/api/lights/' + dev.id + '/control', {
+    await fetch('/api/lights/' + dev.id + '/control', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({ action: 'state', value: state })
     });
@@ -1029,7 +801,7 @@ async function lightBrightnessChange(val) {
   if (!dev) return;
   dev.brightness = parseInt(val);
   try {
-    await fetch('http://localhost:8000/api/lights/' + dev.id + '/control', {
+    await fetch('/api/lights/' + dev.id + '/control', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({ action: 'brightness', value: parseInt(val) })
     });
@@ -1042,7 +814,7 @@ async function lightSetColor(hex) {
   dev.color = hex;
   document.getElementById('light-color-picker').value = hex;
   try {
-    await fetch('http://localhost:8000/api/lights/' + dev.id + '/control', {
+    await fetch('/api/lights/' + dev.id + '/control', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({ action: 'color', value: hex })
     });
@@ -1145,7 +917,7 @@ async function opsOpen() {
   overlay.style.flexDirection = 'column';
   _opsScreen('list');
   try {
-    const r = await fetch('http://localhost:8000/api/systems');
+    const r = await fetch('/api/systems');
     const data = await r.json();
     _ops.systems = data.systems || [];
   } catch(e) { _ops.systems = []; }
@@ -1192,8 +964,8 @@ function opsOpenDetail(idx) {
   const controls = document.getElementById('ops-controls-list');
   if (sys.controls && sys.controls.length > 0) {
     controls.innerHTML = sys.controls.map(c => {
-      if (c.type === 'toggle') return '<div class="ops-control-row"><span class="ops-control-name">' + c.name + '</span><label class="light-toggle"><input type="checkbox" ' + (c.state === 'on' ? 'checked' : '') + ' onchange="opsControl('' + sys.id + '','' + c.id + '','toggle',this.checked)"><span class="light-toggle-slider"></span></label></div>';
-      if (c.type === 'momentary') return '<div class="ops-control-row"><span class="ops-control-name">' + c.name + '</span><button class="ops-momentary-btn" onclick="opsControl('' + sys.id + '','' + c.id + '','momentary',true)">' + c.label + '</button></div>';
+      if (c.type === 'toggle') return '<div class="ops-control-row"><span class="ops-control-name">' + c.name + '</span><label class="light-toggle"><input type="checkbox" ' + (c.state === 'on' ? 'checked' : '') + ' onchange="opsControl(\''+sys.id+'\',\''+c.id+'\',\'toggle\',this.checked)"><span class="light-toggle-slider"></span></label></div>';
+      if (c.type === 'momentary') return '<div class="ops-control-row"><span class="ops-control-name">' + c.name + '</span><button class="ops-momentary-btn" onclick="opsControl(\''+sys.id+'\',\''+c.id+'\',\'momentary\',true)">' + c.label + '</button></div>';
       return '';
     }).join('');
     document.getElementById('ops-controls-section').style.display = 'flex';
@@ -1210,7 +982,7 @@ function opsOpenDetail(idx) {
 }
 async function opsControl(sysId, controlId, type, value) {
   try {
-    await fetch('http://localhost:8000/api/systems/' + sysId + '/control', {
+    await fetch('/api/systems/' + sysId + '/control', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({ control_id: controlId, type: type, value: value })
     });
@@ -1349,7 +1121,7 @@ function settingsClose() {
 function _settingsRenderThemes() {
   const grid = document.getElementById('settings-theme-grid');
   grid.innerHTML = _settings.themes.map(t =>
-    '<div class="settings-theme-btn ' + (t.id === _settings.activeTheme ? 'active' : '') + '" onclick="settingsSetTheme('' + t.id + '')">' +
+    '<div class="settings-theme-btn ' + (t.id === _settings.activeTheme ? 'active' : '') + '" onclick="settingsSetTheme(\''+t.id+'\')">'+
     '<div class="settings-theme-swatch" style="background:' + t.color + ';box-shadow:0 0 8px ' + t.color + '66;"></div>' +
     t.name + '</div>'
   ).join('');
@@ -1361,24 +1133,24 @@ function settingsSetTheme(id) {
 async function settingsBrightness(val) {
   document.getElementById('settings-brightness-val').textContent = val + '%';
   try {
-    await fetch('http://localhost:8000/api/brightness', {
+    await fetch('/api/brightness', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({ value: parseInt(val) })
     });
   } catch(e) {}
 }
 async function settingsDisplayOn() {
-  try { await fetch('http://localhost:8000/api/display', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({state:'on'}) }); } catch(e) {}
+  try { await fetch('/api/display', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({state:'on'}) }); } catch(e) {}
 }
 async function settingsDisplayOff() {
-  try { await fetch('http://localhost:8000/api/display', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({state:'off'}) }); } catch(e) {}
+  try { await fetch('/api/display', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({state:'off'}) }); } catch(e) {}
 }
 </script>
 
 <script>
 async function _settingsLoadSysInfo() {
   try {
-    const r = await fetch('http://localhost:8000/api/sysinfo');
+    const r = await fetch('/api/sysinfo');
     const data = await r.json();
     document.getElementById('settings-hostname').textContent = data.hostname || 'pi5-dashboard';
     document.getElementById('settings-ip').textContent = data.ip || '192.168.1.234';
@@ -1471,7 +1243,7 @@ async function sensorsOpen() {
   overlay.style.flexDirection = 'column';
   _sensorsScreen('list');
   try {
-    const r = await fetch('http://localhost:8000/api/sensors');
+    const r = await fetch('/api/sensors');
     const data = await r.json();
     _sensors.sensors = data.sensors || [];
   } catch(e) { _sensors.sensors = []; }
@@ -1542,7 +1314,7 @@ async function _sensorsLoadGraph() {
   const noData = document.getElementById('sensors-no-data');
   const canvas = document.getElementById('sensors-graph-canvas');
   try {
-    const r = await fetch('http://localhost:8000/api/sensors/' + s.id + '/history?range=' + _sensors.currentRange);
+    const r = await fetch('/api/sensors/' + s.id + '/history?range=' + _sensors.currentRange);
     const data = await r.json();
     const points = data.points || [];
     if (points.length === 0) {
@@ -1597,5 +1369,430 @@ async function _sensorsLoadGraph() {
 }
 </script>
 <script src="chart.min.js"></script>
+</body>
+</html>
+<!-- SCREENSAVER -->
+<style>
+  #screensaver { position:fixed; inset:0; z-index:9000; background:#000;
+    display:none; align-items:center; justify-content:center; }
+  #ss-photo { position:absolute; inset:0; background-size:cover;
+    background-position:center; background-repeat:no-repeat;
+    opacity:0; transition:opacity 1.2s ease; }
+  #ss-photo.ss-on { opacity:1; }
+  #ss-clock-wrap { position:relative; z-index:1; text-align:center;
+    text-shadow:0 2px 30px rgba(0,0,0,0.9); pointer-events:none; }
+  #ss-time { font-family:'Orbitron',monospace; font-size:clamp(60px,10vw,130px);
+    font-weight:700; color:rgba(255,255,255,0.92); letter-spacing:8px; }
+  #ss-date { font-family:'Rajdhani',sans-serif; font-size:clamp(20px,3vw,34px);
+    color:rgba(255,255,255,0.55); letter-spacing:4px; margin-top:14px; font-weight:600; }
+</style>
+
+<div id="screensaver">
+  <div id="ss-photo"></div>
+  <div id="ss-clock-wrap">
+    <div id="ss-time">00:00:00</div>
+    <div id="ss-date"></div>
+  </div>
+</div>
+
+<script>
+const _ss={timer:null,photoTimer:null,photos:[],photoIdx:0,active:false};
+function _ssTimeout(){const el=document.getElementById('settings-ss-timeout');const v=el?parseInt(el.value):60;return v===0?null:v*1000;}
+function _ssDuration(){const el=document.getElementById('settings-ss-duration');return(el?parseInt(el.value):5)*1000;}
+function _ssClockOn(){const el=document.getElementById('settings-ss-clock');return el?el.checked:true;}
+function _ssResetTimer(){clearTimeout(_ss.timer);if(_ss.active)return;const t=_ssTimeout();if(t)_ss.timer=setTimeout(_ssActivate,t);}
+async function _ssActivate(){
+  _ss.active=true;
+  const ov=document.getElementById('screensaver');
+  ov.style.display='flex';
+  document.getElementById('ss-clock-wrap').style.display=_ssClockOn()?'block':'none';
+  try{const r=await fetch('/api/photos');const d=await r.json();_ss.photos=d.photos||[];}catch(e){_ss.photos=[];}
+  _ss.photoIdx=0;_ssNextPhoto();_ssTick();
+}
+function _ssNextPhoto(){
+  clearTimeout(_ss.photoTimer);
+  const el=document.getElementById('ss-photo');
+  if(_ss.photos.length===0){el.classList.remove('ss-on');return;}
+  el.classList.remove('ss-on');
+  setTimeout(()=>{
+    el.style.backgroundImage='url('+_ss.photos[_ss.photoIdx]+')';
+    el.classList.add('ss-on');
+    _ss.photoIdx=(_ss.photoIdx+1)%_ss.photos.length;
+    _ss.photoTimer=setTimeout(_ssNextPhoto,_ssDuration());
+  },1200);
+}
+function _ssDismiss(){
+  if(!_ss.active)return;
+  _ss.active=false;
+  clearTimeout(_ss.photoTimer);clearTimeout(_ss.timer);
+  document.getElementById('screensaver').style.display='none';
+  document.getElementById('ss-photo').classList.remove('ss-on');
+  _ssResetTimer();
+}
+function _ssTick(){
+  if(!_ss.active)return;
+  const now=new Date();
+  const h=String(now.getHours()).padStart(2,'0');
+  const m=String(now.getMinutes()).padStart(2,'0');
+  const s=String(now.getSeconds()).padStart(2,'0');
+  const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  document.getElementById('ss-time').textContent=h+':'+m+':'+s;
+  document.getElementById('ss-date').textContent=days[now.getDay()]+'  ·  '+(now.getMonth()+1)+'/'+now.getDate()+'/'+now.getFullYear();
+  setTimeout(_ssTick,1000);
+}
+['touchstart','mousemove','keydown','click'].forEach(ev=>{
+  document.addEventListener(ev,()=>{if(_ss.active)_ssDismiss();else _ssResetTimer();},{passive:true});
+});
+_ssResetTimer();
+</script>
+
+<!-- AUTOMATION SUBMENU -->
+<style>
+  #auto-overlay{font-family:'Rajdhani',sans-serif;color:#e0e8ff;}
+  .auto-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;flex-shrink:0;background:rgba(10,20,60,0.7);border-bottom:1px solid rgba(30,90,255,0.25);}
+  .auto-title{font-size:20px;font-weight:700;letter-spacing:2px;color:#e0e8ff;}
+  .auto-btn{background:rgba(30,90,255,0.15);border:1px solid rgba(30,90,255,0.35);color:#e0e8ff;border-radius:8px;padding:8px 18px;font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:background 0.2s;}
+  .auto-btn:hover{background:rgba(30,90,255,0.3);}
+  .auto-btn-close{background:rgba(220,40,40,0.12);border-color:rgba(220,40,40,0.35);color:#fca5a5;}
+  .auto-btn-close:hover{background:rgba(220,40,40,0.28);}
+  .auto-btn-green{background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.4);color:#86efac;}
+  .auto-btn-green:hover{background:rgba(34,197,94,0.28);}
+  .auto-btn-danger{background:rgba(220,40,40,0.15);border-color:rgba(220,40,40,0.4);color:#fca5a5;}
+  .auto-screen{display:none;flex-direction:column;height:100%;}
+  .auto-screen.active{display:flex;}
+  .auto-body{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px;}
+  .auto-empty{padding:60px 40px;text-align:center;color:#8ea4d4;font-size:16px;font-weight:600;letter-spacing:1px;line-height:2;}
+  .auto-empty-icon{font-size:48px;display:block;margin-bottom:16px;opacity:0.4;}
+  .auto-category{display:flex;flex-direction:column;}
+  .auto-cat-header{display:flex;align-items:center;gap:10px;padding:10px 16px;background:rgba(30,90,255,0.1);border:1px solid rgba(30,90,255,0.2);border-radius:10px 10px 0 0;cursor:pointer;user-select:none;font-size:13px;font-weight:700;letter-spacing:2px;color:#8ea4d4;text-transform:uppercase;}
+  .auto-cat-arrow{margin-left:auto;font-size:12px;transition:transform 0.2s;}
+  .auto-cat-header.collapsed .auto-cat-arrow{transform:rotate(-90deg);}
+  .auto-cat-rules{display:flex;flex-direction:column;border:1px solid rgba(30,90,255,0.2);border-top:none;border-radius:0 0 10px 10px;overflow:hidden;margin-bottom:8px;}
+  .auto-cat-header.collapsed + .auto-cat-rules{display:none;}
+  .auto-rule-row{display:flex;align-items:center;gap:14px;padding:14px 18px;cursor:pointer;border-bottom:1px solid rgba(30,90,255,0.1);transition:background 0.15s;}
+  .auto-rule-row:last-child{border-bottom:none;}
+  .auto-rule-row:hover{background:rgba(30,90,255,0.12);}
+  .auto-rule-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .auto-rule-dot.on{background:#22c55e;box-shadow:0 0 6px rgba(34,197,94,0.6);}
+  .auto-rule-dot.off{background:#475569;}
+  .auto-rule-name{font-size:16px;font-weight:700;flex:1;}
+  .auto-rule-badge{font-size:11px;font-weight:700;letter-spacing:1px;color:#8ea4d4;background:rgba(30,90,255,0.1);border:1px solid rgba(30,90,255,0.2);border-radius:4px;padding:2px 8px;flex-shrink:0;}
+  .auto-detail-section{background:rgba(30,90,255,0.08);border:1px solid rgba(30,90,255,0.2);border-radius:12px;padding:18px 22px;display:flex;flex-direction:column;gap:10px;}
+  .auto-section-label{font-size:11px;font-weight:700;letter-spacing:2px;color:#8ea4d4;text-transform:uppercase;}
+  .auto-detail-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;}
+  .auto-detail-key{font-size:14px;color:#8ea4d4;font-weight:600;}
+  .auto-detail-val{font-size:14px;font-weight:700;}
+  .auto-step-bar{display:flex;align-items:center;padding:16px 24px 0;flex-shrink:0;}
+  .auto-step{display:flex;flex-direction:column;align-items:center;gap:4px;}
+  .auto-step-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border:2px solid rgba(30,90,255,0.3);color:#8ea4d4;transition:all 0.2s;}
+  .auto-step-num.active{border-color:#1e5aff;background:rgba(30,90,255,0.3);color:#e0e8ff;box-shadow:0 0 8px rgba(30,90,255,0.4);}
+  .auto-step-num.done{border-color:#22c55e;background:rgba(34,197,94,0.2);color:#22c55e;}
+  .auto-step-lbl{font-size:10px;font-weight:700;letter-spacing:1px;color:#8ea4d4;text-transform:uppercase;}
+  .auto-step-line{flex:1;height:2px;background:rgba(30,90,255,0.2);margin:0 6px 14px;}
+  .auto-trigger-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .auto-trigger-opt{background:rgba(30,90,255,0.1);border:2px solid rgba(30,90,255,0.25);border-radius:12px;padding:18px 14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;transition:all 0.2s;}
+  .auto-trigger-opt:hover{background:rgba(30,90,255,0.2);border-color:rgba(30,90,255,0.5);}
+  .auto-trigger-opt.selected{border-color:#1e5aff;background:rgba(30,90,255,0.25);box-shadow:0 0 12px rgba(30,90,255,0.3);}
+  .auto-trigger-icon{font-size:32px;}
+  .auto-trigger-name{font-size:14px;font-weight:700;letter-spacing:1px;}
+  .auto-config-box{background:rgba(30,90,255,0.08);border:1px solid rgba(30,90,255,0.2);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:14px;}
+  .auto-field-lbl{font-size:11px;font-weight:700;letter-spacing:1px;color:#8ea4d4;text-transform:uppercase;margin-bottom:2px;}
+  .auto-input{background:rgba(30,90,255,0.1);border:1px solid rgba(30,90,255,0.3);color:#e0e8ff;border-radius:8px;padding:10px 14px;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:600;width:100%;}
+  .auto-select{background:rgba(10,20,60,0.8);border:1px solid rgba(30,90,255,0.3);color:#e0e8ff;border-radius:8px;padding:10px 14px;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:600;width:100%;cursor:pointer;}
+  .auto-select option{background:#0a1428;}
+  .auto-day-btns{display:flex;gap:6px;flex-wrap:wrap;}
+  .auto-day-btn{background:rgba(30,90,255,0.1);border:1px solid rgba(30,90,255,0.25);border-radius:6px;padding:6px 12px;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;cursor:pointer;color:#8ea4d4;transition:all 0.15s;}
+  .auto-day-btn.on{background:rgba(30,90,255,0.35);border-color:rgba(30,90,255,0.7);color:#e0e8ff;}
+  .auto-action-row{display:flex;align-items:center;gap:10px;background:rgba(30,90,255,0.1);border:1px solid rgba(30,90,255,0.2);border-radius:10px;padding:12px 16px;}
+  .auto-remove-btn{background:none;border:1px solid rgba(220,40,40,0.3);border-radius:6px;color:#f87171;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;}
+  .auto-nav-row{display:flex;justify-content:space-between;align-items:center;padding:16px 24px;flex-shrink:0;border-top:1px solid rgba(30,90,255,0.15);}
+  .auto-log-item{display:flex;align-items:flex-start;gap:14px;padding:12px 0;border-bottom:1px solid rgba(30,90,255,0.1);}
+  .auto-log-item:last-child{border-bottom:none;}
+  .auto-log-info{flex:1;display:flex;flex-direction:column;gap:3px;}
+  .auto-log-name{font-size:15px;font-weight:700;}
+  .auto-log-detail{font-size:13px;color:#8ea4d4;}
+  .auto-log-time{font-size:12px;color:#475569;flex-shrink:0;}
+</style>
+
+<div id="auto-overlay" style="display:none;position:fixed;inset:0;background:rgba(4,10,35,0.97);z-index:1000;flex-direction:column;">
+
+  <div id="auto-screen-list" class="auto-screen">
+    <div class="auto-header">
+      <span class="auto-title">⚡ AUTOMATION</span>
+      <div style="display:flex;gap:10px;">
+        <button class="auto-btn" onclick="autoShowLog()">📋 LOG</button>
+        <button class="auto-btn auto-btn-green" onclick="autoStartCreate()">+ NEW</button>
+        <button class="auto-btn auto-btn-close" onclick="autoClose()">✕ CLOSE</button>
+      </div>
+    </div>
+    <div class="auto-body" id="auto-rule-list"></div>
+  </div>
+
+  <div id="auto-screen-detail" class="auto-screen">
+    <div class="auto-header">
+      <span id="auto-detail-title" class="auto-title"></span>
+      <div style="display:flex;gap:10px;">
+        <button class="auto-btn" onclick="autoBackToList()">◀ BACK</button>
+        <button class="auto-btn auto-btn-close" onclick="autoClose()">✕ CLOSE</button>
+      </div>
+    </div>
+    <div class="auto-body" id="auto-detail-body"></div>
+  </div>
+
+  <div id="auto-screen-log" class="auto-screen">
+    <div class="auto-header">
+      <span class="auto-title">📋 AUTOMATION LOG</span>
+      <div style="display:flex;gap:10px;">
+        <button class="auto-btn" onclick="autoBackToList()">◀ BACK</button>
+        <button class="auto-btn auto-btn-close" onclick="autoClose()">✕ CLOSE</button>
+      </div>
+    </div>
+    <div class="auto-body" id="auto-log-body"></div>
+  </div>
+
+  <div id="auto-screen-create" class="auto-screen">
+    <div class="auto-header">
+      <span id="auto-create-title" class="auto-title">⚡ NEW RULE</span>
+      <button class="auto-btn auto-btn-close" onclick="autoBackToList()">✕ CANCEL</button>
+    </div>
+    <div class="auto-step-bar">
+      <div class="auto-step">
+        <div class="auto-step-num active" id="auto-sn-1">1</div>
+        <div class="auto-step-lbl">TRIGGER</div>
+      </div>
+      <div class="auto-step-line"></div>
+      <div class="auto-step">
+        <div class="auto-step-num" id="auto-sn-2">2</div>
+        <div class="auto-step-lbl">ACTIONS</div>
+      </div>
+      <div class="auto-step-line"></div>
+      <div class="auto-step">
+        <div class="auto-step-num" id="auto-sn-3">3</div>
+        <div class="auto-step-lbl">SAVE</div>
+      </div>
+    </div>
+    <div class="auto-body" id="auto-create-body" style="padding-top:16px;"></div>
+    <div class="auto-nav-row">
+      <button class="auto-btn" id="auto-wiz-back" onclick="autoWizBack()" style="visibility:hidden;">◀ BACK</button>
+      <button class="auto-btn auto-btn-green" id="auto-wiz-next" onclick="autoWizNext()">NEXT ▶</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const _auto={rules:[],currentRule:null,step:1,triggerType:null,triggerConfig:{},actions:[],editId:null,days:new Set([0,1,2,3,4,5,6])};
+const _autoTrigLabels={schedule:'Schedule',solar:'Solar',sensor:'Sensor',manual:'Manual'};
+
+function _autoScreen(id){document.querySelectorAll('.auto-screen').forEach(s=>s.classList.remove('active'));const el=document.getElementById('auto-screen-'+id);if(el)el.classList.add('active');}
+function _autoFmtTime(ts){if(!ts)return'Never';const d=new Date(ts*1000),now=new Date();const diff=Math.floor((now-d)/86400000);const t=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});if(diff===0)return'Today '+t;if(diff===1)return'Yesterday '+t;return d.toLocaleDateString()+' '+t;}
+function _autoTrigSummary(r){const tc=r.trigger_config||{};if(r.trigger_type==='schedule')return'Daily at '+(tc.time||'--:--');if(r.trigger_type==='solar'){const off=tc.offset_minutes||0;return(tc.event||'sunset')+' '+(off>0?'+'+off+'min':off<0?off+'min':'');}if(r.trigger_type==='sensor')return'Sensor '+(tc.operator==='gt'?'above':'below')+' '+tc.value;if(r.trigger_type==='manual')return'Manual only';return r.trigger_type;}
+
+async function autoOpen(){const ov=document.getElementById('auto-overlay');ov.style.display='flex';ov.style.flexDirection='column';_autoScreen('list');await _autoLoad();}
+function autoClose(){document.getElementById('auto-overlay').style.display='none';}
+function autoBackToList(){_autoScreen('list');_autoRenderList();}
+
+async function _autoLoad(){
+  try{const r=await fetch('/api/automation/rules');const d=await r.json();_auto.rules=d.rules||[];}catch(e){_auto.rules=[];}
+  _autoRenderList();
+}
+function _autoRenderList(){
+  const el=document.getElementById('auto-rule-list');
+  if(_auto.rules.length===0){el.innerHTML='<div class="auto-empty"><span class="auto-empty-icon">⚡</span>No rules yet.<br>Tap <b>+ NEW</b> to create your first rule.</div>';return;}
+  const cats={};
+  _auto.rules.forEach(r=>{const c=r.category||'general';if(!cats[c])cats[c]=[];cats[c].push(r);});
+  el.innerHTML=Object.entries(cats).map(([cat,rules])=>`
+    <div class="auto-category">
+      <div class="auto-cat-header" onclick="this.classList.toggle('collapsed')">
+        <span>${cat.toUpperCase()}</span>
+        <span style="color:#8ea4d4;font-size:12px;">${rules.length} rule${rules.length===1?'':'s'}</span>
+        <span class="auto-cat-arrow">▼</span>
+      </div>
+      <div class="auto-cat-rules">
+        ${rules.map(r=>`<div class="auto-rule-row" onclick="autoShowDetail('${r.id}')">
+          <div class="auto-rule-dot ${r.enabled?'on':'off'}"></div>
+          <span class="auto-rule-name">${r.name}</span>
+          <span class="auto-rule-badge">${_autoTrigLabels[r.trigger_type]||r.trigger_type}</span>
+          <span style="color:#475569;">▶</span>
+        </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+function autoShowDetail(id){
+  _auto.currentRule=_auto.rules.find(r=>r.id===id);
+  if(!_auto.currentRule)return;
+  const r=_auto.currentRule;
+  document.getElementById('auto-detail-title').textContent=r.name;
+  const acts=(r.actions||[]).map(a=>{if(a.type==='light_control')return'💡 Light → '+(a.command?.value||a.command?.action||'?');if(a.type==='notification')return'🔔 '+a.message;return a.type;}).join('<br>') || 'No actions';
+  document.getElementById('auto-detail-body').innerHTML=`
+    <div class="auto-detail-section">
+      <div class="auto-section-label">TRIGGER</div>
+      <div class="auto-detail-row"><span class="auto-detail-key">Type</span><span class="auto-detail-val">${_autoTrigLabels[r.trigger_type]||r.trigger_type}</span></div>
+      <div class="auto-detail-row"><span class="auto-detail-key">Config</span><span class="auto-detail-val">${_autoTrigSummary(r)}</span></div>
+    </div>
+    <div class="auto-detail-section">
+      <div class="auto-section-label">ACTIONS</div>
+      <div style="font-size:15px;font-weight:600;line-height:2;">${acts}</div>
+    </div>
+    <div class="auto-detail-section">
+      <div class="auto-section-label">STATUS</div>
+      <div class="auto-detail-row"><span class="auto-detail-key">Last Triggered</span><span class="auto-detail-val">${_autoFmtTime(r.last_triggered)}</span></div>
+      <div class="auto-detail-row"><span class="auto-detail-key">Enabled</span><span class="auto-detail-val" style="color:${r.enabled?'#22c55e':'#f87171'}">${r.enabled?'YES':'PAUSED'}</span></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="auto-btn" onclick="autoManualTrigger('${r.id}')">▶ RUN NOW</button>
+      <button class="auto-btn" onclick="autoToggle('${r.id}')">${r.enabled?'⏸ PAUSE':'▶ RESUME'}</button>
+      <button class="auto-btn auto-btn-danger" onclick="autoDelete('${r.id}')">🗑 DELETE</button>
+    </div>`;
+  _autoScreen('detail');
+}
+async function autoManualTrigger(id){
+  try{await fetch('/api/automation/rules/'+id+'/trigger',{method:'POST'});alert('Rule triggered.');}catch(e){alert('Failed.');}
+}
+async function autoToggle(id){
+  try{const r=await fetch('/api/automation/rules/'+id+'/toggle',{method:'POST'});await _autoLoad();autoBackToList();}catch(e){}
+}
+async function autoDelete(id){
+  if(!confirm('Delete this rule?'))return;
+  try{await fetch('/api/automation/rules/'+id,{method:'DELETE'});await _autoLoad();autoBackToList();}catch(e){}
+}
+async function autoShowLog(){
+  _autoScreen('log');
+  try{
+    const r=await fetch('/api/automation/log');const d=await r.json();
+    const el=document.getElementById('auto-log-body');
+    if(!d.log||d.log.length===0){el.innerHTML='<div class="auto-empty"><span class="auto-empty-icon">📋</span>No log entries yet.</div>';return;}
+    el.innerHTML=d.log.map(e=>`<div class="auto-log-item">
+      <span style="font-size:18px;">${e.result==='ok'?'✅':'❌'}</span>
+      <div class="auto-log-info"><div class="auto-log-name">${e.rule_name}</div><div class="auto-log-detail">${e.detail||''}</div></div>
+      <span class="auto-log-time">${_autoFmtTime(e.timestamp)}</span>
+    </div>`).join('');
+  }catch(e){document.getElementById('auto-log-body').innerHTML='<div class="auto-empty">Failed to load log.</div>';}
+}
+function autoStartCreate(){
+  _auto.step=1;_auto.triggerType=null;_auto.triggerConfig={};_auto.actions=[];_auto.editId=null;_auto.days=new Set([0,1,2,3,4,5,6]);
+  document.getElementById('auto-create-title').textContent='⚡ NEW RULE';
+  _autoScreen('create');_autoWizRender();
+}
+function _autoStepUpdate(){
+  [1,2,3].forEach(n=>{const el=document.getElementById('auto-sn-'+n);el.className='auto-step-num'+(n<_auto.step?' done':n===_auto.step?' active':'');});
+  document.getElementById('auto-wiz-back').style.visibility=_auto.step>1?'visible':'hidden';
+  document.getElementById('auto-wiz-next').textContent=_auto.step===3?'💾 SAVE':'NEXT ▶';
+}
+function _autoWizRender(){
+  _autoStepUpdate();
+  const el=document.getElementById('auto-create-body');
+  if(_auto.step===1){
+    el.innerHTML=`<div class="auto-trigger-grid">
+      ${[['🕐','SCHEDULE','schedule'],['🌅','SOLAR','solar'],['🌡','SENSOR','sensor'],['🔘','MANUAL','manual']].map(([icon,label,type])=>`
+        <div class="auto-trigger-opt ${_auto.triggerType===type?'selected':''}" onclick="autoSelectTrigger('${type}')">
+          <span class="auto-trigger-icon">${icon}</span>
+          <span class="auto-trigger-name">${label}</span>
+        </div>`).join('')}
+    </div>
+    <div id="auto-trig-config" style="margin-top:16px;"></div>`;
+    if(_auto.triggerType)_autoRenderTrigConfig();
+  } else if(_auto.step===2){
+    el.innerHTML=`<div style="display:flex;flex-direction:column;gap:12px;" id="auto-actions-list"></div>
+      <button class="auto-btn auto-btn-green" style="margin-top:8px;" onclick="autoAddAction()">+ ADD ACTION</button>`;
+    _autoRenderActions();
+  } else if(_auto.step===3){
+    el.innerHTML=`<div class="auto-config-box" style="gap:16px;">
+      <div><div class="auto-field-lbl">RULE NAME</div>
+        <input class="auto-input" id="auto-name-input" placeholder="e.g. Porch Lights at Sunset" value="${_auto.editName||''}">
+      </div>
+      <div><div class="auto-field-lbl">CATEGORY</div>
+        <input class="auto-input" id="auto-cat-input" placeholder="e.g. Lighting, Alerts, Security" value="${_auto.editCat||''}">
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <span class="auto-field-lbl" style="margin:0;">ENABLE NOW</span>
+        <label class="settings-toggle"><input type="checkbox" id="auto-enabled-toggle" checked><span class="settings-toggle-slider"></span></label>
+      </div>
+    </div>`;
+  }
+}
+function autoSelectTrigger(type){
+  _auto.triggerType=type;_auto.triggerConfig={};
+  document.querySelectorAll('.auto-trigger-opt').forEach(el=>el.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+  _autoRenderTrigConfig();
+}
+function _autoRenderTrigConfig(){
+  const el=document.getElementById('auto-trig-config');if(!el)return;
+  const tc=_auto.triggerConfig;
+  if(_auto.triggerType==='schedule'){
+    el.innerHTML=`<div class="auto-config-box">
+      <div><div class="auto-field-lbl">TIME</div><input type="time" class="auto-input" id="tc-time" value="${tc.time||'18:00'}" onchange="_auto.triggerConfig.time=this.value"></div>
+      <div><div class="auto-field-lbl">DAYS</div><div class="auto-day-btns">
+        ${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d,i)=>`<div class="auto-day-btn ${_auto.days.has(i)?'on':''}" onclick="autoToggleDay(${i},this)">${d}</div>`).join('')}
+      </div></div>
+    </div>`;
+  } else if(_auto.triggerType==='solar'){
+    el.innerHTML=`<div class="auto-config-box">
+      <div><div class="auto-field-lbl">SOLAR EVENT</div>
+        <select class="auto-select" id="tc-solar" onchange="_auto.triggerConfig.event=this.value">
+          ${['dawn','sunrise','solar_noon','sunset','dusk'].map(e=>`<option value="${e}" ${tc.event===e?'selected':''}>${e.replace('_',' ').toUpperCase()}</option>`).join('')}
+        </select>
+      </div>
+      <div><div class="auto-field-lbl">OFFSET (minutes, +/-)</div>
+        <input type="number" class="auto-input" id="tc-offset" value="${tc.offset_minutes||0}" onchange="_auto.triggerConfig.offset_minutes=parseInt(this.value)">
+      </div>
+    </div>`;
+    if(!tc.event)_auto.triggerConfig.event='sunset';
+  } else if(_auto.triggerType==='sensor'){
+    el.innerHTML=`<div class="auto-config-box">
+      <div><div class="auto-field-lbl">CONDITION</div>
+        <select class="auto-select" onchange="_auto.triggerConfig.operator=this.value">
+          <option value="gt" ${tc.operator==='gt'?'selected':''}>ABOVE</option>
+          <option value="lt" ${tc.operator==='lt'?'selected':''}>BELOW</option>
+        </select>
+      </div>
+      <div><div class="auto-field-lbl">VALUE</div>
+        <input type="number" class="auto-input" value="${tc.value||''}" onchange="_auto.triggerConfig.value=parseFloat(this.value)">
+      </div>
+    </div>`;
+  } else if(_auto.triggerType==='manual'){
+    el.innerHTML=`<div class="auto-config-box" style="color:#8ea4d4;font-size:15px;font-weight:600;">This rule runs only when triggered manually from the dashboard.</div>`;
+  }
+}
+function autoToggleDay(i,el){if(_auto.days.has(i)){_auto.days.delete(i);el.classList.remove('on');}else{_auto.days.add(i);el.classList.add('on');}  _auto.triggerConfig.days=[..._auto.days];}
+function _autoRenderActions(){
+  const el=document.getElementById('auto-actions-list');if(!el)return;
+  if(_auto.actions.length===0){el.innerHTML='<div style="color:#8ea4d4;font-size:14px;font-weight:600;padding:8px 0;">No actions yet. Add at least one.</div>';return;}
+  el.innerHTML=_auto.actions.map((a,i)=>`<div class="auto-action-row">
+    <select class="auto-select" style="flex:1;" onchange="autoActionType(${i},this.value)">
+      <option value="light_control" ${a.type==='light_control'?'selected':''}>💡 Light Control</option>
+      <option value="notification" ${a.type==='notification'?'selected':''}>🔔 Notification</option>
+    </select>
+    ${a.type==='notification'?`<input class="auto-input" style="flex:2;" placeholder="Message" value="${a.message||''}" onchange="_auto.actions[${i}].message=this.value">`:''}
+    ${a.type==='light_control'?`<select class="auto-select" style="flex:1;" onchange="autoActionCmd(${i},this.value)">
+      <option value="on">ON</option><option value="off">OFF</option>
+    </select>`:''}
+    <button class="auto-remove-btn" onclick="autoRemoveAction(${i})">🗑</button>
+  </div>`).join('');
+}
+function autoAddAction(){_auto.actions.push({type:'light_control',command:{action:'state',value:'on'}});_autoRenderActions();}
+function autoActionType(i,type){_auto.actions[i]={type,command:{action:'state',value:'on'}};_autoRenderActions();}
+function autoActionCmd(i,val){_auto.actions[i].command={action:'state',value:val};}
+function autoRemoveAction(i){_auto.actions.splice(i,1);_autoRenderActions();}
+function autoWizBack(){if(_auto.step>1){_auto.step--;_autoWizRender();}}
+async function autoWizNext(){
+  if(_auto.step===1){if(!_auto.triggerType){alert('Select a trigger type.');return;}_auto.step=2;_autoWizRender();}
+  else if(_auto.step===2){if(_auto.actions.length===0){alert('Add at least one action.');return;}_auto.step=3;_autoWizRender();}
+  else if(_auto.step===3){
+    const name=document.getElementById('auto-name-input').value.trim();
+    const cat=document.getElementById('auto-cat-input').value.trim()||'general';
+    const enabled=document.getElementById('auto-enabled-toggle').checked?1:0;
+    if(!name){alert('Enter a rule name.');return;}
+    const tc={..._auto.triggerConfig};
+    if(_auto.triggerType==='schedule')tc.days=[..._auto.days];
+    const rule={name,category:cat,enabled,trigger_type:_auto.triggerType,trigger_config:tc,conditions:[],actions:_auto.actions};
+    try{
+      await fetch('/api/automation/rules',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(rule)});
+      await _autoLoad();autoBackToList();
+    }catch(e){alert('Save failed.');}
+  }
+}
+</script>
 </body>
 </html>

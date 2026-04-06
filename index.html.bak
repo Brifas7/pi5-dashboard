@@ -6,115 +6,230 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { width: 100vw; height: 100vh; overflow: hidden; background: #0042f9; font-family: 'Rajdhani', sans-serif; display: flex; flex-direction: column; }
+body { width: 100vw; height: 100vh; overflow: hidden; font-family: 'Rajdhani', sans-serif; display: flex; flex-direction: column; background: #051c35; }
 @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+#exit-zone { position: fixed; top: 0; right: 0; width: 60px; height: 60px; z-index: 9999; cursor: pointer; }
 </style>
 </head>
 <body>
-<div id="notif" style="background:rgba(0,47,178,0.45);border-bottom:1px solid rgba(30,90,255,0.4);padding:10px 24px;display:flex;gap:32px;align-items:center;font-size:15px;color:#a0b8e8;">
-  <div style="display:flex;align-items:center;gap:10px;">
-    <div style="width:10px;height:10px;border-radius:50%;background:#1e5aff;animation:pulse 2s infinite;"></div>
-    <span><b style="color:#e0e8ff">Front East</b> — Person Detected — 2m ago</span>
-  </div>
-  <div style="display:flex;align-items:center;gap:10px;">
-    <div style="width:10px;height:10px;border-radius:50%;background:#22c55e;"></div>
-    <span><b style="color:#e0e8ff">Back West</b> — Vehicle Detected — 16m ago</span>
-  </div>
-</div>
-<div style="display:flex;flex:1;padding:16px 24px;gap:24px;">
 
-  <div style="display:flex;flex-direction:column;gap:14px;width:170px;justify-content:center;">
-    <button onclick="" style="background:rgba(30,90,255,0.18);border:1px solid rgba(30,90,255,0.4);border-radius:16px;padding:18px 12px;color:#e0e8ff;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;">
-      <span style="font-size:28px;">📷</span><span style="font-size:17px;font-weight:700;">Cameras</span>
-    </button>
-    <button onclick="" style="background:rgba(30,90,255,0.18);border:1px solid rgba(30,90,255,0.4);border-radius:16px;padding:18px 12px;color:#e0e8ff;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;">
-      <span style="font-size:28px;">💡</span><span style="font-size:17px;font-weight:700;">Lighting</span>
-    </button>
-    <button onclick="" style="background:rgba(30,90,255,0.18);border:1px solid rgba(30,90,255,0.4);border-radius:16px;padding:18px 12px;color:#e0e8ff;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;">
-      <span style="font-size:28px;">⚙️</span><span style="font-size:17px;font-weight:700;">Operations</span>
-    </button>
-    <button onclick="" style="background:rgba(30,90,255,0.18);border:1px solid rgba(30,90,255,0.4);border-radius:16px;padding:18px 12px;color:#e0e8ff;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;">
-      <span style="font-size:28px;">🌡</span><span style="font-size:17px;font-weight:700;">Sensors</span>
-    </button>
-    <button onclick="" style="background:rgba(30,90,255,0.18);border:1px solid rgba(30,90,255,0.4);border-radius:16px;padding:18px 12px;color:#e0e8ff;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;">
-      <span style="font-size:28px;">🔧</span><span style="font-size:17px;font-weight:700;">Settings</span>
-    </button>
-  </div>
+<svg style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <filter id="watercolor" x="-50%" y="-50%" width="200%" height="200%" filterUnits="objectBoundingBox">
+      <feTurbulence type="fractalNoise" baseFrequency="0.011" numOctaves="7" seed="42" result="turbLarge"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.038" numOctaves="4" seed="98" result="turbFine"/>
+      <feBlend in="turbLarge" in2="turbFine" mode="multiply" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="14" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
+      <feGaussianBlur in="noise" stdDeviation="7" result="blurred"/>
+      <feColorMatrix in="blurred" type="matrix" values="0 0 0 0 0.04 0 0 0 0 0.14 0 0 0 0 0.29 0 0 0 1 0" result="colored"/>
+      <feComponentTransfer in="colored" result="final">
+        <feFuncR type="linear" slope="1.08" intercept="0"/>
+        <feFuncG type="linear" slope="1.08" intercept="0"/>
+        <feFuncB type="linear" slope="1.12" intercept="0"/>
+      </feComponentTransfer>
+    </filter>
+    <linearGradient id="base" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#051c35"/>
+      <stop offset="45%" stop-color="#0a2545"/>
+      <stop offset="100%" stop-color="#132e4f"/>
+    </linearGradient>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#base)" filter="url(#watercolor)"/>
+</svg>
 
-  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-    <canvas id="clock" width="480" height="480"></canvas>
-    <div id="timetext" style="font-family:'Orbitron',monospace;font-size:52px;font-weight:700;color:#e0e8ff;margin-top:20px;letter-spacing:5px;text-shadow:0 0 18px rgba(30,90,255,0.6);"></div>
-    <div id="datetext" style="font-family:'Rajdhani',sans-serif;font-size:22px;color:#8ea4d4;margin-top:6px;letter-spacing:3px;font-weight:600;"></div>
+<div id="exit-zone" title=""></div>
+
+<div style="position:relative;z-index:1;display:flex;flex-direction:column;width:100%;height:100%;">
+
+  <div id="notif-bar" style="background:rgba(0,47,178,0.45);border-bottom:1px solid rgba(30,90,255,0.4);padding:18px 28px;display:flex;gap:36px;align-items:center;font-size:16px;color:#a0b8e8;min-height:70px;">
+    <span style="color:#8ea4d4;">Loading events...</span>
   </div>
 
-  <div style="width:220px;display:flex;flex-direction:column;gap:14px;justify-content:center;">
-    <div style="background:rgba(30,90,255,0.14);border:1px solid rgba(30,90,255,0.35);border-radius:16px;padding:16px;">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div style="display:flex;flex-direction:column;align-items:center;padding:10px 6px;background:rgba(30,90,255,0.18);border-radius:10px;border:1px solid rgba(30,90,255,0.35);">
-          <div style="font-size:13px;color:#8ea4d4;text-transform:uppercase;letter-spacing:1px;">Temp</div>
-          <div style="font-family:'Orbitron',monospace;font-size:20px;color:#e0e8ff;font-weight:700;">42°F</div>
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:center;padding:10px 6px;background:rgba(30,90,255,0.18);border-radius:10px;border:1px solid rgba(30,90,255,0.35);">
-          <div style="font-size:13px;color:#8ea4d4;text-transform:uppercase;letter-spacing:1px;">Humid</div>
-          <div style="font-family:'Orbitron',monospace;font-size:20px;color:#e0e8ff;font-weight:700;">68%</div>
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:center;padding:10px 6px;background:rgba(30,90,255,0.18);border-radius:10px;border:1px solid rgba(30,90,255,0.35);">
-          <div style="font-size:13px;color:#8ea4d4;text-transform:uppercase;letter-spacing:1px;">Pres</div>
-          <div style="font-family:'Orbitron',monospace;font-size:20px;color:#e0e8ff;font-weight:700;">29.92</div>
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:center;padding:10px 6px;background:rgba(30,90,255,0.18);border-radius:10px;border:1px solid rgba(30,90,255,0.35);">
-          <div style="font-size:13px;color:#8ea4d4;text-transform:uppercase;letter-spacing:1px;">AQI</div>
-          <div style="font-family:'Orbitron',monospace;font-size:20px;color:#e0e8ff;font-weight:700;">Good</div>
-        </div>
-      </div>
-      <div style="display:flex;align-items:center;justify-content:center;margin-top:12px;gap:8px;">
-        <span style="font-size:22px;">🌙</span>
-        <span style="font-size:16px;color:#8ea4d4;font-weight:600;">Waxing Gibbous</span>
-      </div>
+  <div style="display:flex;flex:1;padding:20px 28px;gap:28px;min-height:0;">
+
+    <div style="display:flex;flex-direction:column;gap:14px;width:220px;flex-shrink:0;">
+      <button onclick="camOpen()" style="background:rgba(30,90,255,0.18);border:1px solid rgba(30,90,255,0.4);border-radius:16px;padding:20px 12px;color:#e0e8ff;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:7px;width:100%;">
+        <span style="font-size:30px;">📷</span><span style="font-size:18px;font-weight:700;">Cameras</span>
+      </button>
+      <button onclick="lightOpen()" style="background:rgba(30,90,255,0.18);border:1px solid rgba(30,90,255,0.4);border-radius:16px;padding:20px 12px;color:#e0e8ff;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:7px;width:100%;">
+        <span style="font-size:30px;">💡</span><span style="font-size:18px;font-weight:700;">Lighting</span>
+      </button>
+      <button onclick="opsOpen()" style="background:rgba(30,90,255,0.18);border:1px solid rgba(30,90,255,0.4);border-radius:16px;padding:20px 12px;color:#e0e8ff;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:7px;width:100%;">
+        <span style="font-size:30px;">⚙️</span><span style="font-size:18px;font-weight:700;">Operations</span>
+      </button>
+      <button onclick="sensorsOpen()" style="background:rgba(30,90,255,0.18);border:1px solid rgba(30,90,255,0.4);border-radius:16px;padding:20px 12px;color:#e0e8ff;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:7px;width:100%;">
+        <span style="font-size:30px;">🌡</span><span style="font-size:18px;font-weight:700;">Sensors</span>
+      </button>
+      <button onclick="settingsOpen()" style="background:rgba(30,90,255,0.18);border:1px solid rgba(30,90,255,0.4);border-radius:16px;padding:20px 12px;color:#e0e8ff;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:7px;width:100%;">
+        <span style="font-size:30px;">🔧</span><span style="font-size:18px;font-weight:700;">Settings</span>
+      </button>
     </div>
 
-    <div style="background:rgba(30,90,255,0.14);border:1px solid rgba(30,90,255,0.35);border-radius:16px;padding:16px;">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" id="gauges"></div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;">
+      <canvas id="clock" width="660" height="660"></canvas>
+      <div id="timetext" style="font-family:'Orbitron',monospace;font-size:58px;font-weight:700;color:#e0e8ff;margin-top:18px;letter-spacing:5px;text-shadow:0 0 18px rgba(30,90,255,0.6);"></div>
+      <div id="datetext" style="font-family:'Rajdhani',sans-serif;font-size:24px;color:#8ea4d4;margin-top:6px;letter-spacing:3px;font-weight:600;"></div>
     </div>
 
-    <button style="background:rgba(30,90,255,0.18);border:1px solid rgba(30,90,255,0.4);border-radius:16px;padding:22px 12px;color:#e0e8ff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">
-      <span style="font-size:26px;">⚡</span>
-      <span style="font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;letter-spacing:1px;">AUTOMATION</span>
-    </button>
+    <div style="display:flex;flex-direction:column;gap:14px;width:280px;flex-shrink:0;">
+      <div style="background:rgba(30,90,255,0.14);border:1px solid rgba(30,90,255,0.35);border-radius:16px;padding:18px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div style="display:flex;flex-direction:column;align-items:center;padding:12px 8px;background:rgba(30,90,255,0.18);border-radius:10px;border:1px solid rgba(30,90,255,0.35);">
+            <div style="font-size:14px;color:#8ea4d4;text-transform:uppercase;letter-spacing:1px;">Temp</div>
+            <div id="w-temp" style="font-family:'Orbitron',monospace;font-size:22px;color:#e0e8ff;font-weight:700;">--</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;padding:12px 8px;background:rgba(30,90,255,0.18);border-radius:10px;border:1px solid rgba(30,90,255,0.35);">
+            <div style="font-size:14px;color:#8ea4d4;text-transform:uppercase;letter-spacing:1px;">Humid</div>
+            <div id="w-humid" style="font-family:'Orbitron',monospace;font-size:22px;color:#e0e8ff;font-weight:700;">--</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;padding:12px 8px;background:rgba(30,90,255,0.18);border-radius:10px;border:1px solid rgba(30,90,255,0.35);">
+            <div style="font-size:14px;color:#8ea4d4;text-transform:uppercase;letter-spacing:1px;">Pres</div>
+            <div id="w-pres" style="font-family:'Orbitron',monospace;font-size:22px;color:#e0e8ff;font-weight:700;">--</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;padding:12px 8px;background:rgba(30,90,255,0.18);border-radius:10px;border:1px solid rgba(30,90,255,0.35);">
+            <div style="font-size:14px;color:#8ea4d4;text-transform:uppercase;letter-spacing:1px;">AQI</div>
+            <div id="w-aqi" style="font-family:'Orbitron',monospace;font-size:22px;color:#e0e8ff;font-weight:700;">--</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;margin-top:14px;gap:8px;">
+          <span style="font-size:24px;">🌙</span>
+          <span id="moon-phase" style="font-size:17px;color:#8ea4d4;font-weight:600;">--</span>
+        </div>
+      </div>
+
+      <div style="background:rgba(30,90,255,0.14);border:1px solid rgba(30,90,255,0.35);border-radius:16px;padding:18px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;" id="gauges"></div>
+      </div>
+
+      <div style="flex:1;"></div>
+
+      <button onclick="autoOpen()" style="background:rgba(30,90,255,0.18);border:1px solid rgba(30,90,255,0.4);border-radius:16px;padding:26px 12px;color:#e0e8ff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;width:100%;">
+        <span style="font-size:28px;">⚡</span>
+        <span style="font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;letter-spacing:1px;">AUTOMATION</span>
+      </button>
+    </div>
+
   </div>
 </div>
 
 <script>
+let tapCount = 0;
+let tapTimer = null;
+document.getElementById('exit-zone').addEventListener('click', function() {
+  tapCount++;
+  if(tapCount === 1) {
+    tapTimer = setTimeout(() => { tapCount = 0; }, 3000);
+  }
+  if(tapCount >= 3) {
+    clearTimeout(tapTimer);
+    tapCount = 0;
+    fetch('http://localhost:8000/api/exit-kiosk', {method:'POST'});
+  }
+});
+
+function timeAgo(ts) {
+  const diff = Math.floor(Date.now()/1000 - ts);
+  if(diff < 60) return diff + 's ago';
+  if(diff < 3600) return Math.floor(diff/60) + 'm ago';
+  if(diff < 86400) return Math.floor(diff/3600) + 'h ago';
+  return Math.floor(diff/86400) + 'd ago';
+}
+
+function capitalize(s) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function camName(s) {
+  return s.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+}
+
+async function fetchEvents() {
+  try {
+    const res = await fetch('http://localhost:8000/api/events');
+    const events = await res.json();
+    const bar = document.getElementById('notif-bar');
+    if(!events || events.length === 0) {
+      bar.innerHTML = '<span style="color:#8ea4d4;">No recent events</span>';
+      return;
+    }
+    bar.innerHTML = events.map(e => `
+      <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+        <div style="width:12px;height:12px;border-radius:50%;background:#1e5aff;animation:pulse 2s infinite;flex-shrink:0;"></div>
+        <span><b style="color:#e0e8ff">${camName(e.camera)}</b> — ${capitalize(e.label)} Detected — ${timeAgo(e.time)}</span>
+      </div>
+    `).join('');
+  } catch(err) {
+    console.log('Events fetch failed:', err);
+  }
+}
+
 function buildGauges(data) {
+  const gaugeData = [
+    {label:'CPU', value:Math.round(data.cpu_percent)},
+    {label:'Hailo', value:Math.round(data.hailo_percent)},
+    {label:'RAM', value:Math.round(data.ram_percent)},
+    {label:'Storage', value:Math.round(data.disk_percent)}
+  ];
+  const gaugesEl = document.getElementById('gauges');
+  gaugesEl.innerHTML = '';
+  const circ = 251.2;
+  gaugeData.forEach(g => {
+    const dash = (g.value/100)*circ;
+    gaugesEl.innerHTML += `<div style="display:flex;flex-direction:column;align-items:center;gap:6px;"><div style="position:relative;width:100px;height:100px;"><svg width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="8"/><circle cx="50" cy="50" r="40" fill="none" stroke="#1e5aff" stroke-width="8" stroke-dasharray="${dash} ${circ}" stroke-linecap="round" transform="rotate(-90 50 50)"/></svg><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Orbitron',monospace;font-size:18px;color:#e0e8ff;font-weight:700;">${g.value}%</div></div><div style="font-size:15px;color:#8ea4d4;font-weight:600;text-transform:uppercase;letter-spacing:1px;">${g.label}</div></div>`;
+  });
+}
+
+async function fetchStats() {
+  try {
+    const res = await fetch('http://localhost:8000/api/system');
+    const data = await res.json();
+    buildGauges(data);
+  } catch(e) {
+    console.log('Stats fetch failed:', e);
+  }
+}
+
+fetchEvents();
+fetchStats();
+setInterval(fetchEvents, 30000);
+setInterval(fetchStats, 5000);
+setInterval(fetchSolar, 3600000);
+
+async function fetchSolar() {
+  try {
+    const r = await fetch('http://localhost:8000/api/solar');
+    const d = await r.json();
+    const el = document.getElementById('moon-phase');
+    if (el) el.textContent = d.moon_icon + ' ' + d.moon_phase_name;
+  } catch(e) {}
+}
+fetchSolar();
+
 const canvas = document.getElementById('clock');
 const ctx = canvas.getContext('2d');
-const C = 480, R = C/2;
+const C = 660, R = C/2;
 
 function drawClock() {
   const now = new Date();
   const hrs = now.getHours(), mins = now.getMinutes(), secs = now.getSeconds();
   const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-
   ctx.clearRect(0,0,C,C);
-
   ctx.beginPath();
   ctx.arc(R,R,R-4,0,Math.PI*2);
   ctx.fillStyle='#0d0d0d';
   ctx.fill();
-
   for(let i=0;i<60;i++){
     const ang=(i*6-90)*Math.PI/180;
     const isMaj=i%5===0;
-    const len=isMaj?22:11;
-    const r1=R-20, r2=r1-len;
+    const len=isMaj?28:14;
+    const r1=R-22, r2=r1-len;
     ctx.beginPath();
     ctx.moveTo(R+r1*Math.cos(ang),R+r1*Math.sin(ang));
     ctx.lineTo(R+r2*Math.cos(ang),R+r2*Math.sin(ang));
     ctx.strokeStyle=isMaj?'#1e5aff':'rgba(30,90,255,0.35)';
-    ctx.lineWidth=isMaj?3.5:1.5;
+    ctx.lineWidth=isMaj?4:2;
     ctx.stroke();
   }
-
   const nums=[
     {o:12,i:'00',a:0},{o:1,i:13,a:30},{o:2,i:14,a:60},{o:3,i:15,a:90},
     {o:4,i:16,a:120},{o:5,i:17,a:150},{o:6,i:18,a:180},{o:7,i:19,a:210},
@@ -122,57 +237,1576 @@ function drawClock() {
   ];
   nums.forEach(n=>{
     const rad=(n.a-90)*Math.PI/180;
-    ctx.font='bold 26px Orbitron';
+    ctx.font='bold 32px Orbitron';
     ctx.fillStyle='#e0e8ff';
     ctx.textAlign='center';
     ctx.textBaseline='middle';
-    ctx.fillText(n.o, R+176*Math.cos(rad), R+176*Math.sin(rad));
-    ctx.font='400 14px Orbitron';
+    ctx.fillText(n.o, R+242*Math.cos(rad), R+242*Math.sin(rad));
+    ctx.font='400 18px Orbitron';
     ctx.fillStyle='#1e5aff';
-    ctx.fillText(n.i, R+128*Math.cos(rad), R+128*Math.sin(rad));
+    ctx.fillText(n.i, R+178*Math.cos(rad), R+178*Math.sin(rad));
   });
-
   const hourDeg=((hrs%12)*30+mins*0.5-90)*Math.PI/180;
   const minDeg=(mins*6+secs*0.1-90)*Math.PI/180;
   const secDeg=(secs*6-90)*Math.PI/180;
-
   ctx.lineCap='round';
   ctx.beginPath();
   ctx.moveTo(R,R);
-  ctx.lineTo(R+118*Math.cos(hourDeg),R+118*Math.sin(hourDeg));
+  ctx.lineTo(R+162*Math.cos(hourDeg),R+162*Math.sin(hourDeg));
   ctx.strokeStyle='#4080ff';
-  ctx.lineWidth=8;
+  ctx.lineWidth=10;
   ctx.stroke();
-
   ctx.beginPath();
   ctx.moveTo(R,R);
-  ctx.lineTo(R+160*Math.cos(minDeg),R+160*Math.sin(minDeg));
+  ctx.lineTo(R+220*Math.cos(minDeg),R+220*Math.sin(minDeg));
   ctx.strokeStyle='#4080ff';
-  ctx.lineWidth=5;
+  ctx.lineWidth=6;
   ctx.stroke();
-
   ctx.beginPath();
   ctx.moveTo(R,R);
-  ctx.lineTo(R+182*Math.cos(secDeg),R+182*Math.sin(secDeg));
+  ctx.lineTo(R+248*Math.cos(secDeg),R+248*Math.sin(secDeg));
   ctx.strokeStyle='#ef4444';
-  ctx.lineWidth=2;
+  ctx.lineWidth=2.5;
   ctx.stroke();
-
   ctx.beginPath();
-  ctx.arc(R,R,11,0,Math.PI*2);
+  ctx.arc(R,R,14,0,Math.PI*2);
   ctx.fillStyle='#4080ff';
   ctx.fill();
-
   const h24=String(hrs).padStart(2,'0');
   const m=String(mins).padStart(2,'0');
   const s=String(secs).padStart(2,'0');
   document.getElementById('timetext').textContent=`${h24}:${m}:${s}`;
   const mo=now.getMonth()+1, d=now.getDate(), y=now.getFullYear();
   document.getElementById('datetext').textContent=`${days[now.getDay()]} · ${mo}/${d}/${y}`;
-
   requestAnimationFrame(drawClock);
 }
 drawClock();
+</script>
+
+<!-- ============================================================
+     CAMERA SUBMENU
+     ============================================================ -->
+<style>
+  #cam-overlay { font-family: 'Rajdhani', sans-serif; color: #e0e8ff; }
+  .cam-header { display:flex; align-items:center; justify-content:space-between; padding:16px 24px; flex-shrink:0; background:rgba(10,20,60,0.7); border-bottom:1px solid rgba(30,90,255,0.25); }
+  .cam-title { font-size:20px; font-weight:700; letter-spacing:2px; color:#e0e8ff; }
+  .cam-btn { background:rgba(30,90,255,0.15); border:1px solid rgba(30,90,255,0.35); color:#e0e8ff; border-radius:8px; padding:8px 18px; font-family:'Rajdhani',sans-serif; font-size:14px; font-weight:700; letter-spacing:1px; cursor:pointer; transition:background 0.2s; }
+  .cam-btn:hover { background:rgba(30,90,255,0.3); }
+  .cam-btn-close { background:rgba(220,40,40,0.12); border-color:rgba(220,40,40,0.35); color:#fca5a5; }
+  .cam-btn-close:hover { background:rgba(220,40,40,0.28); }
+  .cam-btn-danger { background:rgba(220,40,40,0.15); border-color:rgba(220,40,40,0.4); color:#fca5a5; }
+  .cam-btn-danger:hover { background:rgba(220,40,40,0.3); }
+  .cam-list-body { display:flex; flex:1; gap:20px; padding:20px; min-height:0; }
+  .cam-feeds-col { flex:1; display:flex; flex-direction:column; gap:12px; min-height:0; }
+  .cam-actions-col { width:200px; display:flex; flex-direction:column; gap:14px; padding-top:40px; }
+  .cam-col-label { font-size:11px; font-weight:700; letter-spacing:2px; color:#8ea4d4; text-transform:uppercase; padding-left:4px; }
+  .cam-feed-scroll { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
+  .cam-feed-item { display:flex; align-items:center; gap:14px; background:rgba(30,90,255,0.1); border:1px solid rgba(30,90,255,0.25); border-radius:10px; padding:14px 16px; cursor:pointer; transition:background 0.2s; user-select:none; }
+  .cam-feed-item:hover { background:rgba(30,90,255,0.22); }
+  .cam-feed-name { font-size:17px; font-weight:700; flex:1; }
+  .cam-offline-label { font-size:11px; font-weight:700; letter-spacing:1px; color:#f87171; background:rgba(220,40,40,0.15); border:1px solid rgba(220,40,40,0.3); border-radius:4px; padding:2px 8px; }
+  .cam-thumb { width:96px; height:54px; object-fit:cover; border-radius:6px; border:1px solid rgba(30,90,255,0.3); background:rgba(0,0,0,0.4); }
+  .cam-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .cam-dot-on { background:#22c55e; box-shadow:0 0 6px rgba(34,197,94,0.7); animation:cam-pulse 2s infinite; }
+  .cam-dot-off { background:#ef4444; }
+  @keyframes cam-pulse { 0%,100% { box-shadow:0 0 4px rgba(34,197,94,0.5); } 50% { box-shadow:0 0 10px rgba(34,197,94,0.9); } }
+  .cam-live-body { flex:1; display:flex; align-items:center; justify-content:center; position:relative; padding:16px; min-height:0; }
+  .cam-live-badge { display:flex; align-items:center; gap:7px; background:rgba(220,40,40,0.2); border:1px solid rgba(220,40,40,0.4); border-radius:6px; padding:4px 12px; font-size:13px; font-weight:700; letter-spacing:2px; color:#fca5a5; }
+  .cam-live-badge-dot { width:8px; height:8px; border-radius:50%; background:#ef4444; box-shadow:0 0 6px rgba(239,68,68,0.8); animation:cam-pulse 1.5s infinite; }
+  .cam-arrow { position:absolute; top:50%; transform:translateY(-50%); background:rgba(30,90,255,0.2); border:1px solid rgba(30,90,255,0.4); color:#e0e8ff; border-radius:8px; width:44px; height:80px; font-size:20px; cursor:pointer; transition:background 0.2s; display:flex; align-items:center; justify-content:center; }
+  .cam-arrow:hover { background:rgba(30,90,255,0.4); }
+  .cam-arrow-left { left:16px; }
+  .cam-arrow-right { right:16px; }
+  .cam-split-option { display:flex; align-items:center; gap:14px; background:rgba(30,90,255,0.1); border:1px solid rgba(30,90,255,0.25); border-radius:10px; padding:14px 18px; cursor:pointer; font-size:17px; font-weight:700; color:#e0e8ff; }
+  .cam-split-option input[type=checkbox] { width:18px; height:18px; cursor:pointer; accent-color:#1e5aff; }
+  .cam-split-cell { position:relative; background:rgba(0,0,0,0.5); border-radius:8px; overflow:hidden; border:1px solid rgba(30,90,255,0.3); min-height:0; }
+  .cam-split-cell-label { position:absolute; top:10px; left:12px; z-index:2; font-size:13px; font-weight:700; letter-spacing:1px; background:rgba(0,0,0,0.6); padding:4px 10px; border-radius:4px; }
+  .cam-filter-bar { display:flex; gap:12px; padding:14px 20px; flex-shrink:0; border-bottom:1px solid rgba(30,90,255,0.15); }
+  .cam-filter-select { background:rgba(30,90,255,0.12); border:1px solid rgba(30,90,255,0.3); color:#e0e8ff; border-radius:8px; padding:8px 14px; font-family:'Rajdhani',sans-serif; font-size:15px; font-weight:600; cursor:pointer; }
+  .cam-filter-select option { background:#0a1428; }
+  .cam-clip-item { display:flex; align-items:center; gap:14px; padding:14px 0; border-bottom:1px solid rgba(30,90,255,0.12); cursor:pointer; transition:background 0.15s; border-radius:4px; }
+  .cam-clip-item:hover { background:rgba(30,90,255,0.08); padding-left:8px; }
+  .cam-clip-item.selected { background:rgba(30,90,255,0.18); padding-left:8px; }
+  .cam-clip-thumb { width:112px; height:63px; object-fit:cover; border-radius:6px; border:1px solid rgba(30,90,255,0.25); background:#0a1428; flex-shrink:0; }
+  .cam-clip-info { flex:1; display:flex; flex-direction:column; gap:4px; }
+  .cam-clip-cam { font-size:16px; font-weight:700; color:#e0e8ff; }
+  .cam-clip-type { font-size:14px; color:#93c5fd; font-weight:600; }
+  .cam-clip-meta { font-size:13px; color:#8ea4d4; }
+  .cam-delete-btn { background:none; border:1px solid rgba(220,40,40,0.3); border-radius:6px; color:#f87171; font-size:18px; width:38px; height:38px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.2s; flex-shrink:0; }
+  .cam-delete-btn:hover { background:rgba(220,40,40,0.2); }
+  .cam-check-circle { width:28px; height:28px; border-radius:50%; flex-shrink:0; border:2px solid rgba(30,90,255,0.5); background:transparent; display:flex; align-items:center; justify-content:center; font-size:16px; transition:all 0.15s; }
+  .cam-check-circle.checked { background:#1e5aff; border-color:#1e5aff; color:#fff; }
+  .cam-bulk-bar { display:flex; justify-content:space-between; align-items:center; padding:14px 20px; flex-shrink:0; background:rgba(30,90,255,0.08); border-top:1px solid rgba(30,90,255,0.2); }
+  .cam-empty, .cam-loading { padding:40px; text-align:center; color:#8ea4d4; font-size:16px; font-weight:600; letter-spacing:1px; }
+  .cam-screen { display:none; flex-direction:column; height:100%; }
+  .cam-screen.active { display:flex; }
+</style>
+
+<div id="cam-overlay" style="display:none; position:fixed; inset:0; background:rgba(4,10,35,0.97); z-index:1000; flex-direction:column;">
+  <div id="cam-screen-list" class="cam-screen">
+    <div class="cam-header">
+      <span class="cam-title">📷 CAMERAS</span>
+      <button class="cam-btn cam-btn-close" onclick="camClose()">✕ CLOSE</button>
+    </div>
+    <div class="cam-list-body">
+      <div class="cam-feeds-col">
+        <div class="cam-col-label">LIVE FEEDS</div>
+        <div id="cam-feed-scroll" class="cam-feed-scroll"></div>
+        <button class="cam-btn" style="margin-top:8px;" onclick="camShowSplitSelect()">⊞  SPLIT VIEW</button>
+      </div>
+      <div class="cam-actions-col">
+        <button class="cam-btn" onclick="camShowClips()">🎬  SAVED CLIPS</button>
+        <button class="cam-btn" onclick="camShowSettings()">⚙  CAM SETTINGS</button>
+      </div>
+    </div>
+  </div>
+  <div id="cam-screen-live" class="cam-screen">
+    <div class="cam-header">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <span id="cam-live-title" class="cam-title"></span>
+        <div class="cam-live-badge"><div class="cam-live-badge-dot"></div>LIVE</div>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <button class="cam-btn" onclick="camShowSplitSelect()">⊞  SPLIT VIEW</button>
+        <button class="cam-btn cam-btn-close" onclick="camBackToList()">✕ CLOSE</button>
+      </div>
+    </div>
+    <div class="cam-live-body">
+      <button class="cam-arrow cam-arrow-left" onclick="camCycle(-1)">◀</button>
+      <div id="cam-live-container" style="width:calc(100% - 120px);height:100%;display:flex;align-items:center;justify-content:center;"></div>
+      <button class="cam-arrow cam-arrow-right" onclick="camCycle(1)">▶</button>
+    </div>
+  </div>
+  <div id="cam-screen-split-select" class="cam-screen">
+    <div class="cam-header">
+      <span class="cam-title">⊞  SELECT CAMERAS</span>
+      <div style="display:flex; gap:10px;">
+        <button class="cam-btn" onclick="camLaunchSplit()">VIEW SELECTED</button>
+        <button class="cam-btn cam-btn-close" onclick="camBackToList()">✕ CLOSE</button>
+      </div>
+    </div>
+    <div id="cam-split-select-list" style="padding:24px; display:flex; flex-direction:column; gap:12px; overflow-y:auto;"></div>
+  </div>
+  <div id="cam-screen-split-view" class="cam-screen">
+    <div class="cam-header">
+      <span class="cam-title">⊞  SPLIT VIEW</span>
+      <div style="display:flex; gap:10px;">
+        <button class="cam-btn" onclick="camShowSplitSelect()">CHANGE</button>
+        <button class="cam-btn cam-btn-close" onclick="camBackToList()">✕ CLOSE</button>
+      </div>
+    </div>
+    <div id="cam-split-grid" style="flex:1; padding:16px; display:grid; gap:12px; min-height:0;"></div>
+  </div>
+  <div id="cam-screen-clips" class="cam-screen">
+    <div class="cam-header">
+      <span class="cam-title">🎬  SAVED CLIPS</span>
+      <div style="display:flex; gap:10px;">
+        <button class="cam-btn" id="cam-select-mode-btn" onclick="camToggleSelectMode()">SELECT MODE</button>
+        <button class="cam-btn cam-btn-close" onclick="camBackToList()">✕ CLOSE</button>
+      </div>
+    </div>
+    <div class="cam-filter-bar">
+      <select id="cam-filter-camera" class="cam-filter-select" onchange="camApplyFilters()">
+        <option value="all">All Cameras</option>
+      </select>
+      <select id="cam-filter-label" class="cam-filter-select" onchange="camApplyFilters()">
+        <option value="all">All Types</option>
+        <option value="person">Person</option>
+        <option value="car">Vehicle</option>
+        <option value="dog">Dog</option>
+        <option value="cat">Cat</option>
+      </select>
+    </div>
+    <div id="cam-clip-list" style="flex:1; overflow-y:auto; padding:0 20px 20px;"></div>
+    <div id="cam-bulk-bar" class="cam-bulk-bar" style="display:none;">
+      <button class="cam-btn" onclick="camSelectAll()">SELECT ALL</button>
+      <button class="cam-btn cam-btn-danger" id="cam-bulk-delete-btn" onclick="camBulkDelete()">DELETE SELECTED (0)</button>
+    </div>
+  </div>
+  <div id="cam-screen-playback" class="cam-screen">
+    <div class="cam-header">
+      <span id="cam-playback-title" class="cam-title"></span>
+      <button class="cam-btn cam-btn-close" onclick="camBackToClips()">✕ CLOSE</button>
+    </div>
+    <div style="flex:1; display:flex; align-items:center; justify-content:center; padding:20px;">
+      <video id="cam-playback-video" controls style="max-width:100%; max-height:100%; border-radius:8px; border:1px solid rgba(30,90,255,0.3); background:#000;"></video>
+    </div>
+  </div>
+</div>
+
+<script>
+const _cam = {
+  cameras: [], currentIdx: 0, splitSelected: new Set(),
+  clips: [], filteredClips: [], selectMode: false, selectedClips: new Set()
+};
+function _camFmt(name) { return name.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()); }
+function _camFmtTime(ts) {
+  const d = new Date(ts * 1000), now = new Date();
+  const diffDays = Math.floor((now - d) / 86400000);
+  const t = d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+  if (diffDays === 0) return 'Today ' + t;
+  if (diffDays === 1) return 'Yesterday ' + t;
+  return d.toLocaleDateString() + ' ' + t;
+}
+function _camScreen(id) {
+  document.querySelectorAll('.cam-screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('cam-screen-' + id);
+  if (el) el.classList.add('active');
+}
+function _camStopStreams() {
+  if (window._camHls) { window._camHls.destroy(); window._camHls = null; }
+  if (window._camPc) { window._camPc.close(); window._camPc = null; }
+  const container = document.getElementById('cam-live-container');
+  if (container) container.innerHTML = '';
+  document.querySelectorAll('.cam-split-img').forEach(i => { i.src = ''; });
+  const vid = document.getElementById('cam-playback-video');
+  if (vid) { vid.pause(); vid.src = ''; }
+}
+async function camOpen() {
+  const overlay = document.getElementById('cam-overlay');
+  overlay.style.display = 'flex';
+  overlay.style.flexDirection = 'column';
+  _camScreen('list');
+  try {
+    const r = await fetch('http://localhost:8000/api/cameras');
+    const data = await r.json();
+    _cam.cameras = data.cameras || [];
+  } catch(e) { _cam.cameras = []; }
+  _camRenderList();
+}
+function camClose() { _camStopStreams(); document.getElementById('cam-overlay').style.display = 'none'; }
+function _camRenderList() {
+  const el = document.getElementById('cam-feed-scroll');
+  if (!el) return;
+  if (_cam.cameras.length === 0) { el.innerHTML = '<div class="cam-empty">No cameras registered in Frigate</div>'; return; }
+  el.innerHTML = _cam.cameras.map((cam, i) => `
+    <div class="cam-feed-item" onclick="camOpenLive(${i})">
+      <div class="cam-dot ${cam.online ? 'cam-dot-on' : 'cam-dot-off'}"></div>
+      <span class="cam-feed-name">${_camFmt(cam.name)}</span>
+      ${!cam.online ? '<span class="cam-offline-label">OFFLINE</span>' : ''}
+      <img class="cam-thumb" src="http://localhost:5000/api/${cam.name}/latest.jpg?t=${Date.now()}" onerror="this.style.visibility='hidden'" alt="" />
+    </div>
+  `).join('');
+}
+function camOpenLive(idx) { _cam.currentIdx = idx; _camScreen('live'); _camLoadLive(); }
+async function _camLoadLive() {
+  const cam = _cam.cameras[_cam.currentIdx];
+  if (!cam) return;
+  document.getElementById('cam-live-title').textContent = _camFmt(cam.name);
+  const container = document.getElementById('cam-live-container');
+  container.innerHTML = '';
+  const video = document.createElement('video');
+  video.autoplay = true;
+  video.muted = true;
+  video.playsInline = true;
+  video.controls = false;
+  video.style.cssText = 'width:100%;height:100%;object-fit:contain;border-radius:8px;border:1px solid rgba(30,90,255,0.3);background:#000;';
+  container.appendChild(video);
+  const pc = new RTCPeerConnection();
+  pc.addTransceiver('video', {direction:'recvonly'});
+  pc.addTransceiver('audio', {direction:'recvonly'});
+  window._camPc = pc;
+  pc.ontrack = e => { if(e.track.kind==='video') video.srcObject = e.streams[0]; };
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  try {
+    const r = await fetch('http://localhost:1984/api/webrtc?src=' + cam.name, {
+      method:'POST', body:offer.sdp,
+      headers:{'Content-Type':'application/x-www-form-urlencoded'}
+    });
+    const sdp = await r.text();
+    await pc.setRemoteDescription({type:'answer', sdp});
+  } catch(e) { console.error('WebRTC error:', e); }
+}
+function camCycle(dir) {
+  _camStopStreams();
+  _cam.currentIdx = (_cam.currentIdx + dir + _cam.cameras.length) % _cam.cameras.length;
+  _camLoadLive();
+}
+function camBackToList() { _camStopStreams(); _camScreen('list'); _camRenderList(); }
+function camShowSplitSelect() {
+  _camStopStreams();
+  const el = document.getElementById('cam-split-select-list');
+  el.innerHTML = _cam.cameras.map((cam, i) => `
+    <label class="cam-split-option">
+      <input type="checkbox" value="${i}" ${_cam.splitSelected.has(i) ? 'checked' : ''} onchange="camToggleSplit(${i}, this.checked)" />
+      <div class="cam-dot ${cam.online ? 'cam-dot-on' : 'cam-dot-off'}"></div>
+      <span>${_camFmt(cam.name)}</span>
+    </label>
+  `).join('');
+  _camScreen('split-select');
+}
+function camToggleSplit(idx, checked) { if (checked) _cam.splitSelected.add(idx); else _cam.splitSelected.delete(idx); }
+function camLaunchSplit() {
+  if (_cam.splitSelected.size === 0) return;
+  const selected = [..._cam.splitSelected];
+  const grid = document.getElementById('cam-split-grid');
+  const cols = selected.length <= 2 ? selected.length : 2;
+  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  grid.innerHTML = selected.map(idx => {
+    const cam = _cam.cameras[idx];
+    return `<div class="cam-split-cell">
+      <div class="cam-split-cell-label">${_camFmt(cam.name)}</div>
+      <img class="cam-split-img" src="http://localhost:1984/api/frame.jpeg?src=${cam.name}" style="width:100%;height:100%;object-fit:cover;display:block;" alt="" />
+    </div>`;
+  }).join('');
+  _camScreen('split-view');
+}
+async function camShowClips() {
+  _camScreen('clips');
+  _cam.selectMode = false; _cam.selectedClips.clear();
+  document.getElementById('cam-select-mode-btn').textContent = 'SELECT MODE';
+  document.getElementById('cam-bulk-bar').style.display = 'none';
+  document.getElementById('cam-clip-list').innerHTML = '<div class="cam-loading">Loading clips...</div>';
+  try {
+    const r = await fetch('http://localhost:8000/api/clips?limit=100');
+    const data = await r.json();
+    _cam.clips = data.clips || [];
+    const camFilter = document.getElementById('cam-filter-camera');
+    const cams = [...new Set(_cam.clips.map(c => c.camera))];
+    camFilter.innerHTML = '<option value="all">All Cameras</option>' + cams.map(c => `<option value="${c}">${_camFmt(c)}</option>`).join('');
+    camApplyFilters();
+  } catch(e) { document.getElementById('cam-clip-list').innerHTML = '<div class="cam-empty">Failed to load clips</div>'; }
+}
+function camApplyFilters() {
+  const cf = document.getElementById('cam-filter-camera').value;
+  const lf = document.getElementById('cam-filter-label').value;
+  _cam.filteredClips = _cam.clips.filter(c => {
+    if (cf !== 'all' && c.camera !== cf) return false;
+    if (lf !== 'all' && c.label !== lf) return false;
+    return true;
+  });
+  _camRenderClips();
+}
+function _camRenderClips() {
+  const el = document.getElementById('cam-clip-list');
+  if (_cam.filteredClips.length === 0) { el.innerHTML = '<div class="cam-empty">No clips found</div>'; return; }
+  el.innerHTML = _cam.filteredClips.map(clip => {
+    const sel = _cam.selectedClips.has(clip.id);
+    const label = clip.label.charAt(0).toUpperCase() + clip.label.slice(1);
+    const score = clip.score > 0 ? ` · ${clip.score}%` : '';
+    return `<div class="cam-clip-item ${sel ? 'selected' : ''}" onclick="${_cam.selectMode ? `camToggleClipSelect('${clip.id}')` : `camPlayClip('${clip.id}','${clip.camera}','${clip.clip_url}')`}">
+      <img class="cam-clip-thumb" src="${clip.thumbnail}" onerror="this.style.background='#0a1428'" alt="" />
+      <div class="cam-clip-info">
+        <div class="cam-clip-cam">${_camFmt(clip.camera)}</div>
+        <div class="cam-clip-type">${label}${score}</div>
+        <div class="cam-clip-meta">${_camFmtTime(clip.start_time)} · ${clip.duration}</div>
+      </div>
+      ${_cam.selectMode ? `<div class="cam-check-circle ${sel ? 'checked' : ''}">✓</div>` : `<button class="cam-delete-btn" onclick="event.stopPropagation(); camDeleteClip('${clip.id}')">🗑</button>`}
+    </div>`;
+  }).join('');
+}
+function camToggleSelectMode() {
+  _cam.selectMode = !_cam.selectMode; _cam.selectedClips.clear();
+  document.getElementById('cam-select-mode-btn').textContent = _cam.selectMode ? 'CANCEL' : 'SELECT MODE';
+  document.getElementById('cam-bulk-bar').style.display = _cam.selectMode ? 'flex' : 'none';
+  _camRenderClips();
+}
+function camSelectAll() { _cam.filteredClips.forEach(c => _cam.selectedClips.add(c.id)); _camUpdateBulkBar(); _camRenderClips(); }
+function camToggleClipSelect(id) {
+  if (_cam.selectedClips.has(id)) _cam.selectedClips.delete(id); else _cam.selectedClips.add(id);
+  _camUpdateBulkBar(); _camRenderClips();
+}
+function _camUpdateBulkBar() { const btn = document.getElementById('cam-bulk-delete-btn'); if (btn) btn.textContent = `DELETE SELECTED (${_cam.selectedClips.size})`; }
+async function camDeleteClip(id) {
+  if (!confirm('Delete this clip?')) return;
+  await fetch(`http://localhost:8000/api/clips/${id}`, { method:'DELETE' }).catch(() => {});
+  _cam.clips = _cam.clips.filter(c => c.id !== id);
+  camApplyFilters();
+}
+async function camBulkDelete() {
+  if (_cam.selectedClips.size === 0) return;
+  if (!confirm(`Delete ${_cam.selectedClips.size} clip(s)?`)) return;
+  const ids = [..._cam.selectedClips];
+  await Promise.all(ids.map(id => fetch(`http://localhost:8000/api/clips/${id}`, { method:'DELETE' }).catch(() => {})));
+  _cam.clips = _cam.clips.filter(c => !ids.includes(c.id));
+  _cam.selectedClips.clear(); camToggleSelectMode(); camApplyFilters();
+}
+function camPlayClip(id, camera, url) {
+  document.getElementById('cam-playback-title').textContent = _camFmt(camera) + ' — Clip';
+  const vid = document.getElementById('cam-playback-video');
+  vid.src = url; vid.play(); _camScreen('playback');
+}
+function camBackToClips() { const vid = document.getElementById('cam-playback-video'); vid.pause(); vid.src = ''; _camScreen('clips'); }
+function camShowSettings() { alert('Camera settings — coming in Settings submenu'); }
+</script>
+
+<script src="hls.min.js"></script>
+
+
+<!-- LIGHTING SUBMENU -->
+<style>
+  #light-overlay { font-family: 'Rajdhani', sans-serif; color: #e0e8ff; }
+  .light-header { display:flex; align-items:center; justify-content:space-between; padding:16px 24px; flex-shrink:0; background:rgba(10,20,60,0.7); border-bottom:1px solid rgba(30,90,255,0.25); }
+  .light-title { font-size:20px; font-weight:700; letter-spacing:2px; color:#e0e8ff; }
+  .light-btn { background:rgba(30,90,255,0.15); border:1px solid rgba(30,90,255,0.35); color:#e0e8ff; border-radius:8px; padding:8px 18px; font-family:'Rajdhani',sans-serif; font-size:14px; font-weight:700; letter-spacing:1px; cursor:pointer; transition:background 0.2s; }
+  .light-btn:hover { background:rgba(30,90,255,0.3); }
+  .light-btn-close { background:rgba(220,40,40,0.12); border-color:rgba(220,40,40,0.35); color:#fca5a5; }
+  .light-btn-close:hover { background:rgba(220,40,40,0.28); }
+  .light-screen { display:none; flex-direction:column; height:100%; }
+  .light-screen.active { display:flex; }
+  .light-empty { padding:60px 40px; text-align:center; color:#8ea4d4; font-size:16px; font-weight:600; letter-spacing:1px; line-height:2; }
+  .light-empty-icon { font-size:48px; display:block; margin-bottom:16px; opacity:0.4; }
+  .light-device-item { display:flex; align-items:center; gap:16px; background:rgba(30,90,255,0.1); border:1px solid rgba(30,90,255,0.25); border-radius:10px; padding:16px 20px; cursor:pointer; transition:background 0.2s; }
+  .light-device-item:hover { background:rgba(30,90,255,0.2); }
+  .light-device-name { font-size:18px; font-weight:700; flex:1; }
+  .light-device-state { font-size:13px; font-weight:700; letter-spacing:1px; }
+  .light-device-state.on { color:#22c55e; }
+  .light-device-state.off { color:#8ea4d4; }
+  .light-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .light-dot.on { background:#22c55e; box-shadow:0 0 6px rgba(34,197,94,0.7); }
+  .light-dot.off { background:#475569; }
+  .light-brightness-bar { height:6px; border-radius:3px; background:rgba(30,90,255,0.2); flex:1; max-width:120px; overflow:hidden; }
+  .light-brightness-fill { height:100%; border-radius:3px; background:#1e5aff; box-shadow:0 0 6px rgba(30,90,255,0.5); transition:width 0.3s; }
+  .light-control-body { flex:1; padding:28px; display:flex; flex-direction:column; gap:28px; overflow-y:auto; }
+  .light-control-section { background:rgba(30,90,255,0.08); border:1px solid rgba(30,90,255,0.2); border-radius:12px; padding:20px 24px; display:flex; flex-direction:column; gap:16px; }
+  .light-section-label { font-size:11px; font-weight:700; letter-spacing:2px; color:#8ea4d4; text-transform:uppercase; }
+  .light-toggle-row { display:flex; align-items:center; justify-content:space-between; }
+  .light-toggle-label { font-size:18px; font-weight:700; }
+  .light-toggle { position:relative; width:56px; height:28px; cursor:pointer; }
+  .light-toggle input { opacity:0; width:0; height:0; }
+  .light-toggle-slider { position:absolute; inset:0; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); border-radius:28px; transition:0.3s; }
+  .light-toggle-slider:before { content:''; position:absolute; height:20px; width:20px; left:3px; bottom:3px; background:#8ea4d4; border-radius:50%; transition:0.3s; }
+  .light-toggle input:checked + .light-toggle-slider { background:rgba(34,197,94,0.3); border-color:rgba(34,197,94,0.5); }
+  .light-toggle input:checked + .light-toggle-slider:before { transform:translateX(28px); background:#22c55e; box-shadow:0 0 8px rgba(34,197,94,0.7); }
+  .light-slider-row { display:flex; flex-direction:column; gap:10px; }
+  .light-slider-label-row { display:flex; justify-content:space-between; align-items:center; }
+  .light-slider { -webkit-appearance:none; width:100%; height:6px; border-radius:3px; background:rgba(30,90,255,0.2); outline:none; cursor:pointer; }
+  .light-slider::-webkit-slider-thumb { -webkit-appearance:none; width:22px; height:22px; border-radius:50%; background:#1e5aff; box-shadow:0 0 8px rgba(30,90,255,0.6); cursor:pointer; }
+  .light-color-row { display:flex; flex-direction:column; gap:12px; }
+  .light-color-swatches { display:flex; gap:10px; flex-wrap:wrap; }
+  .light-swatch { width:36px; height:36px; border-radius:50%; cursor:pointer; border:2px solid transparent; transition:all 0.2s; }
+  .light-swatch:hover, .light-swatch.active { border-color:#fff; transform:scale(1.15); }
+  .light-color-input { width:48px; height:36px; border-radius:8px; border:1px solid rgba(30,90,255,0.3); cursor:pointer; background:none; padding:2px; }
+</style>
+
+<div id="light-overlay" style="display:none; position:fixed; inset:0; background:rgba(4,10,35,0.97); z-index:1000; flex-direction:column;">
+  <div id="light-screen-list" class="light-screen">
+    <div class="light-header">
+      <span class="light-title">💡 LIGHTING</span>
+      <button class="light-btn light-btn-close" onclick="lightClose()">✕ CLOSE</button>
+    </div>
+    <div style="flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:12px;" id="light-device-list"></div>
+  </div>
+  <div id="light-screen-control" class="light-screen">
+    <div class="light-header">
+      <span id="light-control-title" class="light-title"></span>
+      <div style="display:flex; gap:10px;">
+        <button class="light-btn" onclick="lightBackToList()">◀ BACK</button>
+        <button class="light-btn light-btn-close" onclick="lightClose()">✕ CLOSE</button>
+      </div>
+    </div>
+    <div class="light-control-body">
+      <div class="light-control-section">
+        <div class="light-section-label">POWER</div>
+        <div class="light-toggle-row">
+          <span class="light-toggle-label" id="light-power-label">OFF</span>
+          <label class="light-toggle">
+            <input type="checkbox" id="light-power-toggle" onchange="lightTogglePower(this)">
+            <span class="light-toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+      <div class="light-control-section" id="light-dimmer-section">
+        <div class="light-section-label">BRIGHTNESS</div>
+        <div class="light-slider-row">
+          <div class="light-slider-label-row">
+            <span style="font-size:14px; color:#8ea4d4;">0%</span>
+            <span id="light-brightness-val" style="font-family:'Orbitron',monospace; font-size:18px; font-weight:700;">100%</span>
+            <span style="font-size:14px; color:#8ea4d4;">100%</span>
+          </div>
+          <input type="range" min="0" max="100" value="100" class="light-slider" id="light-brightness-slider" oninput="lightBrightnessChange(this.value)">
+        </div>
+      </div>
+      <div class="light-control-section" id="light-color-section">
+        <div class="light-section-label">COLOR</div>
+        <div class="light-color-row">
+          <div class="light-color-swatches">
+            <div class="light-swatch" style="background:#ffffff;" onclick="lightSetColor('#ffffff')"></div>
+            <div class="light-swatch" style="background:#ffd580;" onclick="lightSetColor('#ffd580')"></div>
+            <div class="light-swatch" style="background:#ff6b35;" onclick="lightSetColor('#ff6b35')"></div>
+            <div class="light-swatch" style="background:#ef4444;" onclick="lightSetColor('#ef4444')"></div>
+            <div class="light-swatch" style="background:#22c55e;" onclick="lightSetColor('#22c55e')"></div>
+            <div class="light-swatch" style="background:#3b82f6;" onclick="lightSetColor('#3b82f6')"></div>
+            <div class="light-swatch" style="background:#a855f7;" onclick="lightSetColor('#a855f7')"></div>
+            <div class="light-swatch" style="background:#06b6d4;" onclick="lightSetColor('#06b6d4')"></div>
+            <input type="color" class="light-color-input" id="light-color-picker" value="#ffffff" onchange="lightSetColor(this.value)">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const _light = { devices: [], currentDevice: null };
+function _lightFmt(name) { return name.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()); }
+function _lightScreen(id) {
+  document.querySelectorAll('.light-screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('light-screen-' + id);
+  if (el) el.classList.add('active');
+}
+async function lightOpen() {
+  const overlay = document.getElementById('light-overlay');
+  overlay.style.display = 'flex';
+  overlay.style.flexDirection = 'column';
+  _lightScreen('list');
+  try {
+    const r = await fetch('http://localhost:8000/api/lights');
+    const data = await r.json();
+    _light.devices = data.devices || [];
+  } catch(e) { _light.devices = []; }
+  _lightRenderList();
+}
+function lightClose() { document.getElementById('light-overlay').style.display = 'none'; }
+function lightBackToList() { _lightScreen('list'); _lightRenderList(); }
+function _lightRenderList() {
+  const el = document.getElementById('light-device-list');
+  if (!el) return;
+  if (_light.devices.length === 0) {
+    el.innerHTML = '<div class="light-empty"><span class="light-empty-icon">💡</span>No lighting devices registered.<br>Devices will appear here automatically<br>when connected via MQTT.</div>';
+    return;
+  }
+  el.innerHTML = _light.devices.map((dev, i) => {
+    const isOn = dev.state === 'on';
+    const brightness = dev.brightness !== undefined ? dev.brightness : 100;
+    return '<div class="light-device-item" onclick="lightOpenControl(' + i + ')">' +
+      '<div class="light-dot ' + (isOn ? 'on' : 'off') + '"></div>' +
+      '<span class="light-device-name">' + _lightFmt(dev.name) + '</span>' +
+      (dev.type === 'dimmer' || dev.type === 'rgb' ? '<div class="light-brightness-bar"><div class="light-brightness-fill" style="width:' + (isOn ? brightness : 0) + '%"></div></div>' : '') +
+      '<span class="light-device-state ' + (isOn ? 'on' : 'off') + '">' + (isOn ? 'ON' : 'OFF') + '</span></div>';
+  }).join('');
+}
+</script>
+
+<script>
+function lightOpenControl(idx) {
+  _light.currentDevice = _light.devices[idx];
+  const dev = _light.currentDevice;
+  document.getElementById('light-control-title').textContent = '💡 ' + _lightFmt(dev.name);
+  const isOn = dev.state === 'on';
+  const toggle = document.getElementById('light-power-toggle');
+  toggle.checked = isOn;
+  document.getElementById('light-power-label').textContent = isOn ? 'ON' : 'OFF';
+  const brightness = dev.brightness !== undefined ? dev.brightness : 100;
+  document.getElementById('light-brightness-slider').value = brightness;
+  document.getElementById('light-brightness-val').textContent = brightness + '%';
+  document.getElementById('light-dimmer-section').style.display = (dev.type === 'dimmer' || dev.type === 'rgb') ? 'flex' : 'none';
+  document.getElementById('light-color-section').style.display = dev.type === 'rgb' ? 'flex' : 'none';
+  if (dev.color) document.getElementById('light-color-picker').value = dev.color;
+  _lightScreen('control');
+}
+async function lightTogglePower(el) {
+  const dev = _light.currentDevice;
+  if (!dev) return;
+  const state = el.checked ? 'on' : 'off';
+  document.getElementById('light-power-label').textContent = state.toUpperCase();
+  dev.state = state;
+  try {
+    await fetch('http://localhost:8000/api/lights/' + dev.id + '/control', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ action: 'state', value: state })
+    });
+  } catch(e) {}
+}
+async function lightBrightnessChange(val) {
+  document.getElementById('light-brightness-val').textContent = val + '%';
+  const dev = _light.currentDevice;
+  if (!dev) return;
+  dev.brightness = parseInt(val);
+  try {
+    await fetch('http://localhost:8000/api/lights/' + dev.id + '/control', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ action: 'brightness', value: parseInt(val) })
+    });
+  } catch(e) {}
+}
+async function lightSetColor(hex) {
+  document.querySelectorAll('.light-swatch').forEach(s => s.classList.remove('active'));
+  const dev = _light.currentDevice;
+  if (!dev) return;
+  dev.color = hex;
+  document.getElementById('light-color-picker').value = hex;
+  try {
+    await fetch('http://localhost:8000/api/lights/' + dev.id + '/control', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ action: 'color', value: hex })
+    });
+  } catch(e) {}
+}
+</script>
+
+<!-- OPERATIONS SUBMENU -->
+<style>
+  #ops-overlay { font-family: 'Rajdhani', sans-serif; color: #e0e8ff; }
+  .ops-header { display:flex; align-items:center; justify-content:space-between; padding:16px 24px; flex-shrink:0; background:rgba(10,20,60,0.7); border-bottom:1px solid rgba(30,90,255,0.25); }
+  .ops-title { font-size:20px; font-weight:700; letter-spacing:2px; color:#e0e8ff; }
+  .ops-btn { background:rgba(30,90,255,0.15); border:1px solid rgba(30,90,255,0.35); color:#e0e8ff; border-radius:8px; padding:8px 18px; font-family:'Rajdhani',sans-serif; font-size:14px; font-weight:700; letter-spacing:1px; cursor:pointer; transition:background 0.2s; }
+  .ops-btn:hover { background:rgba(30,90,255,0.3); }
+  .ops-btn-close { background:rgba(220,40,40,0.12); border-color:rgba(220,40,40,0.35); color:#fca5a5; }
+  .ops-btn-close:hover { background:rgba(220,40,40,0.28); }
+  .ops-screen { display:none; flex-direction:column; height:100%; }
+  .ops-screen.active { display:flex; }
+  .ops-empty { padding:60px 40px; text-align:center; color:#8ea4d4; font-size:16px; font-weight:600; letter-spacing:1px; line-height:2; }
+  .ops-empty-icon { font-size:48px; display:block; margin-bottom:16px; opacity:0.4; }
+  .ops-system-item { display:flex; align-items:center; gap:16px; background:rgba(30,90,255,0.1); border:1px solid rgba(30,90,255,0.25); border-radius:10px; padding:16px 20px; cursor:pointer; transition:background 0.2s; }
+  .ops-system-item:hover { background:rgba(30,90,255,0.2); }
+  .ops-system-name { font-size:18px; font-weight:700; flex:1; }
+  .ops-system-summary { font-size:13px; color:#8ea4d4; font-weight:600; }
+  .ops-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .ops-dot-on { background:#22c55e; box-shadow:0 0 6px rgba(34,197,94,0.7); }
+  .ops-dot-off { background:#ef4444; }
+  .ops-dot-unknown { background:#475569; }
+  .ops-status-badge { font-size:11px; font-weight:700; letter-spacing:1px; padding:3px 10px; border-radius:4px; }
+  .ops-status-online { color:#22c55e; background:rgba(34,197,94,0.12); border:1px solid rgba(34,197,94,0.3); }
+  .ops-status-offline { color:#f87171; background:rgba(220,40,40,0.12); border:1px solid rgba(220,40,40,0.3); }
+  .ops-detail-body { flex:1; padding:20px; display:flex; flex-direction:column; gap:16px; overflow-y:auto; }
+  .ops-detail-section { background:rgba(30,90,255,0.08); border:1px solid rgba(30,90,255,0.2); border-radius:12px; padding:18px 22px; display:flex; flex-direction:column; gap:12px; }
+  .ops-section-label { font-size:11px; font-weight:700; letter-spacing:2px; color:#8ea4d4; text-transform:uppercase; }
+  .ops-sensor-row { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid rgba(30,90,255,0.1); }
+  .ops-sensor-row:last-child { border-bottom:none; }
+  .ops-sensor-name { font-size:15px; color:#8ea4d4; font-weight:600; }
+  .ops-sensor-val { font-family:'Orbitron',monospace; font-size:16px; font-weight:700; color:#e0e8ff; }
+  .ops-control-row { display:flex; justify-content:space-between; align-items:center; padding:6px 0; }
+  .ops-control-name { font-size:15px; font-weight:700; }
+  .ops-momentary-btn { background:rgba(30,90,255,0.2); border:1px solid rgba(30,90,255,0.4); color:#e0e8ff; border-radius:8px; padding:8px 20px; font-family:'Rajdhani',sans-serif; font-size:14px; font-weight:700; cursor:pointer; }
+  .ops-momentary-btn:active { background:rgba(30,90,255,0.5); }
+  .ops-event-item { padding:8px 0; border-bottom:1px solid rgba(30,90,255,0.1); display:flex; flex-direction:column; gap:3px; }
+  .ops-event-item:last-child { border-bottom:none; }
+  .ops-event-msg { font-size:14px; font-weight:600; color:#e0e8ff; }
+  .ops-event-time { font-size:12px; color:#8ea4d4; }
+  .ops-conn-row { display:flex; justify-content:space-between; padding:5px 0; }
+  .ops-conn-label { font-size:14px; color:#8ea4d4; font-weight:600; }
+  .ops-conn-val { font-size:14px; font-weight:700; }
+</style>
+
+<div id="ops-overlay" style="display:none; position:fixed; inset:0; background:rgba(4,10,35,0.97); z-index:1000; flex-direction:column;">
+  <div id="ops-screen-list" class="ops-screen">
+    <div class="ops-header">
+      <span class="ops-title">⚙️ OPERATIONS</span>
+      <button class="ops-btn ops-btn-close" onclick="opsClose()">✕ CLOSE</button>
+    </div>
+    <div style="flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:12px;" id="ops-system-list"></div>
+  </div>
+  <div id="ops-screen-detail" class="ops-screen">
+    <div class="ops-header">
+      <span id="ops-detail-title" class="ops-title"></span>
+      <div style="display:flex; gap:10px;">
+        <button class="ops-btn" onclick="opsBackToList()">◀ BACK</button>
+        <button class="ops-btn ops-btn-close" onclick="opsClose()">✕ CLOSE</button>
+      </div>
+    </div>
+    <div class="ops-detail-body">
+      <div class="ops-detail-section" id="ops-conn-section">
+        <div class="ops-section-label">CONNECTION</div>
+        <div id="ops-conn-info"></div>
+      </div>
+      <div class="ops-detail-section" id="ops-sensors-section">
+        <div class="ops-section-label">SENSORS</div>
+        <div id="ops-sensors-list"></div>
+      </div>
+      <div class="ops-detail-section" id="ops-controls-section">
+        <div class="ops-section-label">CONTROLS</div>
+        <div id="ops-controls-list"></div>
+      </div>
+      <div class="ops-detail-section">
+        <div class="ops-section-label">EVENT LOG</div>
+        <div id="ops-event-log"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const _ops = { systems: [], currentSystem: null };
+function _opsFmt(name) { return name.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()); }
+function _opsScreen(id) {
+  document.querySelectorAll('.ops-screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('ops-screen-' + id);
+  if (el) el.classList.add('active');
+}
+async function opsOpen() {
+  const overlay = document.getElementById('ops-overlay');
+  overlay.style.display = 'flex';
+  overlay.style.flexDirection = 'column';
+  _opsScreen('list');
+  try {
+    const r = await fetch('http://localhost:8000/api/systems');
+    const data = await r.json();
+    _ops.systems = data.systems || [];
+  } catch(e) { _ops.systems = []; }
+  _opsRenderList();
+}
+function opsClose() { document.getElementById('ops-overlay').style.display = 'none'; }
+function opsBackToList() { _opsScreen('list'); _opsRenderList(); }
+function _opsRenderList() {
+  const el = document.getElementById('ops-system-list');
+  if (!el) return;
+  if (_ops.systems.length === 0) {
+    el.innerHTML = '<div class="ops-empty"><span class="ops-empty-icon">⚙️</span>No systems registered.<br>Systems will appear here automatically<br>when connected via MQTT.</div>';
+    return;
+  }
+  el.innerHTML = _ops.systems.map((sys, i) => {
+    const online = sys.online === true;
+    return '<div class="ops-system-item" onclick="opsOpenDetail(' + i + ')">' +
+      '<div class="ops-dot ' + (online ? 'ops-dot-on' : 'ops-dot-off') + '"></div>' +
+      '<span class="ops-system-name">' + _opsFmt(sys.name) + '</span>' +
+      '<span class="ops-system-summary">' + (sys.summary || '') + '</span>' +
+      '<span class="ops-status-badge ' + (online ? 'ops-status-online' : 'ops-status-offline') + '">' + (online ? 'ONLINE' : 'OFFLINE') + '</span>' +
+      '</div>';
+  }).join('');
+}
+</script>
+
+<script>
+function opsOpenDetail(idx) {
+  _ops.currentSystem = _ops.systems[idx];
+  const sys = _ops.currentSystem;
+  document.getElementById('ops-detail-title').textContent = '⚙️ ' + _opsFmt(sys.name);
+  const conn = document.getElementById('ops-conn-info');
+  conn.innerHTML = '<div class="ops-conn-row"><span class="ops-conn-label">Status</span><span class="ops-conn-val ' + (sys.online ? 'ops-status-online' : 'ops-status-offline') + '">' + (sys.online ? 'ONLINE' : 'OFFLINE') + '</span></div>' +
+    (sys.ip ? '<div class="ops-conn-row"><span class="ops-conn-label">IP</span><span class="ops-conn-val">' + sys.ip + '</span></div>' : '') +
+    (sys.uptime ? '<div class="ops-conn-row"><span class="ops-conn-label">Uptime</span><span class="ops-conn-val">' + sys.uptime + '</span></div>' : '') +
+    (sys.rssi ? '<div class="ops-conn-row"><span class="ops-conn-label">WiFi Signal</span><span class="ops-conn-val">' + sys.rssi + ' dBm</span></div>' : '');
+  const sensors = document.getElementById('ops-sensors-list');
+  if (sys.sensors && sys.sensors.length > 0) {
+    sensors.innerHTML = sys.sensors.map(s => '<div class="ops-sensor-row"><span class="ops-sensor-name">' + s.name + '</span><span class="ops-sensor-val">' + s.value + ' ' + (s.unit || '') + '</span></div>').join('');
+    document.getElementById('ops-sensors-section').style.display = 'flex';
+  } else {
+    document.getElementById('ops-sensors-section').style.display = 'none';
+  }
+  const controls = document.getElementById('ops-controls-list');
+  if (sys.controls && sys.controls.length > 0) {
+    controls.innerHTML = sys.controls.map(c => {
+      if (c.type === 'toggle') return '<div class="ops-control-row"><span class="ops-control-name">' + c.name + '</span><label class="light-toggle"><input type="checkbox" ' + (c.state === 'on' ? 'checked' : '') + ' onchange="opsControl(\''+sys.id+'\',\''+c.id+'\',\'toggle\',this.checked)"><span class="light-toggle-slider"></span></label></div>';
+      if (c.type === 'momentary') return '<div class="ops-control-row"><span class="ops-control-name">' + c.name + '</span><button class="ops-momentary-btn" onclick="opsControl(\''+sys.id+'\',\''+c.id+'\',\'momentary\',true)">' + c.label + '</button></div>';
+      return '';
+    }).join('');
+    document.getElementById('ops-controls-section').style.display = 'flex';
+  } else {
+    document.getElementById('ops-controls-section').style.display = 'none';
+  }
+  const log = document.getElementById('ops-event-log');
+  if (sys.events && sys.events.length > 0) {
+    log.innerHTML = sys.events.map(e => '<div class="ops-event-item"><span class="ops-event-msg">' + e.message + '</span><span class="ops-event-time">' + e.time + '</span></div>').join('');
+  } else {
+    log.innerHTML = '<div style="color:#8ea4d4; font-size:14px; padding:8px 0;">No events recorded.</div>';
+  }
+  _opsScreen('detail');
+}
+async function opsControl(sysId, controlId, type, value) {
+  try {
+    await fetch('http://localhost:8000/api/systems/' + sysId + '/control', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ control_id: controlId, type: type, value: value })
+    });
+  } catch(e) {}
+}
+</script>
+
+<!-- SETTINGS SUBMENU -->
+<style>
+  #settings-overlay { font-family: 'Rajdhani', sans-serif; color: #e0e8ff; }
+  .settings-header { display:flex; align-items:center; justify-content:space-between; padding:16px 24px; flex-shrink:0; background:rgba(10,20,60,0.7); border-bottom:1px solid rgba(30,90,255,0.25); }
+  .settings-title { font-size:20px; font-weight:700; letter-spacing:2px; color:#e0e8ff; }
+  .settings-btn { background:rgba(30,90,255,0.15); border:1px solid rgba(30,90,255,0.35); color:#e0e8ff; border-radius:8px; padding:8px 18px; font-family:'Rajdhani',sans-serif; font-size:14px; font-weight:700; letter-spacing:1px; cursor:pointer; transition:background 0.2s; }
+  .settings-btn:hover { background:rgba(30,90,255,0.3); }
+  .settings-btn-close { background:rgba(220,40,40,0.12); border-color:rgba(220,40,40,0.35); color:#fca5a5; }
+  .settings-btn-close:hover { background:rgba(220,40,40,0.28); }
+  .settings-screen { display:none; flex-direction:column; height:100%; }
+  .settings-screen.active { display:flex; }
+  .settings-body { flex:1; padding:24px; display:flex; flex-direction:column; gap:16px; overflow-y:auto; }
+  .settings-section { background:rgba(30,90,255,0.08); border:1px solid rgba(30,90,255,0.2); border-radius:12px; padding:20px 24px; display:flex; flex-direction:column; gap:16px; }
+  .settings-section-label { font-size:11px; font-weight:700; letter-spacing:2px; color:#8ea4d4; text-transform:uppercase; margin-bottom:4px; }
+  .settings-row { display:flex; align-items:center; justify-content:space-between; padding:6px 0; }
+  .settings-row-label { font-size:16px; font-weight:700; color:#e0e8ff; }
+  .settings-row-sub { font-size:13px; color:#8ea4d4; font-weight:600; margin-top:2px; }
+  .settings-slider { -webkit-appearance:none; width:200px; height:6px; border-radius:3px; background:rgba(30,90,255,0.2); outline:none; cursor:pointer; }
+  .settings-slider::-webkit-slider-thumb { -webkit-appearance:none; width:22px; height:22px; border-radius:50%; background:#1e5aff; box-shadow:0 0 8px rgba(30,90,255,0.6); cursor:pointer; }
+  .settings-val { font-family:'Orbitron',monospace; font-size:15px; font-weight:700; min-width:48px; text-align:right; }
+  .settings-toggle { position:relative; width:56px; height:28px; cursor:pointer; flex-shrink:0; }
+  .settings-toggle input { opacity:0; width:0; height:0; }
+  .settings-toggle-slider { position:absolute; inset:0; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); border-radius:28px; transition:0.3s; }
+  .settings-toggle-slider:before { content:''; position:absolute; height:20px; width:20px; left:3px; bottom:3px; background:#8ea4d4; border-radius:50%; transition:0.3s; }
+  .settings-toggle input:checked + .settings-toggle-slider { background:rgba(34,197,94,0.3); border-color:rgba(34,197,94,0.5); }
+  .settings-toggle input:checked + .settings-toggle-slider:before { transform:translateX(28px); background:#22c55e; box-shadow:0 0 8px rgba(34,197,94,0.7); }
+  .settings-select { background:rgba(30,90,255,0.12); border:1px solid rgba(30,90,255,0.3); color:#e0e8ff; border-radius:8px; padding:8px 14px; font-family:'Rajdhani',sans-serif; font-size:15px; font-weight:600; cursor:pointer; }
+  .settings-select option { background:#0a1428; }
+  .settings-theme-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .settings-theme-btn { background:rgba(30,90,255,0.1); border:1px solid rgba(30,90,255,0.25); border-radius:10px; padding:14px 8px; cursor:pointer; text-align:center; font-family:'Rajdhani',sans-serif; font-size:13px; font-weight:700; color:#e0e8ff; transition:all 0.2s; }
+  .settings-theme-btn:hover { background:rgba(30,90,255,0.25); }
+  .settings-theme-btn.active { border-color:#1e5aff; box-shadow:0 0 10px rgba(30,90,255,0.4); }
+  .settings-theme-swatch { width:32px; height:32px; border-radius:50%; margin:0 auto 8px; border:2px solid rgba(255,255,255,0.2); }
+</style>
+
+<div id="settings-overlay" style="display:none; position:fixed; inset:0; background:rgba(4,10,35,0.97); z-index:1000; flex-direction:column;">
+  <div id="settings-screen-main" class="settings-screen">
+    <div class="settings-header">
+      <span class="settings-title">🔧 SETTINGS</span>
+      <button class="settings-btn settings-btn-close" onclick="settingsClose()">✕ CLOSE</button>
+    </div>
+    <div class="settings-body">
+      <div class="settings-section">
+        <div class="settings-section-label">DISPLAY</div>
+        <div class="settings-row">
+          <div><div class="settings-row-label">Brightness</div><div class="settings-row-sub">Screen backlight level</div></div>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <input type="range" min="0" max="100" value="80" class="settings-slider" id="settings-brightness-slider" oninput="settingsBrightness(this.value)">
+            <span class="settings-val" id="settings-brightness-val">80%</span>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div><div class="settings-row-label">Display Power</div><div class="settings-row-sub">Turn screen on or off</div></div>
+          <div style="display:flex; gap:10px;">
+            <button class="settings-btn" onclick="settingsDisplayOn()">ON</button>
+            <button class="settings-btn" onclick="settingsDisplayOff()">OFF</button>
+          </div>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-label">SCREENSAVER</div>
+        <div class="settings-row">
+          <div><div class="settings-row-label">Timeout</div><div class="settings-row-sub">Inactivity before screensaver</div></div>
+          <select class="settings-select" id="settings-ss-timeout">
+            <option value="15">15 seconds</option>
+            <option value="30">30 seconds</option>
+            <option value="60" selected>1 minute</option>
+            <option value="120">2 minutes</option>
+            <option value="300">5 minutes</option>
+            <option value="0">Disabled</option>
+          </select>
+        </div>
+        <div class="settings-row">
+          <div><div class="settings-row-label">Photo Duration</div><div class="settings-row-sub">Time per photo</div></div>
+          <select class="settings-select" id="settings-ss-duration">
+            <option value="3">3 seconds</option>
+            <option value="5" selected>5 seconds</option>
+            <option value="10">10 seconds</option>
+            <option value="15">15 seconds</option>
+            <option value="30">30 seconds</option>
+          </select>
+        </div>
+        <div class="settings-row">
+          <div><div class="settings-row-label">Clock Overlay</div><div class="settings-row-sub">Show time over photos</div></div>
+          <label class="settings-toggle">
+            <input type="checkbox" id="settings-ss-clock" checked>
+            <span class="settings-toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-label">THEME</div>
+        <div class="settings-theme-grid" id="settings-theme-grid"></div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-label">SYSTEM INFO</div>
+        <div class="settings-row"><span class="settings-row-label">Hostname</span><span class="settings-val" style="font-family:'Rajdhani',sans-serif;" id="settings-hostname">—</span></div>
+        <div class="settings-row"><span class="settings-row-label">IP Address</span><span class="settings-val" style="font-family:'Rajdhani',sans-serif;" id="settings-ip">—</span></div>
+        <div class="settings-row"><span class="settings-row-label">Tailscale</span><span class="settings-val" style="font-family:'Rajdhani',sans-serif;" id="settings-tailscale">—</span></div>
+        <div class="settings-row"><span class="settings-row-label">Uptime</span><span class="settings-val" style="font-family:'Rajdhani',sans-serif;" id="settings-uptime">—</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const _settings = {
+  themes: [
+    { id: 'water', name: 'Deep Water', color: '#1e5aff' },
+    { id: 'titanium', name: 'Titanium', color: '#8ea4d4' },
+    { id: 'emerald', name: 'Dark Emerald', color: '#10b981' },
+    { id: 'purple', name: 'Electric Purple', color: '#a855f7' },
+    { id: 'christmas', name: 'Christmas', color: '#22c55e' },
+    { id: 'stpatricks', name: "St. Patrick's", color: '#16a34a' }
+  ],
+  activeTheme: 'water'
+};
+async function settingsOpen() {
+  const overlay = document.getElementById('settings-overlay');
+  overlay.style.display = 'flex';
+  overlay.style.flexDirection = 'column';
+  document.getElementById('settings-screen-main').classList.add('active');
+  _settingsRenderThemes();
+  _settingsLoadSysInfo();
+}
+function settingsClose() {
+  document.getElementById('settings-overlay').style.display = 'none';
+}
+function _settingsRenderThemes() {
+  const grid = document.getElementById('settings-theme-grid');
+  grid.innerHTML = _settings.themes.map(t =>
+    '<div class="settings-theme-btn ' + (t.id === _settings.activeTheme ? 'active' : '') + '" onclick="settingsSetTheme(\''+t.id+'\')">'+
+    '<div class="settings-theme-swatch" style="background:' + t.color + ';box-shadow:0 0 8px ' + t.color + '66;"></div>' +
+    t.name + '</div>'
+  ).join('');
+}
+function settingsSetTheme(id) {
+  _settings.activeTheme = id;
+  _settingsRenderThemes();
+}
+async function settingsBrightness(val) {
+  document.getElementById('settings-brightness-val').textContent = val + '%';
+  try {
+    await fetch('http://localhost:8000/api/brightness', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ value: parseInt(val) })
+    });
+  } catch(e) {}
+}
+async function settingsDisplayOn() {
+  try { await fetch('http://localhost:8000/api/display', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({state:'on'}) }); } catch(e) {}
+}
+async function settingsDisplayOff() {
+  try { await fetch('http://localhost:8000/api/display', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({state:'off'}) }); } catch(e) {}
+}
+</script>
+
+<script>
+async function _settingsLoadSysInfo() {
+  try {
+    const r = await fetch('http://localhost:8000/api/sysinfo');
+    const data = await r.json();
+    document.getElementById('settings-hostname').textContent = data.hostname || 'pi5-dashboard';
+    document.getElementById('settings-ip').textContent = data.ip || '192.168.1.234';
+    document.getElementById('settings-tailscale').textContent = data.tailscale || '100.76.61.67';
+    document.getElementById('settings-uptime').textContent = data.uptime || '—';
+  } catch(e) {
+    document.getElementById('settings-hostname').textContent = 'pi5-dashboard';
+    document.getElementById('settings-ip').textContent = '192.168.1.234';
+    document.getElementById('settings-tailscale').textContent = '100.76.61.67';
+  }
+}
+</script>
+
+<!-- SENSORS SUBMENU -->
+<style>
+  #sensors-overlay { font-family: 'Rajdhani', sans-serif; color: #e0e8ff; }
+  .sensors-header { display:flex; align-items:center; justify-content:space-between; padding:16px 24px; flex-shrink:0; background:rgba(10,20,60,0.7); border-bottom:1px solid rgba(30,90,255,0.25); }
+  .sensors-title { font-size:20px; font-weight:700; letter-spacing:2px; color:#e0e8ff; }
+  .sensors-btn { background:rgba(30,90,255,0.15); border:1px solid rgba(30,90,255,0.35); color:#e0e8ff; border-radius:8px; padding:8px 18px; font-family:'Rajdhani',sans-serif; font-size:14px; font-weight:700; letter-spacing:1px; cursor:pointer; transition:background 0.2s; }
+  .sensors-btn:hover { background:rgba(30,90,255,0.3); }
+  .sensors-btn-close { background:rgba(220,40,40,0.12); border-color:rgba(220,40,40,0.35); color:#fca5a5; }
+  .sensors-btn-close:hover { background:rgba(220,40,40,0.28); }
+  .sensors-btn-active { background:rgba(30,90,255,0.4); border-color:rgba(30,90,255,0.8); }
+  .sensors-screen { display:none; flex-direction:column; height:100%; }
+  .sensors-screen.active { display:flex; }
+  .sensors-empty { padding:60px 40px; text-align:center; color:#8ea4d4; font-size:16px; font-weight:600; letter-spacing:1px; line-height:2; }
+  .sensors-empty-icon { font-size:48px; display:block; margin-bottom:16px; opacity:0.4; }
+  .sensors-card { display:flex; align-items:center; gap:16px; background:rgba(30,90,255,0.1); border:1px solid rgba(30,90,255,0.25); border-radius:10px; padding:16px 20px; cursor:pointer; transition:background 0.2s; }
+  .sensors-card:hover { background:rgba(30,90,255,0.2); }
+  .sensors-card-icon { font-size:28px; flex-shrink:0; }
+  .sensors-card-info { flex:1; display:flex; flex-direction:column; gap:3px; }
+  .sensors-card-name { font-size:16px; font-weight:700; color:#e0e8ff; }
+  .sensors-card-source { font-size:12px; color:#8ea4d4; font-weight:600; letter-spacing:1px; text-transform:uppercase; }
+  .sensors-card-val { font-family:'Orbitron',monospace; font-size:22px; font-weight:700; color:#1e5aff; text-shadow:0 0 10px rgba(30,90,255,0.5); }
+  .sensors-card-null { font-size:16px; color:#475569; font-style:italic; }
+  .sensors-range-bar { display:flex; gap:8px; padding:14px 20px; flex-shrink:0; border-bottom:1px solid rgba(30,90,255,0.15); }
+  .sensors-range-btn { background:rgba(30,90,255,0.1); border:1px solid rgba(30,90,255,0.25); color:#8ea4d4; border-radius:6px; padding:6px 14px; font-family:'Rajdhani',sans-serif; font-size:13px; font-weight:700; cursor:pointer; transition:all 0.2s; }
+  .sensors-range-btn:hover { background:rgba(30,90,255,0.2); color:#e0e8ff; }
+  .sensors-range-btn.active { background:rgba(30,90,255,0.35); border-color:rgba(30,90,255,0.7); color:#e0e8ff; }
+  .sensors-graph-area { flex:1; padding:20px; display:flex; flex-direction:column; gap:12px; min-height:0; }
+  .sensors-graph-canvas-wrap { flex:1; background:rgba(30,90,255,0.05); border:1px solid rgba(30,90,255,0.15); border-radius:10px; padding:12px; min-height:0; }
+  .sensors-no-data { display:flex; align-items:center; justify-content:center; height:100%; color:#475569; font-size:15px; font-weight:600; }
+  .sensors-graph-label { font-size:13px; color:#8ea4d4; font-weight:600; letter-spacing:1px; }
+</style>
+
+<div id="sensors-overlay" style="display:none; position:fixed; inset:0; background:rgba(4,10,35,0.97); z-index:1000; flex-direction:column;">
+  <div id="sensors-screen-list" class="sensors-screen">
+    <div class="sensors-header">
+      <span class="sensors-title">🌡 SENSORS</span>
+      <button class="sensors-btn sensors-btn-close" onclick="sensorsClose()">✕ CLOSE</button>
+    </div>
+    <div style="flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:12px;" id="sensors-card-list"></div>
+  </div>
+  <div id="sensors-screen-graph" class="sensors-screen">
+    <div class="sensors-header">
+      <span id="sensors-graph-title" class="sensors-title"></span>
+      <div style="display:flex; gap:10px;">
+        <button class="sensors-btn" onclick="sensorsBackToList()">◀ BACK</button>
+        <button class="sensors-btn sensors-btn-close" onclick="sensorsClose()">✕ CLOSE</button>
+      </div>
+    </div>
+    <div class="sensors-range-bar">
+      <button class="sensors-range-btn active" onclick="sensorsSetRange('24h',this)">24H</button>
+      <button class="sensors-range-btn" onclick="sensorsSetRange('7d',this)">7D</button>
+      <button class="sensors-range-btn" onclick="sensorsSetRange('30d',this)">30D</button>
+      <button class="sensors-range-btn" onclick="sensorsSetRange('6m',this)">6M</button>
+      <button class="sensors-range-btn" onclick="sensorsSetRange('1y',this)">1Y</button>
+    </div>
+    <div class="sensors-graph-area">
+      <div class="sensors-graph-label" id="sensors-graph-sublabel"></div>
+      <div class="sensors-graph-canvas-wrap">
+        <canvas id="sensors-graph-canvas"></canvas>
+        <div class="sensors-no-data" id="sensors-no-data" style="display:none;">No data for this range</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const _sensors = { sensors: [], currentSensor: null, currentRange: '24h', chart: null };
+const _sensorIcons = { rak_temp:'🌡', rak_humidity:'💧', rak_pressure:'🔵', rak_airquality:'💨' };
+function _sensorsScreen(id) {
+  document.querySelectorAll('.sensors-screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('sensors-screen-' + id);
+  if (el) el.classList.add('active');
+}
+async function sensorsOpen() {
+  const overlay = document.getElementById('sensors-overlay');
+  overlay.style.display = 'flex';
+  overlay.style.flexDirection = 'column';
+  _sensorsScreen('list');
+  try {
+    const r = await fetch('http://localhost:8000/api/sensors');
+    const data = await r.json();
+    _sensors.sensors = data.sensors || [];
+  } catch(e) { _sensors.sensors = []; }
+  _sensorsRenderList();
+}
+function sensorsClose() {
+  if (_sensors.chart) { _sensors.chart.destroy(); _sensors.chart = null; }
+  document.getElementById('sensors-overlay').style.display = 'none';
+}
+function sensorsBackToList() {
+  if (_sensors.chart) { _sensors.chart.destroy(); _sensors.chart = null; }
+  _sensorsScreen('list');
+  _sensorsRenderList();
+}
+function _sensorsRenderList() {
+  const el = document.getElementById('sensors-card-list');
+  if (!el) return;
+  if (_sensors.sensors.length === 0) {
+    el.innerHTML = '<div class="sensors-empty"><span class="sensors-empty-icon">🌡</span>No sensors registered.<br>Sensors will appear here automatically<br>when the RAK station is connected.</div>';
+    return;
+  }
+  el.innerHTML = _sensors.sensors.map((s, i) => {
+    const icon = _sensorIcons[s.id] || '📊';
+    const hasVal = s.last_value !== null && s.last_value !== undefined;
+    const ago = s.last_seen ? _sensorsAgo(s.last_seen) : 'No data';
+    return '<div class="sensors-card" onclick="sensorsOpenGraph(' + i + ')">' +
+      '<span class="sensors-card-icon">' + icon + '</span>' +
+      '<div class="sensors-card-info">' +
+        '<div class="sensors-card-name">' + s.name + '</div>' +
+        '<div class="sensors-card-source">' + s.source + ' · ' + ago + '</div>' +
+      '</div>' +
+      (hasVal
+        ? '<span class="sensors-card-val">' + s.last_value.toFixed(1) + ' ' + s.unit + '</span>'
+        : '<span class="sensors-card-null">No data</span>') +
+      '</div>';
+  }).join('');
+}
+function _sensorsAgo(ts) {
+  const diff = Math.floor(Date.now()/1000 - ts);
+  if (diff < 60) return diff + 's ago';
+  if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+  return Math.floor(diff/86400) + 'd ago';
+}
+</script>
+
+<script>
+async function sensorsOpenGraph(idx) {
+  _sensors.currentSensor = _sensors.sensors[idx];
+  _sensors.currentRange = '24h';
+  document.querySelectorAll('.sensors-range-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.sensors-range-btn').classList.add('active');
+  const s = _sensors.currentSensor;
+  const icon = _sensorIcons[s.id] || '📊';
+  document.getElementById('sensors-graph-title').textContent = icon + ' ' + s.name.toUpperCase();
+  _sensorsScreen('graph');
+  await _sensorsLoadGraph();
+}
+function sensorsSetRange(range, btn) {
+  _sensors.currentRange = range;
+  document.querySelectorAll('.sensors-range-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  _sensorsLoadGraph();
+}
+async function _sensorsLoadGraph() {
+  const s = _sensors.currentSensor;
+  if (!s) return;
+  const noData = document.getElementById('sensors-no-data');
+  const canvas = document.getElementById('sensors-graph-canvas');
+  try {
+    const r = await fetch('http://localhost:8000/api/sensors/' + s.id + '/history?range=' + _sensors.currentRange);
+    const data = await r.json();
+    const points = data.points || [];
+    if (points.length === 0) {
+      noData.style.display = 'flex';
+      canvas.style.display = 'none';
+      if (_sensors.chart) { _sensors.chart.destroy(); _sensors.chart = null; }
+      document.getElementById('sensors-graph-sublabel').textContent = '';
+      return;
+    }
+    noData.style.display = 'none';
+    canvas.style.display = 'block';
+    const labels = points.map(p => {
+      const d = new Date(p.t * 1000);
+      if (_sensors.currentRange === '24h') return d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+      return d.toLocaleDateString([], {month:'short',day:'numeric'});
+    });
+    const values = points.map(p => p.v);
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    document.getElementById('sensors-graph-sublabel').textContent =
+      s.name + ' · Min: ' + min.toFixed(1) + s.unit + '  Max: ' + max.toFixed(1) + s.unit + '  Latest: ' + values[values.length-1].toFixed(1) + s.unit;
+    if (_sensors.chart) { _sensors.chart.destroy(); _sensors.chart = null; }
+    const ctx = canvas.getContext('2d');
+    _sensors.chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: values,
+          borderColor: '#1e5aff',
+          backgroundColor: 'rgba(30,90,255,0.1)',
+          borderWidth: 2,
+          pointRadius: points.length > 100 ? 0 : 3,
+          pointBackgroundColor: '#1e5aff',
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color:'#8ea4d4', maxTicksLimit:8, font:{family:'Rajdhani',size:12} }, grid: { color:'rgba(30,90,255,0.1)' } },
+          y: { ticks: { color:'#8ea4d4', font:{family:'Orbitron',size:11}, callback: v => v.toFixed(1) + s.unit }, grid: { color:'rgba(30,90,255,0.1)' } }
+        }
+      }
+    });
+  } catch(e) {
+    noData.style.display = 'flex';
+    canvas.style.display = 'none';
+  }
+}
+</script>
+<script src="chart.min.js"></script>
+</body>
+</html>
+<!-- SCREENSAVER -->
+<style>
+  #screensaver { position:fixed; inset:0; z-index:9000; background:#000;
+    display:none; align-items:center; justify-content:center; }
+  #ss-photo { position:absolute; inset:0; background-size:cover;
+    background-position:center; background-repeat:no-repeat;
+    opacity:0; transition:opacity 1.2s ease; }
+  #ss-photo.ss-on { opacity:1; }
+  #ss-clock-wrap { position:relative; z-index:1; text-align:center;
+    text-shadow:0 2px 30px rgba(0,0,0,0.9); pointer-events:none; }
+  #ss-time { font-family:'Orbitron',monospace; font-size:clamp(60px,10vw,130px);
+    font-weight:700; color:rgba(255,255,255,0.92); letter-spacing:8px; }
+  #ss-date { font-family:'Rajdhani',sans-serif; font-size:clamp(20px,3vw,34px);
+    color:rgba(255,255,255,0.55); letter-spacing:4px; margin-top:14px; font-weight:600; }
+</style>
+
+<div id="screensaver">
+  <div id="ss-photo"></div>
+  <div id="ss-clock-wrap">
+    <div id="ss-time">00:00:00</div>
+    <div id="ss-date"></div>
+  </div>
+</div>
+
+<script>
+const _ss={timer:null,photoTimer:null,photos:[],photoIdx:0,active:false};
+function _ssTimeout(){const el=document.getElementById('settings-ss-timeout');const v=el?parseInt(el.value):60;return v===0?null:v*1000;}
+function _ssDuration(){const el=document.getElementById('settings-ss-duration');return(el?parseInt(el.value):5)*1000;}
+function _ssClockOn(){const el=document.getElementById('settings-ss-clock');return el?el.checked:true;}
+function _ssResetTimer(){clearTimeout(_ss.timer);if(_ss.active)return;const t=_ssTimeout();if(t)_ss.timer=setTimeout(_ssActivate,t);}
+async function _ssActivate(){
+  _ss.active=true;
+  const ov=document.getElementById('screensaver');
+  ov.style.display='flex';
+  document.getElementById('ss-clock-wrap').style.display=_ssClockOn()?'block':'none';
+  try{const r=await fetch('http://localhost:8000/api/photos');const d=await r.json();_ss.photos=d.photos||[];}catch(e){_ss.photos=[];}
+  _ss.photoIdx=0;_ssNextPhoto();_ssTick();
+}
+function _ssNextPhoto(){
+  clearTimeout(_ss.photoTimer);
+  const el=document.getElementById('ss-photo');
+  if(_ss.photos.length===0){el.classList.remove('ss-on');return;}
+  el.classList.remove('ss-on');
+  setTimeout(()=>{
+    el.style.backgroundImage='url('+_ss.photos[_ss.photoIdx]+')';
+    el.classList.add('ss-on');
+    _ss.photoIdx=(_ss.photoIdx+1)%_ss.photos.length;
+    _ss.photoTimer=setTimeout(_ssNextPhoto,_ssDuration());
+  },1200);
+}
+function _ssDismiss(){
+  if(!_ss.active)return;
+  _ss.active=false;
+  clearTimeout(_ss.photoTimer);clearTimeout(_ss.timer);
+  document.getElementById('screensaver').style.display='none';
+  document.getElementById('ss-photo').classList.remove('ss-on');
+  _ssResetTimer();
+}
+function _ssTick(){
+  if(!_ss.active)return;
+  const now=new Date();
+  const h=String(now.getHours()).padStart(2,'0');
+  const m=String(now.getMinutes()).padStart(2,'0');
+  const s=String(now.getSeconds()).padStart(2,'0');
+  const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  document.getElementById('ss-time').textContent=h+':'+m+':'+s;
+  document.getElementById('ss-date').textContent=days[now.getDay()]+'  ·  '+(now.getMonth()+1)+'/'+now.getDate()+'/'+now.getFullYear();
+  setTimeout(_ssTick,1000);
+}
+['touchstart','mousemove','keydown','click'].forEach(ev=>{
+  document.addEventListener(ev,()=>{if(_ss.active)_ssDismiss();else _ssResetTimer();},{passive:true});
+});
+_ssResetTimer();
+</script>
+
+<!-- AUTOMATION SUBMENU -->
+<style>
+  #auto-overlay{font-family:'Rajdhani',sans-serif;color:#e0e8ff;}
+  .auto-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;flex-shrink:0;background:rgba(10,20,60,0.7);border-bottom:1px solid rgba(30,90,255,0.25);}
+  .auto-title{font-size:20px;font-weight:700;letter-spacing:2px;color:#e0e8ff;}
+  .auto-btn{background:rgba(30,90,255,0.15);border:1px solid rgba(30,90,255,0.35);color:#e0e8ff;border-radius:8px;padding:8px 18px;font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:background 0.2s;}
+  .auto-btn:hover{background:rgba(30,90,255,0.3);}
+  .auto-btn-close{background:rgba(220,40,40,0.12);border-color:rgba(220,40,40,0.35);color:#fca5a5;}
+  .auto-btn-close:hover{background:rgba(220,40,40,0.28);}
+  .auto-btn-green{background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.4);color:#86efac;}
+  .auto-btn-green:hover{background:rgba(34,197,94,0.28);}
+  .auto-btn-danger{background:rgba(220,40,40,0.15);border-color:rgba(220,40,40,0.4);color:#fca5a5;}
+  .auto-screen{display:none;flex-direction:column;height:100%;}
+  .auto-screen.active{display:flex;}
+  .auto-body{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px;}
+  .auto-empty{padding:60px 40px;text-align:center;color:#8ea4d4;font-size:16px;font-weight:600;letter-spacing:1px;line-height:2;}
+  .auto-empty-icon{font-size:48px;display:block;margin-bottom:16px;opacity:0.4;}
+  .auto-category{display:flex;flex-direction:column;}
+  .auto-cat-header{display:flex;align-items:center;gap:10px;padding:10px 16px;background:rgba(30,90,255,0.1);border:1px solid rgba(30,90,255,0.2);border-radius:10px 10px 0 0;cursor:pointer;user-select:none;font-size:13px;font-weight:700;letter-spacing:2px;color:#8ea4d4;text-transform:uppercase;}
+  .auto-cat-arrow{margin-left:auto;font-size:12px;transition:transform 0.2s;}
+  .auto-cat-header.collapsed .auto-cat-arrow{transform:rotate(-90deg);}
+  .auto-cat-rules{display:flex;flex-direction:column;border:1px solid rgba(30,90,255,0.2);border-top:none;border-radius:0 0 10px 10px;overflow:hidden;margin-bottom:8px;}
+  .auto-cat-header.collapsed + .auto-cat-rules{display:none;}
+  .auto-rule-row{display:flex;align-items:center;gap:14px;padding:14px 18px;cursor:pointer;border-bottom:1px solid rgba(30,90,255,0.1);transition:background 0.15s;}
+  .auto-rule-row:last-child{border-bottom:none;}
+  .auto-rule-row:hover{background:rgba(30,90,255,0.12);}
+  .auto-rule-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .auto-rule-dot.on{background:#22c55e;box-shadow:0 0 6px rgba(34,197,94,0.6);}
+  .auto-rule-dot.off{background:#475569;}
+  .auto-rule-name{font-size:16px;font-weight:700;flex:1;}
+  .auto-rule-badge{font-size:11px;font-weight:700;letter-spacing:1px;color:#8ea4d4;background:rgba(30,90,255,0.1);border:1px solid rgba(30,90,255,0.2);border-radius:4px;padding:2px 8px;flex-shrink:0;}
+  .auto-detail-section{background:rgba(30,90,255,0.08);border:1px solid rgba(30,90,255,0.2);border-radius:12px;padding:18px 22px;display:flex;flex-direction:column;gap:10px;}
+  .auto-section-label{font-size:11px;font-weight:700;letter-spacing:2px;color:#8ea4d4;text-transform:uppercase;}
+  .auto-detail-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;}
+  .auto-detail-key{font-size:14px;color:#8ea4d4;font-weight:600;}
+  .auto-detail-val{font-size:14px;font-weight:700;}
+  .auto-step-bar{display:flex;align-items:center;padding:16px 24px 0;flex-shrink:0;}
+  .auto-step{display:flex;flex-direction:column;align-items:center;gap:4px;}
+  .auto-step-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border:2px solid rgba(30,90,255,0.3);color:#8ea4d4;transition:all 0.2s;}
+  .auto-step-num.active{border-color:#1e5aff;background:rgba(30,90,255,0.3);color:#e0e8ff;box-shadow:0 0 8px rgba(30,90,255,0.4);}
+  .auto-step-num.done{border-color:#22c55e;background:rgba(34,197,94,0.2);color:#22c55e;}
+  .auto-step-lbl{font-size:10px;font-weight:700;letter-spacing:1px;color:#8ea4d4;text-transform:uppercase;}
+  .auto-step-line{flex:1;height:2px;background:rgba(30,90,255,0.2);margin:0 6px 14px;}
+  .auto-trigger-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .auto-trigger-opt{background:rgba(30,90,255,0.1);border:2px solid rgba(30,90,255,0.25);border-radius:12px;padding:18px 14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;transition:all 0.2s;}
+  .auto-trigger-opt:hover{background:rgba(30,90,255,0.2);border-color:rgba(30,90,255,0.5);}
+  .auto-trigger-opt.selected{border-color:#1e5aff;background:rgba(30,90,255,0.25);box-shadow:0 0 12px rgba(30,90,255,0.3);}
+  .auto-trigger-icon{font-size:32px;}
+  .auto-trigger-name{font-size:14px;font-weight:700;letter-spacing:1px;}
+  .auto-config-box{background:rgba(30,90,255,0.08);border:1px solid rgba(30,90,255,0.2);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:14px;}
+  .auto-field-lbl{font-size:11px;font-weight:700;letter-spacing:1px;color:#8ea4d4;text-transform:uppercase;margin-bottom:2px;}
+  .auto-input{background:rgba(30,90,255,0.1);border:1px solid rgba(30,90,255,0.3);color:#e0e8ff;border-radius:8px;padding:10px 14px;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:600;width:100%;}
+  .auto-select{background:rgba(10,20,60,0.8);border:1px solid rgba(30,90,255,0.3);color:#e0e8ff;border-radius:8px;padding:10px 14px;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:600;width:100%;cursor:pointer;}
+  .auto-select option{background:#0a1428;}
+  .auto-day-btns{display:flex;gap:6px;flex-wrap:wrap;}
+  .auto-day-btn{background:rgba(30,90,255,0.1);border:1px solid rgba(30,90,255,0.25);border-radius:6px;padding:6px 12px;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;cursor:pointer;color:#8ea4d4;transition:all 0.15s;}
+  .auto-day-btn.on{background:rgba(30,90,255,0.35);border-color:rgba(30,90,255,0.7);color:#e0e8ff;}
+  .auto-action-row{display:flex;align-items:center;gap:10px;background:rgba(30,90,255,0.1);border:1px solid rgba(30,90,255,0.2);border-radius:10px;padding:12px 16px;}
+  .auto-remove-btn{background:none;border:1px solid rgba(220,40,40,0.3);border-radius:6px;color:#f87171;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;}
+  .auto-nav-row{display:flex;justify-content:space-between;align-items:center;padding:16px 24px;flex-shrink:0;border-top:1px solid rgba(30,90,255,0.15);}
+  .auto-log-item{display:flex;align-items:flex-start;gap:14px;padding:12px 0;border-bottom:1px solid rgba(30,90,255,0.1);}
+  .auto-log-item:last-child{border-bottom:none;}
+  .auto-log-info{flex:1;display:flex;flex-direction:column;gap:3px;}
+  .auto-log-name{font-size:15px;font-weight:700;}
+  .auto-log-detail{font-size:13px;color:#8ea4d4;}
+  .auto-log-time{font-size:12px;color:#475569;flex-shrink:0;}
+</style>
+
+<div id="auto-overlay" style="display:none;position:fixed;inset:0;background:rgba(4,10,35,0.97);z-index:1000;flex-direction:column;">
+
+  <div id="auto-screen-list" class="auto-screen">
+    <div class="auto-header">
+      <span class="auto-title">⚡ AUTOMATION</span>
+      <div style="display:flex;gap:10px;">
+        <button class="auto-btn" onclick="autoShowLog()">📋 LOG</button>
+        <button class="auto-btn auto-btn-green" onclick="autoStartCreate()">+ NEW</button>
+        <button class="auto-btn auto-btn-close" onclick="autoClose()">✕ CLOSE</button>
+      </div>
+    </div>
+    <div class="auto-body" id="auto-rule-list"></div>
+  </div>
+
+  <div id="auto-screen-detail" class="auto-screen">
+    <div class="auto-header">
+      <span id="auto-detail-title" class="auto-title"></span>
+      <div style="display:flex;gap:10px;">
+        <button class="auto-btn" onclick="autoBackToList()">◀ BACK</button>
+        <button class="auto-btn auto-btn-close" onclick="autoClose()">✕ CLOSE</button>
+      </div>
+    </div>
+    <div class="auto-body" id="auto-detail-body"></div>
+  </div>
+
+  <div id="auto-screen-log" class="auto-screen">
+    <div class="auto-header">
+      <span class="auto-title">📋 AUTOMATION LOG</span>
+      <div style="display:flex;gap:10px;">
+        <button class="auto-btn" onclick="autoBackToList()">◀ BACK</button>
+        <button class="auto-btn auto-btn-close" onclick="autoClose()">✕ CLOSE</button>
+      </div>
+    </div>
+    <div class="auto-body" id="auto-log-body"></div>
+  </div>
+
+  <div id="auto-screen-create" class="auto-screen">
+    <div class="auto-header">
+      <span id="auto-create-title" class="auto-title">⚡ NEW RULE</span>
+      <button class="auto-btn auto-btn-close" onclick="autoBackToList()">✕ CANCEL</button>
+    </div>
+    <div class="auto-step-bar">
+      <div class="auto-step">
+        <div class="auto-step-num active" id="auto-sn-1">1</div>
+        <div class="auto-step-lbl">TRIGGER</div>
+      </div>
+      <div class="auto-step-line"></div>
+      <div class="auto-step">
+        <div class="auto-step-num" id="auto-sn-2">2</div>
+        <div class="auto-step-lbl">ACTIONS</div>
+      </div>
+      <div class="auto-step-line"></div>
+      <div class="auto-step">
+        <div class="auto-step-num" id="auto-sn-3">3</div>
+        <div class="auto-step-lbl">SAVE</div>
+      </div>
+    </div>
+    <div class="auto-body" id="auto-create-body" style="padding-top:16px;"></div>
+    <div class="auto-nav-row">
+      <button class="auto-btn" id="auto-wiz-back" onclick="autoWizBack()" style="visibility:hidden;">◀ BACK</button>
+      <button class="auto-btn auto-btn-green" id="auto-wiz-next" onclick="autoWizNext()">NEXT ▶</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const _auto={rules:[],currentRule:null,step:1,triggerType:null,triggerConfig:{},actions:[],editId:null,days:new Set([0,1,2,3,4,5,6])};
+const _autoTrigLabels={schedule:'Schedule',solar:'Solar',sensor:'Sensor',manual:'Manual'};
+
+function _autoScreen(id){document.querySelectorAll('.auto-screen').forEach(s=>s.classList.remove('active'));const el=document.getElementById('auto-screen-'+id);if(el)el.classList.add('active');}
+function _autoFmtTime(ts){if(!ts)return'Never';const d=new Date(ts*1000),now=new Date();const diff=Math.floor((now-d)/86400000);const t=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});if(diff===0)return'Today '+t;if(diff===1)return'Yesterday '+t;return d.toLocaleDateString()+' '+t;}
+function _autoTrigSummary(r){const tc=r.trigger_config||{};if(r.trigger_type==='schedule')return'Daily at '+(tc.time||'--:--');if(r.trigger_type==='solar'){const off=tc.offset_minutes||0;return(tc.event||'sunset')+' '+(off>0?'+'+off+'min':off<0?off+'min':'');}if(r.trigger_type==='sensor')return'Sensor '+(tc.operator==='gt'?'above':'below')+' '+tc.value;if(r.trigger_type==='manual')return'Manual only';return r.trigger_type;}
+
+async function autoOpen(){const ov=document.getElementById('auto-overlay');ov.style.display='flex';ov.style.flexDirection='column';_autoScreen('list');await _autoLoad();}
+function autoClose(){document.getElementById('auto-overlay').style.display='none';}
+function autoBackToList(){_autoScreen('list');_autoRenderList();}
+
+async function _autoLoad(){
+  try{const r=await fetch('http://localhost:8000/api/automation/rules');const d=await r.json();_auto.rules=d.rules||[];}catch(e){_auto.rules=[];}
+  _autoRenderList();
+}
+function _autoRenderList(){
+  const el=document.getElementById('auto-rule-list');
+  if(_auto.rules.length===0){el.innerHTML='<div class="auto-empty"><span class="auto-empty-icon">⚡</span>No rules yet.<br>Tap <b>+ NEW</b> to create your first rule.</div>';return;}
+  const cats={};
+  _auto.rules.forEach(r=>{const c=r.category||'general';if(!cats[c])cats[c]=[];cats[c].push(r);});
+  el.innerHTML=Object.entries(cats).map(([cat,rules])=>`
+    <div class="auto-category">
+      <div class="auto-cat-header" onclick="this.classList.toggle('collapsed')">
+        <span>${cat.toUpperCase()}</span>
+        <span style="color:#8ea4d4;font-size:12px;">${rules.length} rule${rules.length===1?'':'s'}</span>
+        <span class="auto-cat-arrow">▼</span>
+      </div>
+      <div class="auto-cat-rules">
+        ${rules.map(r=>`<div class="auto-rule-row" onclick="autoShowDetail('${r.id}')">
+          <div class="auto-rule-dot ${r.enabled?'on':'off'}"></div>
+          <span class="auto-rule-name">${r.name}</span>
+          <span class="auto-rule-badge">${_autoTrigLabels[r.trigger_type]||r.trigger_type}</span>
+          <span style="color:#475569;">▶</span>
+        </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+function autoShowDetail(id){
+  _auto.currentRule=_auto.rules.find(r=>r.id===id);
+  if(!_auto.currentRule)return;
+  const r=_auto.currentRule;
+  document.getElementById('auto-detail-title').textContent=r.name;
+  const acts=(r.actions||[]).map(a=>{if(a.type==='light_control')return'💡 Light → '+(a.command?.value||a.command?.action||'?');if(a.type==='notification')return'🔔 '+a.message;return a.type;}).join('<br>') || 'No actions';
+  document.getElementById('auto-detail-body').innerHTML=`
+    <div class="auto-detail-section">
+      <div class="auto-section-label">TRIGGER</div>
+      <div class="auto-detail-row"><span class="auto-detail-key">Type</span><span class="auto-detail-val">${_autoTrigLabels[r.trigger_type]||r.trigger_type}</span></div>
+      <div class="auto-detail-row"><span class="auto-detail-key">Config</span><span class="auto-detail-val">${_autoTrigSummary(r)}</span></div>
+    </div>
+    <div class="auto-detail-section">
+      <div class="auto-section-label">ACTIONS</div>
+      <div style="font-size:15px;font-weight:600;line-height:2;">${acts}</div>
+    </div>
+    <div class="auto-detail-section">
+      <div class="auto-section-label">STATUS</div>
+      <div class="auto-detail-row"><span class="auto-detail-key">Last Triggered</span><span class="auto-detail-val">${_autoFmtTime(r.last_triggered)}</span></div>
+      <div class="auto-detail-row"><span class="auto-detail-key">Enabled</span><span class="auto-detail-val" style="color:${r.enabled?'#22c55e':'#f87171'}">${r.enabled?'YES':'PAUSED'}</span></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="auto-btn" onclick="autoManualTrigger('${r.id}')">▶ RUN NOW</button>
+      <button class="auto-btn" onclick="autoToggle('${r.id}')">${r.enabled?'⏸ PAUSE':'▶ RESUME'}</button>
+      <button class="auto-btn auto-btn-danger" onclick="autoDelete('${r.id}')">🗑 DELETE</button>
+    </div>`;
+  _autoScreen('detail');
+}
+async function autoManualTrigger(id){
+  try{await fetch('http://localhost:8000/api/automation/rules/'+id+'/trigger',{method:'POST'});alert('Rule triggered.');}catch(e){alert('Failed.');}
+}
+async function autoToggle(id){
+  try{const r=await fetch('http://localhost:8000/api/automation/rules/'+id+'/toggle',{method:'POST'});await _autoLoad();autoBackToList();}catch(e){}
+}
+async function autoDelete(id){
+  if(!confirm('Delete this rule?'))return;
+  try{await fetch('http://localhost:8000/api/automation/rules/'+id,{method:'DELETE'});await _autoLoad();autoBackToList();}catch(e){}
+}
+async function autoShowLog(){
+  _autoScreen('log');
+  try{
+    const r=await fetch('http://localhost:8000/api/automation/log');const d=await r.json();
+    const el=document.getElementById('auto-log-body');
+    if(!d.log||d.log.length===0){el.innerHTML='<div class="auto-empty"><span class="auto-empty-icon">📋</span>No log entries yet.</div>';return;}
+    el.innerHTML=d.log.map(e=>`<div class="auto-log-item">
+      <span style="font-size:18px;">${e.result==='ok'?'✅':'❌'}</span>
+      <div class="auto-log-info"><div class="auto-log-name">${e.rule_name}</div><div class="auto-log-detail">${e.detail||''}</div></div>
+      <span class="auto-log-time">${_autoFmtTime(e.timestamp)}</span>
+    </div>`).join('');
+  }catch(e){document.getElementById('auto-log-body').innerHTML='<div class="auto-empty">Failed to load log.</div>';}
+}
+function autoStartCreate(){
+  _auto.step=1;_auto.triggerType=null;_auto.triggerConfig={};_auto.actions=[];_auto.editId=null;_auto.days=new Set([0,1,2,3,4,5,6]);
+  document.getElementById('auto-create-title').textContent='⚡ NEW RULE';
+  _autoScreen('create');_autoWizRender();
+}
+function _autoStepUpdate(){
+  [1,2,3].forEach(n=>{const el=document.getElementById('auto-sn-'+n);el.className='auto-step-num'+(n<_auto.step?' done':n===_auto.step?' active':'');});
+  document.getElementById('auto-wiz-back').style.visibility=_auto.step>1?'visible':'hidden';
+  document.getElementById('auto-wiz-next').textContent=_auto.step===3?'💾 SAVE':'NEXT ▶';
+}
+function _autoWizRender(){
+  _autoStepUpdate();
+  const el=document.getElementById('auto-create-body');
+  if(_auto.step===1){
+    el.innerHTML=`<div class="auto-trigger-grid">
+      ${[['🕐','SCHEDULE','schedule'],['🌅','SOLAR','solar'],['🌡','SENSOR','sensor'],['🔘','MANUAL','manual']].map(([icon,label,type])=>`
+        <div class="auto-trigger-opt ${_auto.triggerType===type?'selected':''}" onclick="autoSelectTrigger('${type}')">
+          <span class="auto-trigger-icon">${icon}</span>
+          <span class="auto-trigger-name">${label}</span>
+        </div>`).join('')}
+    </div>
+    <div id="auto-trig-config" style="margin-top:16px;"></div>`;
+    if(_auto.triggerType)_autoRenderTrigConfig();
+  } else if(_auto.step===2){
+    el.innerHTML=`<div style="display:flex;flex-direction:column;gap:12px;" id="auto-actions-list"></div>
+      <button class="auto-btn auto-btn-green" style="margin-top:8px;" onclick="autoAddAction()">+ ADD ACTION</button>`;
+    _autoRenderActions();
+  } else if(_auto.step===3){
+    el.innerHTML=`<div class="auto-config-box" style="gap:16px;">
+      <div><div class="auto-field-lbl">RULE NAME</div>
+        <input class="auto-input" id="auto-name-input" placeholder="e.g. Porch Lights at Sunset" value="${_auto.editName||''}">
+      </div>
+      <div><div class="auto-field-lbl">CATEGORY</div>
+        <input class="auto-input" id="auto-cat-input" placeholder="e.g. Lighting, Alerts, Security" value="${_auto.editCat||''}">
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <span class="auto-field-lbl" style="margin:0;">ENABLE NOW</span>
+        <label class="settings-toggle"><input type="checkbox" id="auto-enabled-toggle" checked><span class="settings-toggle-slider"></span></label>
+      </div>
+    </div>`;
+  }
+}
+function autoSelectTrigger(type){
+  _auto.triggerType=type;_auto.triggerConfig={};
+  document.querySelectorAll('.auto-trigger-opt').forEach(el=>el.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+  _autoRenderTrigConfig();
+}
+function _autoRenderTrigConfig(){
+  const el=document.getElementById('auto-trig-config');if(!el)return;
+  const tc=_auto.triggerConfig;
+  if(_auto.triggerType==='schedule'){
+    el.innerHTML=`<div class="auto-config-box">
+      <div><div class="auto-field-lbl">TIME</div><input type="time" class="auto-input" id="tc-time" value="${tc.time||'18:00'}" onchange="_auto.triggerConfig.time=this.value"></div>
+      <div><div class="auto-field-lbl">DAYS</div><div class="auto-day-btns">
+        ${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d,i)=>`<div class="auto-day-btn ${_auto.days.has(i)?'on':''}" onclick="autoToggleDay(${i},this)">${d}</div>`).join('')}
+      </div></div>
+    </div>`;
+  } else if(_auto.triggerType==='solar'){
+    el.innerHTML=`<div class="auto-config-box">
+      <div><div class="auto-field-lbl">SOLAR EVENT</div>
+        <select class="auto-select" id="tc-solar" onchange="_auto.triggerConfig.event=this.value">
+          ${['dawn','sunrise','solar_noon','sunset','dusk'].map(e=>`<option value="${e}" ${tc.event===e?'selected':''}>${e.replace('_',' ').toUpperCase()}</option>`).join('')}
+        </select>
+      </div>
+      <div><div class="auto-field-lbl">OFFSET (minutes, +/-)</div>
+        <input type="number" class="auto-input" id="tc-offset" value="${tc.offset_minutes||0}" onchange="_auto.triggerConfig.offset_minutes=parseInt(this.value)">
+      </div>
+    </div>`;
+    if(!tc.event)_auto.triggerConfig.event='sunset';
+  } else if(_auto.triggerType==='sensor'){
+    el.innerHTML=`<div class="auto-config-box">
+      <div><div class="auto-field-lbl">CONDITION</div>
+        <select class="auto-select" onchange="_auto.triggerConfig.operator=this.value">
+          <option value="gt" ${tc.operator==='gt'?'selected':''}>ABOVE</option>
+          <option value="lt" ${tc.operator==='lt'?'selected':''}>BELOW</option>
+        </select>
+      </div>
+      <div><div class="auto-field-lbl">VALUE</div>
+        <input type="number" class="auto-input" value="${tc.value||''}" onchange="_auto.triggerConfig.value=parseFloat(this.value)">
+      </div>
+    </div>`;
+  } else if(_auto.triggerType==='manual'){
+    el.innerHTML=`<div class="auto-config-box" style="color:#8ea4d4;font-size:15px;font-weight:600;">This rule runs only when triggered manually from the dashboard.</div>`;
+  }
+}
+function autoToggleDay(i,el){if(_auto.days.has(i)){_auto.days.delete(i);el.classList.remove('on');}else{_auto.days.add(i);el.classList.add('on');}  _auto.triggerConfig.days=[..._auto.days];}
+function _autoRenderActions(){
+  const el=document.getElementById('auto-actions-list');if(!el)return;
+  if(_auto.actions.length===0){el.innerHTML='<div style="color:#8ea4d4;font-size:14px;font-weight:600;padding:8px 0;">No actions yet. Add at least one.</div>';return;}
+  el.innerHTML=_auto.actions.map((a,i)=>`<div class="auto-action-row">
+    <select class="auto-select" style="flex:1;" onchange="autoActionType(${i},this.value)">
+      <option value="light_control" ${a.type==='light_control'?'selected':''}>💡 Light Control</option>
+      <option value="notification" ${a.type==='notification'?'selected':''}>🔔 Notification</option>
+    </select>
+    ${a.type==='notification'?`<input class="auto-input" style="flex:2;" placeholder="Message" value="${a.message||''}" onchange="_auto.actions[${i}].message=this.value">`:''}
+    ${a.type==='light_control'?`<select class="auto-select" style="flex:1;" onchange="autoActionCmd(${i},this.value)">
+      <option value="on">ON</option><option value="off">OFF</option>
+    </select>`:''}
+    <button class="auto-remove-btn" onclick="autoRemoveAction(${i})">🗑</button>
+  </div>`).join('');
+}
+function autoAddAction(){_auto.actions.push({type:'light_control',command:{action:'state',value:'on'}});_autoRenderActions();}
+function autoActionType(i,type){_auto.actions[i]={type,command:{action:'state',value:'on'}};_autoRenderActions();}
+function autoActionCmd(i,val){_auto.actions[i].command={action:'state',value:val};}
+function autoRemoveAction(i){_auto.actions.splice(i,1);_autoRenderActions();}
+function autoWizBack(){if(_auto.step>1){_auto.step--;_autoWizRender();}}
+async function autoWizNext(){
+  if(_auto.step===1){if(!_auto.triggerType){alert('Select a trigger type.');return;}_auto.step=2;_autoWizRender();}
+  else if(_auto.step===2){if(_auto.actions.length===0){alert('Add at least one action.');return;}_auto.step=3;_autoWizRender();}
+  else if(_auto.step===3){
+    const name=document.getElementById('auto-name-input').value.trim();
+    const cat=document.getElementById('auto-cat-input').value.trim()||'general';
+    const enabled=document.getElementById('auto-enabled-toggle').checked?1:0;
+    if(!name){alert('Enter a rule name.');return;}
+    const tc={..._auto.triggerConfig};
+    if(_auto.triggerType==='schedule')tc.days=[..._auto.days];
+    const rule={name,category:cat,enabled,trigger_type:_auto.triggerType,trigger_config:tc,conditions:[],actions:_auto.actions};
+    try{
+      await fetch('http://localhost:8000/api/automation/rules',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(rule)});
+      await _autoLoad();autoBackToList();
+    }catch(e){alert('Save failed.');}
+  }
+}
 </script>
 </body>
 </html>
