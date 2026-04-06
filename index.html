@@ -193,6 +193,17 @@ fetchEvents();
 fetchStats();
 setInterval(fetchEvents, 30000);
 setInterval(fetchStats, 5000);
+setInterval(fetchSolar, 3600000);
+
+async function fetchSolar() {
+  try {
+    const r = await fetch('http://localhost:8000/api/solar');
+    const d = await r.json();
+    const el = document.getElementById('moon-phase');
+    if (el) el.textContent = d.moon_icon + ' ' + d.moon_phase_name;
+  } catch(e) {}
+}
+fetchSolar();
 
 const canvas = document.getElementById('clock');
 const ctx = canvas.getContext('2d');
