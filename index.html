@@ -314,7 +314,7 @@ drawClock();
      CAMERA SUBMENU
      ============================================================ -->
 <style>
-  #cam-overlay { font-family: 'Rajdhani', sans-serif; color: #e0e8ff; }
+  #cam-overlay { font-family: 'Rajdhani', sans-serif; color: var(--text); }
   .cam-header { display:flex; align-items:center; justify-content:space-between; padding:16px 24px; flex-shrink:0; background:rgba(10,20,60,0.7); border-bottom:1px solid rgba(var(--accent-rgb),0.25); }
   .cam-title { font-size:20px; font-weight:700; letter-spacing:2px; color:var(--text); }
   .cam-btn { background:rgba(var(--accent-rgb),0.15); border:1px solid rgba(var(--accent-rgb),0.35); color:var(--text); border-radius:8px; padding:8px 18px; font-family:'Rajdhani',sans-serif; font-size:14px; font-weight:700; letter-spacing:1px; cursor:pointer; transition:background 0.2s; }
@@ -646,7 +646,7 @@ function camShowSettings() { alert('Camera settings — coming in Settings subme
 
 <!-- LIGHTING SUBMENU -->
 <style>
-  #light-overlay { font-family: 'Rajdhani', sans-serif; color: #e0e8ff; }
+  #light-overlay { font-family: 'Rajdhani', sans-serif; color: var(--text); }
   .light-header { display:flex; align-items:center; justify-content:space-between; padding:16px 24px; flex-shrink:0; background:rgba(10,20,60,0.7); border-bottom:1px solid rgba(var(--accent-rgb),0.25); }
   .light-title { font-size:20px; font-weight:700; letter-spacing:2px; color:var(--text); }
   .light-btn { background:rgba(var(--accent-rgb),0.15); border:1px solid rgba(var(--accent-rgb),0.35); color:var(--text); border-radius:8px; padding:8px 18px; font-family:'Rajdhani',sans-serif; font-size:14px; font-weight:700; letter-spacing:1px; cursor:pointer; transition:background 0.2s; }
@@ -676,7 +676,7 @@ function camShowSettings() { alert('Camera settings — coming in Settings subme
   .light-toggle { position:relative; width:56px; height:28px; cursor:pointer; }
   .light-toggle input { opacity:0; width:0; height:0; }
   .light-toggle-slider { position:absolute; inset:0; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); border-radius:28px; transition:0.3s; }
-  .light-toggle-slider:before { content:''; position:absolute; height:20px; width:20px; left:3px; bottom:3px; background:#8ea4d4; border-radius:50%; transition:0.3s; }
+  .light-toggle-slider:before { content:''; position:absolute; height:20px; width:20px; left:3px; bottom:3px; background:var(--text-sub); border-radius:50%; transition:0.3s; }
   .light-toggle input:checked + .light-toggle-slider { background:rgba(34,197,94,0.3); border-color:rgba(34,197,94,0.5); }
   .light-toggle input:checked + .light-toggle-slider:before { transform:translateX(28px); background:#22c55e; box-shadow:0 0 8px rgba(34,197,94,0.7); }
   .light-slider-row { display:flex; flex-direction:column; gap:10px; }
@@ -848,7 +848,7 @@ async function lightSetColor(hex) {
 
 <!-- OPERATIONS SUBMENU -->
 <style>
-  #ops-overlay { font-family: 'Rajdhani', sans-serif; color: #e0e8ff; }
+  #ops-overlay { font-family: 'Rajdhani', sans-serif; color: var(--text); }
   .ops-header { display:flex; align-items:center; justify-content:space-between; padding:16px 24px; flex-shrink:0; background:rgba(10,20,60,0.7); border-bottom:1px solid rgba(var(--accent-rgb),0.25); }
   .ops-title { font-size:20px; font-weight:700; letter-spacing:2px; color:var(--text); }
   .ops-btn { background:rgba(var(--accent-rgb),0.15); border:1px solid rgba(var(--accent-rgb),0.35); color:var(--text); border-radius:8px; padding:8px 18px; font-family:'Rajdhani',sans-serif; font-size:14px; font-weight:700; letter-spacing:1px; cursor:pointer; transition:background 0.2s; }
@@ -1016,7 +1016,7 @@ async function opsControl(sysId, controlId, type, value) {
 
 <!-- SETTINGS SUBMENU -->
 <style>
-  #settings-overlay { font-family: 'Rajdhani', sans-serif; color: #e0e8ff; }
+  #settings-overlay { font-family: 'Rajdhani', sans-serif; color: var(--text); }
   .settings-header { display:flex; align-items:center; justify-content:space-between; padding:16px 24px; flex-shrink:0; background:rgba(10,20,60,0.7); border-bottom:1px solid rgba(var(--accent-rgb),0.25); }
   .settings-title { font-size:20px; font-weight:700; letter-spacing:2px; color:var(--text); }
   .settings-btn { background:rgba(var(--accent-rgb),0.15); border:1px solid rgba(var(--accent-rgb),0.35); color:var(--text); border-radius:8px; padding:8px 18px; font-family:'Rajdhani',sans-serif; font-size:14px; font-weight:700; letter-spacing:1px; cursor:pointer; transition:background 0.2s; }
@@ -1037,7 +1037,7 @@ async function opsControl(sysId, controlId, type, value) {
   .settings-toggle { position:relative; width:56px; height:28px; cursor:pointer; flex-shrink:0; }
   .settings-toggle input { opacity:0; width:0; height:0; }
   .settings-toggle-slider { position:absolute; inset:0; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); border-radius:28px; transition:0.3s; }
-  .settings-toggle-slider:before { content:''; position:absolute; height:20px; width:20px; left:3px; bottom:3px; background:#8ea4d4; border-radius:50%; transition:0.3s; }
+  .settings-toggle-slider:before { content:''; position:absolute; height:20px; width:20px; left:3px; bottom:3px; background:var(--text-sub); border-radius:50%; transition:0.3s; }
   .settings-toggle input:checked + .settings-toggle-slider { background:rgba(34,197,94,0.3); border-color:rgba(34,197,94,0.5); }
   .settings-toggle input:checked + .settings-toggle-slider:before { transform:translateX(28px); background:#22c55e; box-shadow:0 0 8px rgba(34,197,94,0.7); }
   .settings-select { background:rgba(var(--accent-rgb),0.12); border:1px solid rgba(var(--accent-rgb),0.3); color:var(--text); border-radius:8px; padding:8px 14px; font-family:'Rajdhani',sans-serif; font-size:15px; font-weight:600; cursor:pointer; }
@@ -1104,7 +1104,7 @@ async function opsControl(sysId, controlId, type, value) {
 
 <!-- SENSORS SUBMENU -->
 <style>
-  #sensors-overlay { font-family: 'Rajdhani', sans-serif; color: #e0e8ff; }
+  #sensors-overlay { font-family: 'Rajdhani', sans-serif; color: var(--text); }
   .sensors-header { display:flex; align-items:center; justify-content:space-between; padding:16px 24px; flex-shrink:0; background:rgba(10,20,60,0.7); border-bottom:1px solid rgba(var(--accent-rgb),0.25); }
   .sensors-title { font-size:20px; font-weight:700; letter-spacing:2px; color:var(--text); }
   .sensors-btn { background:rgba(var(--accent-rgb),0.15); border:1px solid rgba(var(--accent-rgb),0.35); color:var(--text); border-radius:8px; padding:8px 18px; font-family:'Rajdhani',sans-serif; font-size:14px; font-weight:700; letter-spacing:1px; cursor:pointer; transition:background 0.2s; }
@@ -1295,8 +1295,8 @@ async function _sensorsLoadGraph() {
         responsive: true, maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
-          x: { ticks: { color:'#8ea4d4', maxTicksLimit:8, font:{family:'Rajdhani',size:12} }, grid: { color:'rgba(var(--accent-rgb),0.1)' } },
-          y: { ticks: { color:'#8ea4d4', font:{family:'Orbitron',size:11}, callback: v => v.toFixed(1) + s.unit }, grid: { color:'rgba(var(--accent-rgb),0.1)' } }
+          x: { ticks: { color:'var(--text-sub)', maxTicksLimit:8, font:{family:'Rajdhani',size:12} }, grid: { color:'rgba(var(--accent-rgb),0.1)' } },
+          y: { ticks: { color:'var(--text-sub)', font:{family:'Orbitron',size:11}, callback: v => v.toFixed(1) + s.unit }, grid: { color:'rgba(var(--accent-rgb),0.1)' } }
         }
       }
     });
