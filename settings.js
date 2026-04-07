@@ -81,6 +81,7 @@ function applyTheme(id){console.log("THEME:",id);document.title="Theme:"+id;
   r.setProperty('--text-sub',c.sub);
   r.setProperty('--notif-bg',c.notif);
   r.setProperty('--overlay-bg',c.overlay);
+  document.body.style.background='url(static/themes/'+id+'.jpg) center/cover no-repeat #051c35';
   _settings.activeTheme=id;
   localStorage.setItem('dashTheme',id);
   _settingsRenderThemes();
@@ -88,7 +89,7 @@ function applyTheme(id){console.log("THEME:",id);document.title="Theme:"+id;
 
 (function(){
   var saved=localStorage.getItem('dashTheme');
-  if(saved && _themeColors[saved]) applyTheme(saved);
+  if(saved && _themeColors[saved]){applyTheme(saved);}else{applyTheme('water');}
 })();
 
 var _holidayThemes=[
