@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--accent-rgb:30,90,255;--accent:#1e5aff;--bg:#051c35;--text:#e0e8ff;--text-sub:#8ea4d4;--notif-bg:rgba(0,47,178,0.45);--overlay-bg:rgba(4,10,35,0.97);}
@@ -10,6 +11,10 @@
 body { width: 100vw; height: 100vh; overflow: hidden; font-family: 'Rajdhani', sans-serif; display: flex; flex-direction: column; background: var(--bg); }
 @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
 #exit-zone { position: fixed; top: 0; right: 0; width: 60px; height: 60px; z-index: 9999; cursor: pointer; }
+
+@media (max-width: 900px) {
+  #clock-col { order: -1; }
+}
 </style>
 </head>
 <body>
@@ -46,9 +51,9 @@ body { width: 100vw; height: 100vh; overflow: hidden; font-family: 'Rajdhani', s
     <span style="color:var(--text-sub);">Loading events...</span>
   </div>
 
-  <div style="display:flex;flex:1;padding:20px 28px;gap:28px;min-height:0;">
+  <div id="main-layout" style="display:flex;flex:1;padding:20px 28px;gap:28px;min-height:0;">
 
-    <div style="display:flex;flex-direction:column;gap:14px;width:220px;flex-shrink:0;">
+    <div id="nav-col" style="display:flex;flex-direction:column;gap:14px;width:220px;flex-shrink:0;">
       <button onclick="camOpen()" style="background:rgba(var(--accent-rgb),0.18);border:1px solid rgba(var(--accent-rgb),0.4);border-radius:16px;padding:20px 12px;color:var(--text);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:7px;width:100%;">
         <span style="font-size:30px;">📷</span><span style="font-size:18px;font-weight:700;">Cameras</span>
       </button>
@@ -66,13 +71,13 @@ body { width: 100vw; height: 100vh; overflow: hidden; font-family: 'Rajdhani', s
       </button>
     </div>
 
-    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;">
+    <div id="clock-col" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;">
       <canvas id="clock" width="660" height="660"></canvas>
       <div id="timetext" style="font-family:'Orbitron',monospace;font-size:58px;font-weight:700;color:var(--text);margin-top:18px;letter-spacing:5px;text-shadow:0 0 18px rgba(var(--accent-rgb),0.6);"></div>
       <div id="datetext" style="font-family:'Rajdhani',sans-serif;font-size:24px;color:var(--text-sub);margin-top:6px;letter-spacing:3px;font-weight:600;"></div>
     </div>
 
-    <div style="display:flex;flex-direction:column;gap:14px;width:280px;flex-shrink:0;">
+    <div id="right-col" style="display:flex;flex-direction:column;gap:14px;width:280px;flex-shrink:0;">
       <div style="background:rgba(var(--accent-rgb),0.14);border:1px solid rgba(var(--accent-rgb),0.35);border-radius:16px;padding:18px;">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
           <div style="display:flex;flex-direction:column;align-items:center;padding:12px 8px;background:rgba(var(--accent-rgb),0.18);border-radius:10px;border:1px solid rgba(var(--accent-rgb),0.35);">
@@ -158,7 +163,7 @@ async function fetchEvents() {
     }
     bar.innerHTML = events.map(e => `
       <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
-        <div style="width:12px;height:12px;border-radius:50%;background:#1e5aff;animation:pulse 2s infinite;flex-shrink:0;"></div>
+        <div style="width:12px;height:12px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;flex-shrink:0;"></div>
         <span><b style="color:var(--text)">${camName(e.camera)}</b> — ${capitalize(e.label)} Detected — ${timeAgo(e.time)}</span>
       </div>
     `).join('');
@@ -1084,11 +1089,26 @@ async function opsControl(sysId, controlId, type, value) {
 <div id="settings-screen-themes_list" class="settings-screen"><div class="settings-header"><button class="settings-btn" onclick="settingsBack('themes')">◀ BACK</button><span class="settings-title">🎨 THEMES</span><button class="settings-btn settings-btn-close" onclick="settingsClose()">✕ CLOSE</button></div><div class="settings-body"><div class="settings-section"><div class="settings-theme-grid" id="settings-theme-grid"></div></div></div></div>
 <div id="settings-screen-holiday_themes" class="settings-screen"><div class="settings-header"><button class="settings-btn" onclick="settingsBack('themes')">◀ BACK</button><span class="settings-title">🎄 HOLIDAY THEMES</span><button class="settings-btn settings-btn-close" onclick="settingsClose()">✕ CLOSE</button></div><div class="settings-body"><div class="settings-section"><div class="settings-theme-grid" id="settings-holiday-grid"></div></div></div></div>
 <div id="settings-screen-about" class="settings-screen"><div class="settings-header"><button class="settings-btn" onclick="settingsBack('main')">◀ BACK</button><span class="settings-title">ℹ ABOUT</span><button class="settings-btn settings-btn-close" onclick="settingsClose()">✕ CLOSE</button></div><div class="settings-body"><div class="settings-section">
-<div class="settings-section-label">SYSTEM INFO</div>
-<div class="settings-row"><span class="settings-row-label">Hostname</span><span class="settings-val" style="font-family:Rajdhani,sans-serif;" id="settings-hostname">—</span></div>
-<div class="settings-row"><span class="settings-row-label">IP Address</span><span class="settings-val" style="font-family:Rajdhani,sans-serif;" id="settings-ip">—</span></div>
-<div class="settings-row"><span class="settings-row-label">Tailscale</span><span class="settings-val" style="font-family:Rajdhani,sans-serif;" id="settings-tailscale">—</span></div>
-<div class="settings-row"><span class="settings-row-label">Uptime</span><span class="settings-val" style="font-family:Rajdhani,sans-serif;" id="settings-uptime">—</span></div>
+<div class="settings-section-label">DASHBOARD</div>
+<div class="settings-row"><span class="settings-row-label">Version</span><span class="settings-val" style="font-family:Rajdhani,sans-serif;" id="si-version">—</span></div>
+<div class="settings-row"><span class="settings-row-label">Uptime</span><span class="settings-val" style="font-family:Rajdhani,sans-serif;" id="si-uptime">—</span></div>
+<div class="settings-row"><span class="settings-row-label">Astral</span><span class="settings-val" style="font-family:Rajdhani,sans-serif;" id="si-astral">—</span></div>
+<div class="settings-row"><span class="settings-row-label">Database</span><span class="settings-val" style="font-family:Rajdhani,sans-serif;" id="si-db">—</span></div>
+</div>
+<div class="settings-section">
+<div class="settings-section-label">HARDWARE</div>
+<div class="settings-row"><span class="settings-row-label">Hostname</span><span class="settings-val" style="font-family:Rajdhani,sans-serif;" id="si-hostname">—</span></div>
+<div class="settings-row"><span class="settings-row-label">Kernel</span><span class="settings-val" style="font-family:Rajdhani,sans-serif;" id="si-kernel">—</span></div>
+<div class="settings-row"><span class="settings-row-label">Python</span><span class="settings-val" style="font-family:Rajdhani,sans-serif;" id="si-python">—</span></div>
+<div class="settings-row"><span class="settings-row-label">Hailo</span><span class="settings-val" style="font-family:Rajdhani,sans-serif;" id="si-hailo">—</span></div>
+<div class="settings-row"><span class="settings-row-label">RAM</span><span class="settings-val" style="font-family:Rajdhani,sans-serif;" id="si-ram">—</span></div>
+<div class="settings-row"><span class="settings-row-label">Storage</span><span class="settings-val" style="font-family:Rajdhani,sans-serif;" id="si-storage">—</span></div>
+</div>
+<div class="settings-section">
+<div class="settings-section-label">NETWORK</div>
+<div class="settings-row"><span class="settings-row-label">WiFi (wlan0)</span><span class="settings-val" style="font-family:Rajdhani,sans-serif;" id="si-ip">—</span></div>
+<div class="settings-row"><span class="settings-row-label">Camera (eth0)</span><span class="settings-val" style="font-family:Rajdhani,sans-serif;" id="si-eth0">—</span></div>
+<div class="settings-row"><span class="settings-row-label">Tailscale</span><span class="settings-val" style="font-family:Rajdhani,sans-serif;" id="si-tailscale">—</span></div>
 </div></div></div>
 <div id="settings-screen-timedate" class="settings-screen"><div class="settings-header"><button class="settings-btn" onclick="settingsBack('main')">◀ BACK</button><span class="settings-title">🕐 TIME & DATE</span><button class="settings-btn settings-btn-close" onclick="settingsClose()">✕ CLOSE</button></div><div class="settings-body"><div class="settings-section"><div style="text-align:center;padding:40px 20px;color:var(--text-sub);font-size:15px;">Time & Date settings — coming soon</div></div></div></div>
 <div id="settings-screen-network" class="settings-screen"><div class="settings-header"><button class="settings-btn" onclick="settingsBack('main')">◀ BACK</button><span class="settings-title">📡 NETWORK</span><button class="settings-btn settings-btn-close" onclick="settingsClose()">✕ CLOSE</button></div><div class="settings-body"><div class="settings-section"><div style="text-align:center;padding:40px 20px;color:var(--text-sub);font-size:15px;">Network information — coming soon</div></div></div></div>
@@ -1307,7 +1327,7 @@ async function _sensorsLoadGraph() {
 }
 </script>
 <script src="chart.min.js"></script>
-<script src="settings.js?v=9"></script>
+<script src="settings.js?v=10"></script>
 </body>
 </html>
 <!-- SCREENSAVER -->

@@ -50,10 +50,11 @@ async function settingsBrightness(val){
 }
 async function _settingsLoadSysInfo(){
   try{var r=await fetch('/api/sysinfo');var d=await r.json();
-  document.getElementById('settings-hostname').textContent=d.hostname||'—';
-  document.getElementById('settings-ip').textContent=d.ip||'—';
-  document.getElementById('settings-tailscale').textContent=d.tailscale||'—';
-  document.getElementById('settings-uptime').textContent=d.uptime||'—';
+  var s=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v||'—';};
+  s('si-version',d.version);s('si-uptime',d.uptime);s('si-astral',d.astral);s('si-db',d.db_size);
+  s('si-hostname',d.hostname);s('si-kernel',d.kernel);s('si-python',d.python);
+  s('si-hailo',d.hailo);s('si-ram',d.ram_total);s('si-storage',d.storage_total);
+  s('si-ip',d.ip);s('si-eth0',d.eth0);s('si-tailscale',d.tailscale);
   }catch(e){}
 }
 async function settingsDisplayOn(){
