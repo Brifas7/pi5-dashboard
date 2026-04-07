@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upload</title>
+<style>
+body { background:#051c35; color:#e0e8ff; font-family:'Rajdhani',sans-serif; padding:20px; }
+h2 { text-align:center; }
+.box { background:rgba(30,90,255,0.12); border:1px solid rgba(30,90,255,0.3); border-radius:12px; padding:20px; max-width:400px; margin:20px auto; }
+select,input[type=file] { width:100%; padding:10px; margin:10px 0; background:rgba(30,90,255,0.1); border:1px solid rgba(30,90,255,0.3); color:#e0e8ff; border-radius:8px; font-size:16px; }
+button { width:100%; padding:14px; background:#1e5aff; border:none; color:white; border-radius:8px; font-size:18px; font-weight:700; cursor:pointer; margin-top:10px; }
+button:disabled { opacity:0.5; }
+.msg { text-align:center; padding:10px; margin-top:10px; border-radius:8px; }
+.ok { background:rgba(34,197,94,0.2); color:#86efac; }
+.err { background:rgba(239,68,68,0.2); color:#fca5a5; }
+</style>
+</head>
+<body>
+<h2>Upload Files</h2>
+<div class="box">
+  <label>Destination:</label>
+  <select id="dest">
+    <option value="photos">Screensaver Photos</option>
+    <option value="themes">Theme Backgrounds</option>
+  </select>
+  <input type="file" id="file" accept="image/*" multiple>
+  <button onclick="doUpload()" id="btn">Upload</button>
+  <div id="msg"></div>
+</div>
+<script>
+async function doUpload(){
+  var files=document.getElementById('file').files;
+  var dest=document.getElementById('dest').value;
+  var msg=document.getElementById('msg');
+  var btn=document.getElementById('btn');
+  if(!files.length){msg.className='msg err';msg.textContent='Pick a file first';return;}
+  btn.disabled=true;btn.textContent='Uploading...';
+  var ok=0,fail=0;
+  for(var i=0;i<files.length;i++){
+    var fd=new FormData();
+    fd.append('file',files[i]);
+    try{
+      var r=await fetch('/api/upload?dest='+dest,{method:'POST',body:fd});
+      var d=await r.json();
+      if(d.success)ok++;else fail++;
+    }catch(e){fail++;}
+  }
+  btn.disabled=false;btn.textContent='Upload';
+  msg.className='msg '+(fail?'err':'ok');
+  msg.textContent=ok+' uploaded'+(fail?', '+fail+' failed':'');
+}
+</script>
+</body>
+</html>
