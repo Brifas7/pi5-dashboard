@@ -57,26 +57,29 @@ body { width: 100vw; height: 100vh; overflow: hidden; font-family: 'Rajdhani', s
 
     <div id="right-col" style="display:flex;flex-direction:column;gap:14px;width:280px;flex-shrink:0;">
       <div style="background:rgba(var(--accent-rgb),0.14);border:1px solid rgba(var(--accent-rgb),0.35);border-radius:16px;padding:18px;">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <div style="display:flex;flex-direction:column;align-items:center;padding:12px 8px;background:rgba(var(--accent-rgb),0.18);border-radius:10px;border:1px solid rgba(var(--accent-rgb),0.35);">
-            <div style="font-size:14px;color:var(--text-sub);text-transform:uppercase;letter-spacing:1px;">Temp</div>
-            <div id="w-temp" style="font-family:'Orbitron',monospace;font-size:22px;color:var(--text);font-weight:700;">--</div>
+        <div style="display:flex;flex-direction:column;align-items:center;padding:14px 8px;background:rgba(var(--accent-rgb),0.18);border-radius:10px;border:1px solid rgba(var(--accent-rgb),0.35);margin-bottom:12px;">
+          <div style="font-size:11px;color:var(--text-sub);text-transform:uppercase;letter-spacing:1px;">Temperature</div>
+          <div id="w-temp" style="font-family:'Orbitron',monospace;font-size:28px;color:var(--text);font-weight:700;">--</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div style="display:flex;flex-direction:column;align-items:center;padding:10px 6px;background:rgba(var(--accent-rgb),0.18);border-radius:10px;border:1px solid rgba(var(--accent-rgb),0.35);">
+            <div style="font-size:10px;color:var(--text-sub);text-transform:uppercase;letter-spacing:1px;">Humidity</div>
+            <div id="w-humid" style="font-family:'Orbitron',monospace;font-size:18px;color:var(--text);font-weight:700;">--</div>
           </div>
-          <div style="display:flex;flex-direction:column;align-items:center;padding:12px 8px;background:rgba(var(--accent-rgb),0.18);border-radius:10px;border:1px solid rgba(var(--accent-rgb),0.35);">
-            <div style="font-size:14px;color:var(--text-sub);text-transform:uppercase;letter-spacing:1px;">Humid</div>
-            <div id="w-humid" style="font-family:'Orbitron',monospace;font-size:22px;color:var(--text);font-weight:700;">--</div>
+          <div style="display:flex;flex-direction:column;align-items:center;padding:10px 6px;background:rgba(var(--accent-rgb),0.18);border-radius:10px;border:1px solid rgba(var(--accent-rgb),0.35);">
+            <div style="font-size:10px;color:var(--text-sub);text-transform:uppercase;letter-spacing:1px;">Barometric</div>
+            <div id="w-pres" style="font-family:'Orbitron',monospace;font-size:18px;color:var(--text);font-weight:700;">--</div>
           </div>
-          <div style="display:flex;flex-direction:column;align-items:center;padding:12px 8px;background:rgba(var(--accent-rgb),0.18);border-radius:10px;border:1px solid rgba(var(--accent-rgb),0.35);">
-            <div style="font-size:14px;color:var(--text-sub);text-transform:uppercase;letter-spacing:1px;">Pres</div>
-            <div id="w-pres" style="font-family:'Orbitron',monospace;font-size:22px;color:var(--text);font-weight:700;">--</div>
+          <div style="display:flex;flex-direction:column;align-items:center;padding:10px 6px;background:rgba(var(--accent-rgb),0.18);border-radius:10px;border:1px solid rgba(var(--accent-rgb),0.35);">
+            <div style="font-size:10px;color:var(--text-sub);text-transform:uppercase;letter-spacing:1px;">Air Quality</div>
+            <div id="w-aqi" style="font-family:'Orbitron',monospace;font-size:18px;color:var(--text);font-weight:700;">--</div>
           </div>
-          <div style="display:flex;flex-direction:column;align-items:center;padding:12px 8px;background:rgba(var(--accent-rgb),0.18);border-radius:10px;border:1px solid rgba(var(--accent-rgb),0.35);">
-            <div style="font-size:14px;color:var(--text-sub);text-transform:uppercase;letter-spacing:1px;">AQI</div>
-            <div id="w-aqi" style="font-family:'Orbitron',monospace;font-size:22px;color:var(--text);font-weight:700;">--</div>
+          <div style="display:flex;flex-direction:column;align-items:center;padding:10px 6px;background:rgba(var(--accent-rgb),0.18);border-radius:10px;border:1px solid rgba(var(--accent-rgb),0.35);">
+            <div style="font-size:10px;color:var(--text-sub);text-transform:uppercase;letter-spacing:1px;">Dew Point</div>
+            <div id="w-dewpoint" style="font-family:'Orbitron',monospace;font-size:18px;color:var(--text);font-weight:700;">--</div>
           </div>
         </div>
         <div style="display:flex;align-items:center;justify-content:center;margin-top:14px;gap:8px;">
-          
           <span id="moon-phase" style="font-size:17px;color:var(--text-sub);font-weight:600;">--</span>
         </div>
       </div>
@@ -132,7 +135,7 @@ function camName(s) {
 
 async function fetchEvents() {
   try {
-    const res = await fetch('/api/events');
+    const res = await fetch('/api/notifications');
     const events = await res.json();
     const bar = document.getElementById('notif-bar');
     if(!events || events.length === 0) {
@@ -142,7 +145,7 @@ async function fetchEvents() {
     bar.innerHTML = events.map(e => `
       <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
         <div style="width:12px;height:12px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;flex-shrink:0;"></div>
-        <span><b style="color:var(--text)">${camName(e.camera)}</b> — ${capitalize(e.label)} Detected — ${timeAgo(e.time)}</span>
+        <span><b style="color:var(--text)">${e.icon} ${e.source}</b> — ${e.message} — ${timeAgo(e.time)}</span>
       </div>
     `).join('');
   } catch(err) {
@@ -192,6 +195,23 @@ async function fetchSolar() {
     if (el) el.textContent = d.moon_icon + ' ' + d.moon_phase_name;
   } catch(e) {}
 }
+async function fetchSensors() {
+  try {
+    const r = await fetch('/api/sensors');
+    const d = await r.json();
+    if(d.sensors){
+      d.sensors.forEach(s => {
+        if(s.id==='rak_temp') document.getElementById('w-temp').textContent=s.last_value+'°F';
+        if(s.id==='rak_humidity') document.getElementById('w-humid').textContent=s.last_value+'%';
+        if(s.id==='rak_pressure') document.getElementById('w-pres').textContent=s.last_value+' hPa';
+        if(s.id==='rak_airquality') document.getElementById('w-aqi').textContent=Math.round(s.last_value);
+        if(s.id==='rak_dewpoint') document.getElementById('w-dewpoint').textContent=s.last_value+'°F';
+      });
+    }
+  } catch(e) {}
+}
+fetchSensors();
+setInterval(fetchSensors, 60000);
 fetchSolar();
 
 const canvas = document.getElementById('clock');
