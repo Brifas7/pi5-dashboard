@@ -156,7 +156,7 @@ async function fetchEvents() {
 function buildGauges(data) {
   const gaugeData = [
     {label:'CPU', value:Math.round(data.cpu_percent)},
-    {label:'TEMP', value:Math.round(data.cpu_temp_f), max:200, suffix:'°F'},
+    {label:'Pi Temp', value:Math.round(data.cpu_temp_f), max:200, suffix:'°F'},
     {label:'RAM', value:Math.round(data.ram_percent)},
     {label:'Storage', value:Math.round(data.disk_percent)}
   ];
@@ -484,7 +484,7 @@ function _camScreen(id) {
   if (el) el.classList.add('active');
 }
 function _camStopStreams() {
-  if (window._camHls) { window._camHls.destroy(); window._camHls = null; }
+  if(window._camHls){window._camHls.destroy();window._camHls=null;}if(window._camWs){window._camWs.close();window._camWs=null;}
   if (window._camPc) { window._camPc.close(); window._camPc = null; }
   const container = document.getElementById('cam-live-container');
   if (container) container.innerHTML = '';
@@ -519,18 +519,7 @@ function _camRenderList() {
   `).join('');
 }
 function camOpenLive(idx) { _cam.currentIdx = idx; _camScreen('live'); _camLoadLive(); }
-async function _camLoadLive(){
-  const cam=_cam.cameras[_cam.currentIdx];
-  document.getElementById('cam-live-title').textContent=_camFmt(cam.name);
-  const c=document.getElementById('cam-live-container');
-  c.innerHTML='';
-  const v=document.createElement('video');
-  v.autoplay=true;v.muted=true;v.playsInline=true;v.controls=true;
-  v.style.cssText='width:100%;height:100%;object-fit:contain;border-radius:8px;border:1px solid rgba(var(--accent-rgb),0.3);background:#000;';
-  v.src=_GO2RTC+'/api/stream.mp4?src='+cam.name;
-  c.appendChild(v);
-  v.play().catch(e=>console.error('play error:',e));
-}
+
 function camCycle(dir) {
   _camStopStreams();
   _cam.currentIdx = (_cam.currentIdx + dir + _cam.cameras.length) % _cam.cameras.length;
@@ -1326,6 +1315,7 @@ async function _sensorsLoadGraph() {
 </script>
 <script src="chart.min.js"></script>
 <script src="settings.js?v=18"></script>
+<script src="camera.js"></script>
 </body>
 </html>
 <!-- SCREENSAVER -->
@@ -1752,5 +1742,6 @@ async function autoWizNext(){
 }
 </script>
 
+<script src="camera.js"></script>
 </body>
 </html>
