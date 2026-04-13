@@ -559,9 +559,6 @@ function camCycle(dir) {
   _camLoadLive();
 }
 function camBackToList() { _camStopStreams(); _camScreen('list'); _camRenderList(); }
-}
-function camToggleSplit(idx, checked) { if (checked) _cam.splitSelected.add(idx); else _cam.splitSelected.delete(idx); }
-}
 function camApplyFilters() {
   const cf = document.getElementById('cam-filter-camera').value;
   const lf = document.getElementById('cam-filter-label').value;
