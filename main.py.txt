@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.responses import StreamingResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import psutil, subprocess, json, httpx
@@ -373,5 +374,486 @@ def _mqtt_subscriber():
     except: pass
 
 threading.Thread(target=_mqtt_subscriber,daemon=True).start()
+
+
+
+@app.post("/api/settime")
+async def set_time(payload: dict):
+    dt = payload.get("datetime", "")
+    if not dt:
+        return {"success": False, "error": "no datetime"}
+    try:
+        subprocess.run(
+            ["sudo", "date", "-s", dt],
+            capture_output=True, timeout=5
+        )
+        return {"success": True}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@app.get("/api/network")
+def get_network():
+    import subprocess as sp
+    info = {}
+    try:
+        ips = sp.check_output(["hostname", "-I"]).decode().strip().split()
+        info["wlan_ip"] = next((i for i in ips if i.startswith("192.168.1.")), "not connected")
+        info["eth0_ip"] = next((i for i in ips if i.startswith("192.168.2.")), "not connected")
+    except:
+        info["wlan_ip"] = "unknown"
+        info["eth0_ip"] = "unknown"
+    try:
+        ssid = sp.check_output(["iwgetid", "-r"]).decode().strip()
+        info["ssid"] = ssid if ssid else "not connected"
+    except:
+        info["ssid"] = "unknown"
+    try:
+        signal = sp.check_output(["bash", "-c", "cat /proc/net/wireless | tail -1 | awk '{print $3}'"]).decode().strip().rstrip(".")
+        info["signal"] = signal + " dBm" if signal else "unknown"
+    except:
+        info["signal"] = "unknown"
+    try:
+        eth0_state = sp.check_output(["cat", "/sys/class/net/eth0/operstate"]).decode().strip()
+        info["eth0_status"] = "Connected" if eth0_state == "up" else "Down"
+    except:
+        info["eth0_status"] = "unknown"
+    try:
+        ts_ip = sp.check_output(["tailscale", "ip", "-4"]).decode().strip()
+        info["ts_ip"] = ts_ip if ts_ip else "not connected"
+        ts_status = sp.check_output(["tailscale", "status", "--json"]).decode()
+        info["ts_status"] = "Connected"
+    except:
+        info["ts_ip"] = "unknown"
+        info["ts_status"] = "unknown"
+    try:
+        sp.check_output(["ping", "-c", "1", "-W", "2", "8.8.8.8"])
+        info["internet"] = "Connected"
+    except:
+        info["internet"] = "No connection"
+    return info
+
+
+@app.get("/api/system/services")
+def get_services():
+    import subprocess as sp
+    services = ["dashboard-api", "rak-reader", "automation-engine"]
+    result = []
+    for svc in services:
+        try:
+            out = sp.check_output(["systemctl", "is-active", svc]).decode().strip()
+            result.append({"name": svc, "status": out})
+        except:
+            result.append({"name": svc, "status": "inactive"})
+    # Frigate is Docker
+    try:
+        out = sp.check_output(["docker", "inspect", "-f", "{{.State.Status}}", "frigate"]).decode().strip()
+        result.append({"name": "frigate", "status": out})
+    except:
+        result.append({"name": "frigate", "status": "unknown"})
+    return {"services": result}
+
+@app.post("/api/system/restart-service")
+async def restart_service(payload: dict):
+    svc = payload.get("service", "")
+    if not svc:
+        return {"success": False, "error": "no service"}
+    try:
+        if svc == "frigate":
+            subprocess.Popen(["bash", "-c", "cd /home/brifas/frigate && docker compose restart"])
+        else:
+            subprocess.Popen(["sudo", "systemctl", "restart", svc])
+        return {"success": True}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.get("/api/system/logs")
+def get_logs(service: str = "dashboard-api", lines: int = 20):
+    import subprocess as sp
+    try:
+        if service == "frigate":
+            out = sp.check_output(
+                ["docker", "logs", "frigate", "--tail", str(lines)],
+                stderr=sp.STDOUT
+            ).decode()
+        else:
+            out = sp.check_output(
+                ["journalctl", "-u", service, "-n", str(lines), "--no-pager"],
+                stderr=sp.STDOUT
+            ).decode()
+        return {"logs": out}
+    except Exception as e:
+        return {"logs": str(e)}
+
+@app.get("/api/system/backup-info")
+def backup_info():
+    import glob
+    try:
+        backups = sorted(glob.glob("/home/brifas/backups/*"))
+        if backups:
+            latest = os.path.basename(backups[-1])
+            mtime = os.path.getmtime(backups[-1])
+            return {"last_backup": latest, "timestamp": mtime}
+        return {"last_backup": "none", "timestamp": 0}
+    except:
+        return {"last_backup": "unknown", "timestamp": 0}
+
+@app.post("/api/system/backup")
+async def run_backup():
+    try:
+        subprocess.Popen(["bash", "/home/brifas/backup.sh"])
+        return {"success": True}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.post("/api/system/git-push")
+async def git_push():
+    try:
+        result = subprocess.check_output(
+            ["bash", "-c", "cd /home/brifas/dashboard-html && git add -A && git commit -m \"dashboard auto-save\" && git push origin master"],
+            stderr=subprocess.STDOUT, timeout=30
+        ).decode()
+        return {"success": True, "output": result}
+    except subprocess.CalledProcessError as e:
+        return {"success": False, "output": e.output.decode()}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.post("/api/system/reboot")
+async def reboot_system():
+    subprocess.Popen(["sudo", "reboot"])
+    return {"success": True}
+
+@app.post("/api/system/shutdown")
+async def shutdown_system():
+    subprocess.Popen(["sudo", "shutdown", "-h", "now"])
+    return {"success": True}
+
+
+@app.delete("/api/devices/{device_id}")
+def delete_device(device_id: str):
+    try:
+        conn = _db()
+        conn.execute("DELETE FROM device_registry WHERE id=?", (device_id,))
+        conn.commit()
+        conn.close()
+        return {"success": True}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@app.get("/api/system/hardware")
+def get_hardware():
+    import subprocess as sp
+    hw = []
+    # Pi 5
+    try:
+        t = sp.check_output(["vcgencmd", "measure_temp"]).decode()
+        temp = float(t.replace("temp=","").replace("'C\n","").strip().rstrip("'C"))
+        temp_f = round(temp * 9/5 + 32, 1)
+    except:
+        temp_f = 0
+    try:
+        up = sp.check_output(["uptime", "-p"]).decode().strip()
+    except:
+        up = "unknown"
+    ram = __import__("psutil").virtual_memory()
+    hw.append({"name": "Raspberry Pi 5 8GB", "status": "online",
+        "detail": f"CPU {temp_f}\u00b0F \u00b7 {up}",
+        "extra": f"RAM {ram.percent}%"})
+    # Hailo-8L
+    try:
+        ver = sp.check_output(["cat", "/sys/module/hailo_pci/version"]).decode().strip()
+        hw.append({"name": "Hailo-8L AI Accelerator", "status": "online",
+            "detail": f"Driver {ver}", "extra": ""})
+    except:
+        hw.append({"name": "Hailo-8L AI Accelerator", "status": "offline",
+            "detail": "Not detected", "extra": ""})
+
+    # Waveshare Display
+    try:
+        disp = sp.check_output(["vcgencmd", "display_power"]).decode().strip()
+        power = "On" if "1" in disp else "Off"
+        hw.append({"name": "Waveshare 13.3\" Display", "status": "online",
+            "detail": f"Power: {power} \u00b7 1920x1080", "extra": ""})
+    except:
+        hw.append({"name": "Waveshare 13.3\" Display", "status": "online",
+            "detail": "1920x1080", "extra": ""})
+    # NVMe SSD
+    disk = __import__("psutil").disk_usage("/")
+    hw.append({"name": "512GB NVMe SSD", "status": "online",
+        "detail": f"{round(disk.used/1024**3,1)} / {round(disk.total/1024**3,1)} GB used",
+        "extra": f"{disk.percent}%"})
+    return {"hardware": hw}
+
+
+@app.get("/api/system/registered-devices")
+def get_registered_devices():
+    import glob
+    devices = []
+    # RAK WisBlock
+    try:
+        acm = glob.glob("/dev/ttyACM*")
+        if acm:
+            devices.append({"name": "RAK WisBlock Weather Station",
+                "status": "online",
+                "detail": "RAK4631 + RAK1906 \u00b7 USB " + acm[0] + " \u00b7 Meshtastic 2.7.15",
+                "extra": "", "id": "rak_wisblock"})
+        else:
+            devices.append({"name": "RAK WisBlock Weather Station",
+                "status": "offline",
+                "detail": "RAK4631 + RAK1906 \u00b7 Not connected",
+                "extra": "", "id": "rak_wisblock"})
+    except:
+        devices.append({"name": "RAK WisBlock Weather Station",
+            "status": "offline",
+            "detail": "RAK4631 + RAK1906 \u00b7 Not connected",
+            "extra": "", "id": "rak_wisblock"})
+    # Cameras
+    for cam in CAMERAS:
+        devices.append({"name": cam["name"],
+            "status": "online",
+            "detail": cam["type"] + " \u00b7 " + cam["ip"],
+            "extra": "", "id": cam["id"]})
+    # MQTT devices from registry
+    try:
+        conn = _db()
+        rows = conn.execute("SELECT id,name,category,type,online,ip,last_seen FROM device_registry").fetchall()
+        conn.close()
+        for r in rows:
+            devices.append({"name": r[1],
+                "status": "online" if r[4] else "offline",
+                "detail": (r[3] or "") + " \u00b7 " + (r[2] or "") + ("  \u00b7 " + r[5] if r[5] else ""),
+                "extra": "",
+                "id": r[0]})
+    except:
+        pass
+    return {"devices": devices}
+
+
+@app.get("/api/sensors/averages")
+def get_sensor_averages():
+    try:
+        now = int(_time.time())
+        conn = _db()
+        result = {}
+        for period, label, secs in [("24h", "24h", 86400), ("7d", "7d", 604800), ("30d", "30d", 2592000)]:
+            since = now - secs
+            row = conn.execute(
+                "SELECT AVG(value), MAX(value), MIN(value) FROM sensor_readings WHERE sensor_id='rak_temp' AND timestamp>?",
+                (since,)
+            ).fetchone()
+            if row and row[0] is not None:
+                result["temp_" + label] = str(round(row[0], 1)) + " \u00b0F"
+                if label == "24h":
+                    result["temp_24h_high"] = str(round(row[1], 1)) + " \u00b0F"
+                    result["temp_24h_low"] = str(round(row[2], 1)) + " \u00b0F"
+        # 24h humidity avg
+        row = conn.execute(
+            "SELECT AVG(value) FROM sensor_readings WHERE sensor_id='rak_humidity' AND timestamp>?",
+            (now - 86400,)
+        ).fetchone()
+        if row and row[0] is not None:
+            result["humid_24h"] = str(round(row[0], 1)) + " %"
+        # 24h pressure avg
+        row = conn.execute(
+            "SELECT AVG(value) FROM sensor_readings WHERE sensor_id='rak_pressure' AND timestamp>?",
+            (now - 86400,)
+        ).fetchone()
+        if row and row[0] is not None:
+            result["pres_24h"] = str(round(row[0], 1)) + " hPa"
+        conn.close()
+        return result
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/api/notifications/settings")
+def get_notif_settings():
+    try:
+        conn = _db()
+        conn.execute("""CREATE TABLE IF NOT EXISTS notification_settings (
+            key TEXT PRIMARY KEY, value TEXT)""")
+        rows = conn.execute("SELECT key, value FROM notification_settings").fetchall()
+        conn.close()
+        settings = {}
+        for r in rows:
+            try: settings[r[0]] = json.loads(r[1])
+            except: settings[r[0]] = r[1]
+        # Defaults
+        if "camera_motion" not in settings: settings["camera_motion"] = True
+        if "system_alerts" not in settings: settings["system_alerts"] = True
+        if "sensor_alerts" not in settings: settings["sensor_alerts"] = True
+        if "automation_alerts" not in settings: settings["automation_alerts"] = True
+        if "sound" not in settings: settings["sound"] = False
+        if "quiet_start" not in settings: settings["quiet_start"] = ""
+        if "quiet_end" not in settings: settings["quiet_end"] = ""
+        if "sensor_thresholds" not in settings: settings["sensor_thresholds"] = []
+        return settings
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.post("/api/notifications/settings")
+def save_notif_settings(payload: dict):
+    try:
+        conn = _db()
+        conn.execute("""CREATE TABLE IF NOT EXISTS notification_settings (
+            key TEXT PRIMARY KEY, value TEXT)""")
+        for k, v in payload.items():
+            conn.execute(
+                "INSERT INTO notification_settings (key, value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=?",
+                (k, json.dumps(v), json.dumps(v)))
+        conn.commit()
+        conn.close()
+        return {"success": True}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.get("/api/notifications/history")
+def get_notif_history(limit: int = 50):
+    try:
+        conn = _db()
+        conn.execute("""CREATE TABLE IF NOT EXISTS notification_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp INTEGER, type TEXT, source TEXT,
+            message TEXT, icon TEXT)""")
+        rows = conn.execute(
+            "SELECT timestamp, type, source, message, icon FROM notification_history ORDER BY timestamp DESC LIMIT ?",
+            (limit,)).fetchall()
+        conn.close()
+        return {"notifications": [
+            {"timestamp": r[0], "type": r[1], "source": r[2], "message": r[3], "icon": r[4]}
+            for r in rows]}
+    except Exception as e:
+        return {"notifications": [], "error": str(e)}
+
+
+@app.get("/api/camera/retention")
+def get_retention():
+    try:
+        import yaml
+        with open("/home/brifas/frigate/config/config.yml", "r") as f:
+            cfg = yaml.safe_load(f)
+        rec = cfg.get("record", {})
+        cont = rec.get("continuous", {}).get("days", 7)
+        det = rec.get("detections", {}).get("retain", {}).get("days", 14)
+        snap = cfg.get("snapshots", {}).get("retain", {}).get("default", 7)
+        return {"continuous": cont, "clips": det, "snapshots": snap}
+    except Exception as e:
+        return {"continuous": 7, "clips": 14, "snapshots": 7, "error": str(e)}
+
+@app.post("/api/camera/retention")
+async def set_retention(payload: dict):
+    try:
+        import yaml
+        with open("/home/brifas/frigate/config/config.yml", "r") as f:
+            cfg = yaml.safe_load(f)
+        cont = payload.get("continuous", 7)
+        clips = payload.get("clips", 14)
+        snaps = payload.get("snapshots", 7)
+        if "record" not in cfg:
+            cfg["record"] = {}
+        if "continuous" not in cfg["record"]:
+            cfg["record"]["continuous"] = {}
+        cfg["record"]["continuous"]["days"] = cont
+        if "detections" not in cfg["record"]:
+            cfg["record"]["detections"] = {"retain": {}}
+        if "retain" not in cfg["record"]["detections"]:
+            cfg["record"]["detections"]["retain"] = {}
+        cfg["record"]["detections"]["retain"]["days"] = clips
+        if "snapshots" not in cfg:
+            cfg["snapshots"] = {"retain": {}}
+        if "retain" not in cfg["snapshots"]:
+            cfg["snapshots"]["retain"] = {}
+        cfg["snapshots"]["retain"]["default"] = snaps
+        with open("/home/brifas/frigate/config/config.yml", "w") as f:
+            yaml.dump(cfg, f, default_flow_style=False)
+        subprocess.Popen(["bash", "-c", "cd /home/brifas/frigate && docker compose restart"])
+        return {"success": True}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+# --- CAMERA PROXY ---
+CAMERAS = [
+    {
+        "id": "front_left",
+        "name": "Front Left",
+        "type": "amcrest",
+        "ip": "192.168.2.26",
+        "user": "admin",
+        "pass": "Wayne5046",
+    },
+]
+
+@app.get("/api/camera/list")
+async def camera_list():
+    result = []
+    for cam in CAMERAS:
+        online = False
+        if cam["type"] == "amcrest":
+            try:
+                auth = httpx.DigestAuth(cam["user"], cam["pass"])
+                async with httpx.AsyncClient() as client:
+                    r = await client.get(
+                        f"http://{cam['ip']}/cgi-bin/magicBox.cgi?action=getSystemInfo",
+                        auth=auth, timeout=3
+                    )
+                    online = r.status_code == 200
+            except:
+                pass
+        result.append({"id": cam["id"], "name": cam["name"], "type": cam["type"], "online": online})
+    return {"cameras": result}
+
+@app.get("/api/camera/{cam_id}/snapshot")
+async def camera_snapshot(cam_id: str):
+    cam = next((c for c in CAMERAS if c["id"] == cam_id), None)
+    if not cam:
+        return Response(status_code=404)
+    if cam["type"] == "amcrest":
+        url = f"http://{cam['ip']}/cgi-bin/mjpg/video.cgi"
+        url += "?channel=1&subtype=1"
+        auth = httpx.DigestAuth(cam["user"], cam["pass"])
+        async with httpx.AsyncClient() as client:
+            async with client.stream(
+                "GET", url, auth=auth, timeout=10
+            ) as r:
+                buf = b""
+                async for chunk in r.aiter_bytes(4096):
+                    buf += chunk
+                    start = buf.find(b"\xff\xd8")
+                    end = buf.find(b"\xff\xd9", start + 2)
+                    if start >= 0 and end >= 0:
+                        return Response(
+                            content=buf[start:end+2],
+                            media_type="image/jpeg"
+                        )
+        return Response(status_code=500)
+    return Response(status_code=400)
+
+@app.get("/api/camera/{cam_id}/stream")
+async def camera_stream(cam_id: str):
+    cam = next((c for c in CAMERAS if c["id"] == cam_id), None)
+    if not cam:
+        return Response(status_code=404)
+    if cam["type"] == "amcrest":
+        url = f"http://{cam['ip']}/cgi-bin/mjpg/video.cgi"
+        url += "?channel=1&subtype=1"
+        auth = httpx.DigestAuth(cam["user"], cam["pass"])
+        client = httpx.AsyncClient()
+        req = client.build_request("GET", url)
+        resp = await client.send(req, auth=auth, stream=True)
+        ct = resp.headers.get(
+            "content-type",
+            "multipart/x-mixed-replace; boundary=myboundary"
+        )
+        async def generate():
+            try:
+                async for chunk in resp.aiter_bytes(65536):
+                    yield chunk
+            finally:
+                await resp.aclose()
+                await client.aclose()
+        return StreamingResponse(generate(), media_type=ct)
+    return Response(status_code=400)
 
 app.mount("/", StaticFiles(directory="/home/brifas/dashboard-html", html=True), name="dashboard")
