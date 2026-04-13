@@ -27,6 +27,14 @@ def on_telemetry(packet, interface):
             readings.append({"id":"rak_humidity","name":"Humidity","value":round(env['relativeHumidity'],1),"unit":"%"})
         if 'barometricPressure' in env:
             readings.append({"id":"rak_pressure","name":"Pressure","value":round(env['barometricPressure'],1),"unit":"hPa"})
+        if 'temperature' in env and 'relativeHumidity' in env:
+            import math
+            tc=env['temperature']
+            rh=env['relativeHumidity']
+            a,b=17.27,237.7
+            alpha=a*tc/(b+tc)+math.log(rh/100.0)
+            dp_c=b*alpha/(a-alpha)
+            readings.append({'id':'rak_dewpoint','name':'Dew Point','value':c_to_f(dp_c),'unit':'°F'})
         if 'iaq' in env:
             readings.append({"id":"rak_airquality","name":"Air Quality","value":round(env['iaq'],1),"unit":"IAQ"})
         if readings:
@@ -39,9 +47,22 @@ def main():
     while True:
         try:
             log.info("Connecting to RAK via USB...")
-            iface = meshtastic.serial_interface.SerialInterface()
+            iface = meshtastic.serial_interface.SerialInterface("/dev/ttyACM0")
             pub.subscribe(on_telemetry, "meshtastic.receive.telemetry")
             log.info("Connected. Listening for telemetry...")
+            # Register weather station as a system in device registry
+            try:
+                requests.post("http://localhost:8000/api/devices/register", json={
+                    "id": "rak_weather_station",
+                    "name": "RAK WisBlock Weather Station",
+                    "category": "system",
+                    "type": "weather_station",
+                    "summary": "RAK4631 + RAK1906 Environmental Sensor",
+                    "ip": "/dev/ttyACM0"
+                }, timeout=5)
+                log.info("Weather station registered")
+            except Exception as e:
+                log.warning(f"Registration failed: {e}")
             while True:
                 time.sleep(1)
         except Exception as e:
