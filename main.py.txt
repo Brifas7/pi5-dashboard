@@ -15,7 +15,14 @@ app.add_middleware(CORSMiddleware,allow_origins=["*"],allow_methods=["*"],allow_
 
 from fastapi import Header, HTTPException, Depends, UploadFile, File, Query
 
-DASHBOARD_PIN = "5046"
+def _load_pin():
+    try:
+        with open(os.path.join(os.path.dirname(__file__), "cameras.json"), "r") as f:
+            return json.load(f).get("dashboard_pin", "5046")
+    except:
+        return "5046"
+
+DASHBOARD_PIN = _load_pin()
 
 async def verify_pin(x_pin: str = Header(None)):
     if x_pin != DASHBOARD_PIN:
@@ -772,16 +779,14 @@ async def set_retention(payload: dict):
         return {"success": False, "error": str(e)}
 
 # --- CAMERA PROXY ---
-CAMERAS = [
-    {
-        "id": "front_left",
-        "name": "Front Left",
-        "type": "amcrest",
-        "ip": "192.168.2.26",
-        "user": "admin",
-        "pass": "Wayne5046",
-    },
-]
+def _load_cameras():
+    try:
+        with open(os.path.join(os.path.dirname(__file__), "cameras.json"), "r") as f:
+            return json.load(f).get("cameras", [])
+    except:
+        return []
+
+CAMERAS = _load_cameras()
 
 @app.get("/api/camera/list")
 async def camera_list():

@@ -24,7 +24,7 @@ body { width: 100vw; height: 100vh; overflow: hidden; font-family: 'Rajdhani', s
 <div style="position:relative;z-index:1;display:flex;flex-direction:column;width:100%;height:100%;">
 
   <div id="notif-bar" style="background:var(--notif-bg);border-bottom:1px solid rgba(var(--accent-rgb),0.4);padding:18px 28px;display:flex;gap:36px;align-items:center;font-size:16px;color:#a0b8e8;min-height:70px;">
-    <span style="color:var(--text-sub);">Loading events...</span>
+    <span style="color:var(--text-sub);">Loading events...</span><span id="conn-status" style="margin-left:auto;font-size:12px;font-weight:700;letter-spacing:1px;color:#22c55e;">CONNECTED</span>
   </div>
 
   <div id="main-layout" style="display:flex;flex:1;padding:20px 28px;gap:28px;min-height:0;">
@@ -99,7 +99,6 @@ body { width: 100vw; height: 100vh; overflow: hidden; font-family: 'Rajdhani', s
 
 <script>
 const _HOST=window.location.hostname;
-const _FRIGATE="http://"+_HOST+":5000";
 let tapCount = 0;
 let tapTimer = null;
 document.getElementById('exit-zone').addEventListener('click', function() {
@@ -122,13 +121,9 @@ function timeAgo(ts) {
   return Math.floor(diff/86400) + 'd ago';
 }
 
-function capitalize(s) {
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
 
-function camName(s) {
-  return s.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
-}
+
+
 
 async function fetchEvents() {
   try {
@@ -172,9 +167,13 @@ async function fetchStats() {
   try {
     const res = await fetch('/api/system');
     const data = await res.json();
+    var cs = document.getElementById('conn-status');
+    if (cs) { cs.textContent = 'CONNECTED'; cs.style.color = '#22c55e'; }
     buildGauges(data);
   } catch(e) {
     console.log('Stats fetch failed:', e);
+    var cs = document.getElementById('conn-status');
+    if (cs) { cs.textContent = 'OFFLINE'; cs.style.color = '#ef4444'; }
   }
 }
 
@@ -352,7 +351,6 @@ drawClock();
   .cam-arrow-left { left:16px; }
   .cam-arrow-right { right:16px; }
 
-  .cam-split-option input[type=checkbox] { width:18px; height:18px; cursor:pointer; accent-color:#1e5aff; }
 
 
   .cam-filter-bar { display:flex; gap:12px; padding:14px 20px; flex-shrink:0; border-bottom:1px solid rgba(var(--accent-rgb),0.15); }
