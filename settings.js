@@ -32,7 +32,7 @@ async function settingsOpen(){
   _settingsHideAll();
   document.getElementById('settings-screen-main').classList.add('active');
 }
-function settingsClose(){
+function settingsClose(){if(typeof _isMobile==='function'&&_isMobile())return _mobileClose();
   document.getElementById('settings-overlay').style.display='none';
   _settings.navStack=[];
 }

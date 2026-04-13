@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Dashboard Mobile</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--accent-rgb:30,90,255;--accent:#1e5aff;--bg:#0a0e1a;--text:#e0e8ff;--text-sub:#8ea4d4;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);font-family:'Rajdhani',sans-serif;color:var(--text);min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;padding:16px;}
+.mobile-header{text-align:center;padding:12px 0 20px;font-size:18px;font-weight:700;letter-spacing:2px;color:var(--text-sub);}
+.mobile-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;flex:1;}
+.mobile-btn{background:rgba(var(--accent-rgb),0.12);border:1px solid rgba(var(--accent-rgb),0.3);border-radius:14px;padding:28px 12px;color:var(--text);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;-webkit-tap-highlight-color:transparent;transition:background 0.2s;min-height:110px;}
+.mobile-btn:active{background:rgba(var(--accent-rgb),0.35);}
+.mobile-btn-icon{font-size:36px;}
+.mobile-btn-label{font-size:18px;font-weight:700;letter-spacing:1px;}
+</style>
+</head>
+<body>
+<div class="mobile-header">DASHBOARD</div>
+<div class="mobile-grid">
+<div class="mobile-btn" onclick="go('cam')">
+<span class="mobile-btn-icon">📷</span>
+<span class="mobile-btn-label">Cameras</span>
+</div>
+<div class="mobile-btn" onclick="go('light')">
+<span class="mobile-btn-icon">💡</span>
+<span class="mobile-btn-label">Lighting</span>
+</div>
+<div class="mobile-btn" onclick="go('ops')">
+<span class="mobile-btn-icon">⚙️</span>
+<span class="mobile-btn-label">Operations</span>
+</div>
+<div class="mobile-btn" onclick="go('sensors')">
+<span class="mobile-btn-icon">🌡</span>
+<span class="mobile-btn-label">Sensors</span>
+</div>
+<div class="mobile-btn" onclick="go('auto')">
+<span class="mobile-btn-icon">⚡</span>
+<span class="mobile-btn-label">Automation</span>
+</div>
+<div class="mobile-btn" onclick="go('settings')">
+<span class="mobile-btn-icon">🔧</span>
+<span class="mobile-btn-label">Settings</span>
+</div>
+</div>
+<script>
+function go(section) {
+  window.location.href = '/?mobile=' + section;
+}
+</script>
+</body>
+</html>
