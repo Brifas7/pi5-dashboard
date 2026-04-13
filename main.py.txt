@@ -2,11 +2,13 @@ from fastapi import FastAPI
 from fastapi.responses import StreamingResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-import psutil, subprocess, json, httpx
+import psutil, subprocess, json, httpx, logging
 import sqlite3, time as _time, uuid, datetime, threading, os
 from astral import LocationInfo
 from astral.sun import sun
 from astral.moon import phase as moon_phase
+
+log = logging.getLogger("dashboard")
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware,allow_origins=["*"],allow_methods=["*"],allow_headers=["*"])

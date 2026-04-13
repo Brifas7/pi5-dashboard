@@ -351,10 +351,10 @@ drawClock();
   .cam-arrow:hover { background:rgba(var(--accent-rgb),0.4); }
   .cam-arrow-left { left:16px; }
   .cam-arrow-right { right:16px; }
-  .cam-split-option { display:flex; align-items:center; gap:14px; background:rgba(var(--accent-rgb),0.1); border:1px solid rgba(var(--accent-rgb),0.25); border-radius:10px; padding:14px 18px; cursor:pointer; font-size:17px; font-weight:700; color:var(--text); }
+
   .cam-split-option input[type=checkbox] { width:18px; height:18px; cursor:pointer; accent-color:#1e5aff; }
-  .cam-split-cell { position:relative; background:rgba(0,0,0,0.5); border-radius:8px; overflow:hidden; border:1px solid rgba(var(--accent-rgb),0.3); min-height:0; }
-  .cam-split-cell-label { position:absolute; top:10px; left:12px; z-index:2; font-size:13px; font-weight:700; letter-spacing:1px; background:rgba(0,0,0,0.6); padding:4px 10px; border-radius:4px; }
+
+
   .cam-filter-bar { display:flex; gap:12px; padding:14px 20px; flex-shrink:0; border-bottom:1px solid rgba(var(--accent-rgb),0.15); }
   .cam-filter-select { background:rgba(var(--accent-rgb),0.12); border:1px solid rgba(var(--accent-rgb),0.3); color:var(--text); border-radius:8px; padding:8px 14px; font-family:'Rajdhani',sans-serif; font-size:15px; font-weight:600; cursor:pointer; }
   .cam-filter-select option { background:#0a1428; }
@@ -411,26 +411,8 @@ drawClock();
       <button class="cam-arrow cam-arrow-right" onclick="camCycle(1)">▶</button>
     </div>
   </div>
-  <div id="cam-screen-split-select" class="cam-screen">
-    <div class="cam-header">
-      <span class="cam-title">⊞  SELECT CAMERAS</span>
-      <div style="display:flex; gap:10px;">
-        <button class="cam-btn" onclick="camLaunchSplit()">VIEW SELECTED</button>
-        <button class="cam-btn cam-btn-close" onclick="camBackToList()">✕ CLOSE</button>
-      </div>
-    </div>
-    <div id="cam-split-select-list" style="padding:24px; display:flex; flex-direction:column; gap:12px; overflow-y:auto;"></div>
-  </div>
-  <div id="cam-screen-split-view" class="cam-screen">
-    <div class="cam-header">
-      <span class="cam-title">⊞  SPLIT VIEW</span>
-      <div style="display:flex; gap:10px;">
-        <button class="cam-btn" onclick="camShowSplitSelect()">CHANGE</button>
-        <button class="cam-btn cam-btn-close" onclick="camBackToList()">✕ CLOSE</button>
-      </div>
-    </div>
-    <div id="cam-split-grid" style="flex:1; padding:16px; display:grid; gap:12px; min-height:0;"></div>
-  </div>
+  
+  
   <div id="cam-screen-clips" class="cam-screen">
     <div class="cam-header">
       <span class="cam-title">🎬  SAVED CLIPS</span>
@@ -520,7 +502,7 @@ drawClock();
 
 <script>
 const _cam = {
-  cameras: [], currentIdx: 0, splitSelected: new Set(),
+  cameras: [], currentIdx: 0,
   clips: [], filteredClips: [], selectMode: false, selectedClips: new Set()
 };
 function _camFmt(name) { return name.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()); }
@@ -538,12 +520,9 @@ function _camScreen(id) {
   if (el) el.classList.add('active');
 }
 function _camStopStreams() {
-  if(window._camHls){window._camHls.destroy();window._camHls=null;}if(window._camWs){window._camWs.close();window._camWs=null;}
-  if (window._camPc) { window._camPc.close(); window._camPc = null; }
-  const container = document.getElementById('cam-live-container');
+  var container = document.getElementById('cam-live-container');
   if (container) container.innerHTML = '';
-  document.querySelectorAll('.cam-split-img').forEach(i => { i.src = ''; });
-  const vid = document.getElementById('cam-playback-video');
+  var vid = document.getElementById('cam-playback-video');
   if (vid) { vid.pause(); vid.src = ''; }
 }
 async function camOpen() {
@@ -580,49 +559,8 @@ function camCycle(dir) {
   _camLoadLive();
 }
 function camBackToList() { _camStopStreams(); _camScreen('list'); _camRenderList(); }
-function camShowSplitSelect() {
-  _camStopStreams();
-  const el = document.getElementById('cam-split-select-list');
-  el.innerHTML = _cam.cameras.map((cam, i) => `
-    <label class="cam-split-option">
-      <input type="checkbox" value="${i}" ${_cam.splitSelected.has(i) ? 'checked' : ''} onchange="camToggleSplit(${i}, this.checked)" />
-      <div class="cam-dot ${cam.online ? 'cam-dot-on' : 'cam-dot-off'}"></div>
-      <span>${_camFmt(cam.name)}</span>
-    </label>
-  `).join('');
-  _camScreen('split-select');
 }
 function camToggleSplit(idx, checked) { if (checked) _cam.splitSelected.add(idx); else _cam.splitSelected.delete(idx); }
-function camLaunchSplit() {
-  if (_cam.splitSelected.size === 0) return;
-  const selected = [..._cam.splitSelected];
-  const grid = document.getElementById('cam-split-grid');
-  const cols = selected.length <= 2 ? selected.length : 2;
-  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-  grid.innerHTML = selected.map(idx => {
-    const cam = _cam.cameras[idx];
-    return `<div class="cam-split-cell">
-      <div class="cam-split-cell-label">${_camFmt(cam.name)}</div>
-      <img class="cam-split-img" src=_GO2RTC+"/api/frame.jpeg?src=${cam.name}" style="width:100%;height:100%;object-fit:cover;display:block;" alt="" />
-    </div>`;
-  }).join('');
-  _camScreen('split-view');
-}
-async function camShowClips() {
-  _camScreen('clips');
-  _cam.selectMode = false; _cam.selectedClips.clear();
-  document.getElementById('cam-select-mode-btn').textContent = 'SELECT MODE';
-  document.getElementById('cam-bulk-bar').style.display = 'none';
-  document.getElementById('cam-clip-list').innerHTML = '<div class="cam-loading">Loading clips...</div>';
-  try {
-    const r = await fetch('/api/clips?limit=100');
-    const data = await r.json();
-    _cam.clips = data.clips || [];
-    const camFilter = document.getElementById('cam-filter-camera');
-    const cams = [...new Set(_cam.clips.map(c => c.camera))];
-    camFilter.innerHTML = '<option value="all">All Cameras</option>' + cams.map(c => `<option value="${c}">${_camFmt(c)}</option>`).join('');
-    camApplyFilters();
-  } catch(e) { document.getElementById('cam-clip-list').innerHTML = '<div class="cam-empty">Failed to load clips</div>'; }
 }
 function camApplyFilters() {
   const cf = document.getElementById('cam-filter-camera').value;
@@ -2653,16 +2591,7 @@ async function settingsRefreshNetwork() {
     console.log('Network fetch failed:', e);
   }
 }
-(function() {
-  var origNav = window.settingsNav;
-  if (origNav) {
-    var _wrappedNav = window.settingsNav;
-    window.settingsNav = function(screen) {
-      _wrappedNav(screen);
-      if (screen === 'network') settingsRefreshNetwork();
-    };
-  }
-})();
+
 </script>
 
 <script>
@@ -2777,15 +2706,7 @@ function sysLoadAll() {
   sysLoadBackupInfo();
 }
 
-(function() {
-  var _prevNav = window.settingsNav;
-  if (_prevNav) {
-    window.settingsNav = function(screen) {
-      _prevNav(screen);
-      if (screen === 'system') sysLoadAll();
-    };
-  }
-})();
+
 </script>
 
 <script>
@@ -2859,15 +2780,7 @@ async function devRemove(id) {
   } catch(e) { alert('Failed to remove'); }
 }
 
-(function() {
-  var _prevNav = window.settingsNav;
-  if (_prevNav) {
-    window.settingsNav = function(screen) {
-      _prevNav(screen);
-      if (screen === 'devices') devRefresh();
-    };
-  }
-})();
+
 </script>
 
 <script>
@@ -2969,12 +2882,21 @@ async function notifLoadHistory() {
   }
 }
 
+
+</script>
+
+<script>
+// Settings navigation dispatcher
 (function() {
-  var _prevNav = window.settingsNav;
-  if (_prevNav) {
+  var _baseSettingsNav = window.settingsNav;
+  if (_baseSettingsNav) {
     window.settingsNav = function(screen) {
-      _prevNav(screen);
-      if (screen === 'notifications') notifLoad();
+      _baseSettingsNav(screen);
+      if (screen === 'timedate' && typeof settingsLoadTimeDate === 'function') settingsLoadTimeDate();
+      if (screen === 'network' && typeof settingsRefreshNetwork === 'function') settingsRefreshNetwork();
+      if (screen === 'system' && typeof sysLoadAll === 'function') sysLoadAll();
+      if (screen === 'devices' && typeof devRefresh === 'function') devRefresh();
+      if (screen === 'notifications' && typeof notifLoad === 'function') notifLoad();
     };
   }
 })();
