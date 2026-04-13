@@ -11,6 +11,15 @@ from astral.moon import phase as moon_phase
 app = FastAPI()
 app.add_middleware(CORSMiddleware,allow_origins=["*"],allow_methods=["*"],allow_headers=["*"])
 
+from fastapi import Header, HTTPException, Depends, UploadFile, File, Query
+
+DASHBOARD_PIN = "5046"
+
+async def verify_pin(x_pin: str = Header(None)):
+    if x_pin != DASHBOARD_PIN:
+        raise HTTPException(status_code=403, detail="Invalid PIN")
+
+
 PHOTOS_DIR = "/home/brifas/dashboard-html/photos"
 os.makedirs(PHOTOS_DIR, exist_ok=True)
 app.mount("/photos", StaticFiles(directory=PHOTOS_DIR), name="photos")
@@ -37,7 +46,7 @@ def health(): return {"status":"ok"}
 
 @app.get("/api/system")
 def system_stats():
-    cpu=psutil.cpu_percent(interval=1); ram=psutil.virtual_memory(); disk=psutil.disk_usage("/")
+    cpu=psutil.cpu_percent(interval=0); ram=psutil.virtual_memory(); disk=psutil.disk_usage("/")
     try:
         t=subprocess.check_output(["vcgencmd","measure_temp"]).decode()
         cpu_temp=float(t.replace("temp=","").replace("'C\n",""))
@@ -92,15 +101,14 @@ async def notifications():
             cpu_temp=float(t2.replace("temp=","").replace("'C\n","").strip().rstrip("'C"))
         except: pass
         cpu_f=cpu_temp*9/5+32
-        if cpu_f>160: items.append({"type":"system","icon":"🔥","source":"System","message":f"CPU temp {cpu_f:.0f}°F","time":__import__("time").time()})
+        if cpu_f>160: items.append({"type":"system","icon":"🔥","source":"System","message":f"CPU temp {cpu_f:.0f}°F","time":_time.time()})
         disk=psutil.disk_usage("/")
-        if disk.percent>90: items.append({"type":"system","icon":"💾","source":"System","message":f"Storage {disk.percent}% full","time":__import__("time").time()})
+        if disk.percent>90: items.append({"type":"system","icon":"💾","source":"System","message":f"Storage {disk.percent}% full","time":_time.time()})
     except: pass
     items.sort(key=lambda x:x.get("time",0),reverse=True)
     return items[:5]
 
 
-from fastapi import UploadFile, File, Query
 
 @app.post("/api/upload")
 async def upload_file(file: UploadFile = File(...), dest: str = Query("photos")):
@@ -162,19 +170,7 @@ async def get_events():
                      "score":round(e.get("score",0)*100),"time":e.get("start_time",0)} for e in r.json()]
     except: return []
 
-@app.get("/api/cameras")
-def get_cameras():
-    for attempt in range(3):
-        try:
-            cfg=httpx.get("http://localhost:5000/api/config",timeout=5).json()
-            stats=httpx.get("http://localhost:5000/api/stats",timeout=5).json()
-            cam_stats=stats.get("cameras",{})
-            return {"cameras":[{"name":n,"online":cam_stats.get(n,{}).get("camera_fps",0)>0}
-                                for n in cfg.get("cameras",{}).keys()]}
-        except:
-            import time
-            time.sleep(1)
-    return {"cameras":[],"error":"Frigate not responding"}
+
 
 @app.get("/api/clips")
 async def get_clips(camera:str=None,label:str=None,limit:int=100):
@@ -378,7 +374,7 @@ threading.Thread(target=_mqtt_subscriber,daemon=True).start()
 
 
 @app.post("/api/settime")
-async def set_time(payload: dict):
+async def set_time(payload: dict, pin=Depends(verify_pin)):
     dt = payload.get("datetime", "")
     if not dt:
         return {"success": False, "error": "no datetime"}
@@ -507,7 +503,7 @@ async def run_backup():
         return {"success": False, "error": str(e)}
 
 @app.post("/api/system/git-push")
-async def git_push():
+async def git_push(pin=Depends(verify_pin)):
     try:
         result = subprocess.check_output(
             ["bash", "-c", "cd /home/brifas/dashboard-html && git add -A && git commit -m \"dashboard auto-save\" && git push origin master"],
@@ -520,12 +516,12 @@ async def git_push():
         return {"success": False, "error": str(e)}
 
 @app.post("/api/system/reboot")
-async def reboot_system():
+async def reboot_system(pin=Depends(verify_pin)):
     subprocess.Popen(["sudo", "reboot"])
     return {"success": True}
 
 @app.post("/api/system/shutdown")
-async def shutdown_system():
+async def shutdown_system(pin=Depends(verify_pin)):
     subprocess.Popen(["sudo", "shutdown", "-h", "now"])
     return {"success": True}
 

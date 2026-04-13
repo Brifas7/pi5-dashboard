@@ -99,7 +99,6 @@ body { width: 100vw; height: 100vh; overflow: hidden; font-family: 'Rajdhani', s
 
 <script>
 const _HOST=window.location.hostname;
-const _GO2RTC="http://"+_HOST+":1984";
 const _FRIGATE="http://"+_HOST+":5000";
 let tapCount = 0;
 let tapTimer = null;
@@ -2603,7 +2602,7 @@ async function settingsApplyManualTime() {
   try {
     var r = await fetch('/api/settime', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json', 'X-Pin': '5046'},
       body: JSON.stringify({datetime: d + ' ' + t})
     });
     var data = await r.json();
@@ -2737,7 +2736,7 @@ async function sysBackupNow() {
 
 async function sysGitPush() {
   try {
-    var r = await fetch('/api/system/git-push', {method: 'POST'});
+    var r = await fetch('/api/system/git-push', {method: 'POST', headers: {'X-Pin': '5046'}});
     var d = await r.json();
     alert(d.success ? 'Pushed to GitHub' : 'Failed: ' + (d.output || d.error || ''));
   } catch(e) { alert('Failed'); }
@@ -2761,14 +2760,14 @@ async function sysLoadLogs() {
 function sysReboot() {
   if (!confirm('Reboot the Pi? This will disconnect you.')) return;
   if (!confirm('Are you sure? All services will restart.')) return;
-  fetch('/api/system/reboot', {method: 'POST'});
+  fetch('/api/system/reboot', {method: 'POST', headers: {'X-Pin': '5046'}});
   alert('Rebooting...');
 }
 
 function sysShutdown() {
   if (!confirm('Shutdown the Pi? You will need physical access to turn it back on.')) return;
   if (!confirm('Are you absolutely sure?')) return;
-  fetch('/api/system/shutdown', {method: 'POST'});
+  fetch('/api/system/shutdown', {method: 'POST', headers: {'X-Pin': '5046'}});
   alert('Shutting down...');
 }
 
