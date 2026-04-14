@@ -10,6 +10,20 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { width: 100vw; height: 100vh; overflow: hidden; font-family: 'Rajdhani', sans-serif; display: flex; flex-direction: column; background: none; }
 @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+/* === GLASSMORPHISM === */
+#nav-col button {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+#nav-col button:hover {
+  background: rgba(var(--accent-rgb), 0.28) !important;
+  box-shadow: 0 0 24px rgba(var(--accent-rgb), 0.35);
+  transform: translateY(-1px);
+  transition: all 0.2s ease;
+}
+#timetext, #datetext {
+  text-shadow: 0 0 15px rgba(var(--accent-rgb), 0.6);
+}
 #exit-zone { position: fixed; top: 0; right: 0; width: 60px; height: 60px; z-index: 9999; cursor: pointer; }
 #clock-bezel {
   position: relative; display: inline-block; padding: 28px;
