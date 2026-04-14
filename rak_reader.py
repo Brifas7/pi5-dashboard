@@ -47,6 +47,7 @@ def main():
     while True:
         try:
             log.info("Connecting to RAK via USB...")
+            iface = None
             iface = meshtastic.serial_interface.SerialInterface("/dev/ttyACM0")
             pub.subscribe(on_telemetry, "meshtastic.receive.telemetry")
             log.info("Connected. Listening for telemetry...")
@@ -67,7 +68,14 @@ def main():
                 time.sleep(1)
         except Exception as e:
             log.error(f"Connection error: {e}. Retrying in 10s...")
-            time.sleep(10)
+        finally:
+            if iface:
+                try:
+                    iface.close()
+                    log.info("Serial interface closed.")
+                except Exception:
+                    pass
+        time.sleep(10)
 
 if __name__ == "__main__":
     main()

@@ -48,6 +48,19 @@ def init_db():
         brightness INTEGER DEFAULT 100, color TEXT DEFAULT '#ffffff',
         online INTEGER DEFAULT 0, ip TEXT, uptime TEXT, rssi INTEGER,
         summary TEXT, last_seen INTEGER)""")
+    conn.execute("""CREATE TABLE IF NOT EXISTS sensor_registry (
+        id TEXT PRIMARY KEY, name TEXT, unit TEXT, source TEXT,
+        last_seen INTEGER, last_value REAL)""")
+    conn.execute("""CREATE TABLE IF NOT EXISTS sensor_readings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp INTEGER,
+        sensor_id TEXT, sensor_name TEXT, value REAL, unit TEXT)""")
+    conn.execute("""CREATE TABLE IF NOT EXISTS automation_rules (
+        id TEXT PRIMARY KEY, name TEXT, category TEXT DEFAULT 'general',
+        enabled INTEGER DEFAULT 1, trigger_type TEXT, trigger_config TEXT,
+        conditions TEXT, actions TEXT, created INTEGER, last_triggered INTEGER)""")
+    conn.execute("""CREATE TABLE IF NOT EXISTS automation_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp INTEGER,
+        rule_id TEXT, rule_name TEXT, result TEXT, detail TEXT)""")
     conn.commit(); conn.close()
 
 @app.get("/api/health")
@@ -229,7 +242,10 @@ def ingest_sensor(payload:dict):
         now=int(_time.time()); conn=_db()
         for rd in payload.get("readings",[]):
             conn.execute("INSERT INTO sensor_readings (timestamp,sensor_id,sensor_name,value,unit) VALUES (?,?,?,?,?)",(now,rd["id"],rd.get("name",""),rd["value"],rd.get("unit","")))
-            conn.execute("UPDATE sensor_registry SET last_seen=?,last_value=? WHERE id=?",(now,rd["value"],rd["id"]))
+            conn.execute("""INSERT INTO sensor_registry (id,name,unit,source,last_seen,last_value)
+                VALUES (?,?,?,?,?,?)
+                ON CONFLICT(id) DO UPDATE SET last_seen=excluded.last_seen,last_value=excluded.last_value""",
+                (rd["id"],rd.get("name",""),rd.get("unit",""),"RAK WisBlock",now,rd["value"]))
         conn.commit(); conn.close(); return {"success":True}
     except Exception as e: return {"success":False,"error":str(e)}
 
