@@ -10,6 +10,9 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { width: 100vw; height: 100vh; overflow: hidden; font-family: 'Rajdhani', sans-serif; display: flex; flex-direction: column; background: none; }
 @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+.ops-avg-cell{background:rgba(var(--accent-rgb),0.08);border:1px solid rgba(var(--accent-rgb),0.2);border-radius:8px;padding:8px;text-align:center;}
+.ops-avg-label{font-size:11px;color:var(--text-sub);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
+.ops-avg-val{font-family:'Orbitron',monospace;font-size:15px;font-weight:700;color:var(--text);}
 /* === GLASSMORPHISM === */
 #nav-col button {
   backdrop-filter: blur(12px);
@@ -26,11 +29,11 @@ body { width: 100vw; height: 100vh; overflow: hidden; font-family: 'Rajdhani', s
 }
 #exit-zone { position: fixed; top: 0; right: 0; width: 60px; height: 60px; z-index: 9999; cursor: pointer; }
 #clock-bezel {
-  position: relative; display: inline-block; padding: 28px;
-  background: radial-gradient(circle at center, rgba(255,255,255,0.12) 0%, transparent 70%);
-  border: 18px solid rgba(var(--accent-rgb), 0.65);
+  position: relative; display: inline-block; padding: 22px;
+  background: radial-gradient(circle at center, rgba(255,255,255,0.08) 0%, transparent 65%);
+  border: 24px solid rgba(20,20,30,0.95);
   border-radius: 50%;
-  box-shadow: 0 0 40px rgba(var(--accent-rgb), 0.5), inset 0 0 60px rgba(0,0,0,0.7), 0 15px 35px rgba(0,0,0,0.6);
+  box-shadow: 0 0 60px rgba(var(--accent-rgb), 0.85), 0 0 25px rgba(var(--accent-rgb), 0.4), inset 0 0 80px rgba(0,0,0,0.9), inset 0 0 40px rgba(var(--accent-rgb), 0.3), 0 20px 40px rgba(0,0,0,0.7);
   margin-bottom: 24px;
 }
 #clock { display: block; border-radius: 50%; }
@@ -1108,13 +1111,16 @@ async function _opsRenderWeatherStation() {
 
   // Averages
   html += '<div class="ops-section"><div class="ops-section-label">AVERAGES</div>';
-  html += '<div class="ops-stat-row"><span class="ops-stat-label">Temp (24h avg)</span><span class="ops-stat-val">' + (avgs.temp_24h || '—') + '</span></div>';
-  html += '<div class="ops-stat-row"><span class="ops-stat-label">Temp (7d avg)</span><span class="ops-stat-val">' + (avgs.temp_7d || '—') + '</span></div>';
-  html += '<div class="ops-stat-row"><span class="ops-stat-label">Temp (30d avg)</span><span class="ops-stat-val">' + (avgs.temp_30d || '—') + '</span></div>';
-  html += '<div class="ops-stat-row"><span class="ops-stat-label">Temp (24h high)</span><span class="ops-stat-val" style="color:#ef4444;">' + (avgs.temp_24h_high || '—') + '</span></div>';
-  html += '<div class="ops-stat-row"><span class="ops-stat-label">Temp (24h low)</span><span class="ops-stat-val" style="color:#3b82f6;">' + (avgs.temp_24h_low || '—') + '</span></div>';
-  html += '<div class="ops-stat-row"><span class="ops-stat-label">Humidity (24h avg)</span><span class="ops-stat-val">' + (avgs.humid_24h || '—') + '</span></div>';
-  html += '<div class="ops-stat-row"><span class="ops-stat-label">Pressure (24h avg)</span><span class="ops-stat-val">' + (avgs.pres_24h || '—') + '</span></div>';
+  html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px;">';
+  html += '<div class="ops-avg-cell"><div class="ops-avg-label">24h Avg</div><div class="ops-avg-val">' + (avgs.temp_24h || '—') + '</div></div>';
+  html += '<div class="ops-avg-cell"><div class="ops-avg-label">7d Avg</div><div class="ops-avg-val">' + (avgs.temp_7d || '—') + '</div></div>';
+  html += '<div class="ops-avg-cell"><div class="ops-avg-label">30d Avg</div><div class="ops-avg-val">' + (avgs.temp_30d || '—') + '</div></div>';
+  html += '<div class="ops-avg-cell"><div class="ops-avg-label">Humidity</div><div class="ops-avg-val">' + (avgs.humid_24h || '—') + '</div></div>';
+  html += '<div class="ops-avg-cell"><div class="ops-avg-label">24h High</div><div class="ops-avg-val" style="color:#ef4444;">' + (avgs.temp_24h_high || '—') + '</div></div>';
+  html += '<div class="ops-avg-cell"><div class="ops-avg-label">24h Low</div><div class="ops-avg-val" style="color:#3b82f6;">' + (avgs.temp_24h_low || '—') + '</div></div>';
+  html += '<div class="ops-avg-cell"><div class="ops-avg-label">Pressure</div><div class="ops-avg-val">' + (avgs.pres_24h || '—') + '</div></div>';
+  html += '<div class="ops-avg-cell"><div class="ops-avg-label">Dew Pt Avg</div><div class="ops-avg-val">' + (avgs.dew_24h || '—') + '</div></div>';
+  html += '</div></div>';
   html += '</div>';
 
   // History button
@@ -1346,7 +1352,11 @@ async function opsLoadGraph() {
 <div id="settings-screen-themes" class="settings-screen"><div class="settings-header"><button class="settings-btn" onclick="settingsBack('main')">◀ BACK</button><span class="settings-title">🎨 THEMES</span><button class="settings-btn settings-btn-close" onclick="settingsClose()">✕ CLOSE</button></div><div class="settings-body"><div class="settings-section" style="display:flex;flex-direction:column;gap:14px;">
 <div class="settings-menu-item" onclick="settingsNav('themes_list')"><div style="display:flex;align-items:center;gap:14px;"><span style="font-size:22px;">🎨</span><div><div class="settings-row-label">Themes</div><div class="settings-row-sub">Select visual theme</div></div></div><span style="color:var(--text-sub);font-size:18px;">▶</span></div>
 <div class="settings-menu-item" onclick="settingsNav('holiday_themes')"><div style="display:flex;align-items:center;gap:14px;"><span style="font-size:22px;">🎄</span><div><div class="settings-row-label">Holiday Themes</div><div class="settings-row-sub">Seasonal theme schedule</div></div></div><span style="color:var(--text-sub);font-size:18px;">▶</span></div>
+<div class="settings-menu-item" onclick="settingsNav('theme_schedule')"><div style="display:flex;align-items:center;gap:14px;"><span style="font-size:22px;">📅</span><div><div class="settings-row-label">Schedule</div><div class="settings-row-sub">Auto-switch themes by date</div></div></div><span style="color:var(--text-sub);font-size:18px;">▶</span></div>
+<div class="settings-menu-item" onclick="settingsNav('theme_carousel')"><div style="display:flex;align-items:center;gap:14px;"><span style="font-size:22px;">🎠</span><div><div class="settings-row-label">Carousel</div><div class="settings-row-sub">Auto-cycle themes on a timer</div></div></div><span style="color:var(--text-sub);font-size:18px;">▶</span></div>
 </div></div></div>
+<div id="settings-screen-theme_schedule" class="settings-screen"><div class="settings-header"><button class="settings-btn" onclick="settingsBack('themes')">◀ BACK</button><span class="settings-title">📅 SCHEDULE</span><button class="settings-btn settings-btn-close" onclick="settingsClose()">✕ CLOSE</button></div><div class="settings-body"><div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button class="settings-btn" onclick="scheduleShowCreate()">+ NEW</button></div><div id="schedule-list"></div></div>
+<div id="settings-screen-theme_carousel" class="settings-screen"><div class="settings-header"><button class="settings-btn" onclick="settingsBack('themes')">◀ BACK</button><span class="settings-title">🎠 CAROUSEL</span><button class="settings-btn settings-btn-close" onclick="settingsClose()">✕ CLOSE</button></div><div class="settings-body"><div class="settings-section" style="gap:16px;"><div class="settings-row"><div><div class="settings-row-label">Auto-Cycle Themes</div><div class="settings-row-sub">Cycles through all regular themes</div></div><label class="settings-toggle"><input type="checkbox" id="carousel-toggle" onchange="carouselToggle(this.checked)"><span class="settings-toggle-slider"></span></label></div><div class="settings-row"><div><div class="settings-row-label">Change Every</div></div><div style="display:flex;gap:8px;align-items:center;"><input type="number" class="auto-input" id="carousel-val" value="1" min="1" style="width:80px;" onchange="carouselSave()"><select class="auto-select" id="carousel-unit" onchange="carouselSave()"><option value="60000">Minutes</option><option value="3600000" selected>Hours</option><option value="86400000">Days</option><option value="604800000">Weeks</option></select></div></div></div></div></div>
 <div id="settings-screen-themes_list" class="settings-screen"><div class="settings-header"><button class="settings-btn" onclick="settingsBack('themes')">◀ BACK</button><span class="settings-title">🎨 THEMES</span><button class="settings-btn settings-btn-close" onclick="settingsClose()">✕ CLOSE</button></div><div class="settings-body"><div class="settings-section"><div class="settings-theme-grid" id="settings-theme-grid"></div></div></div></div>
 <div id="settings-screen-holiday_themes" class="settings-screen"><div class="settings-header"><button class="settings-btn" onclick="settingsBack('themes')">◀ BACK</button><span class="settings-title">🎄 HOLIDAY THEMES</span><button class="settings-btn settings-btn-close" onclick="settingsClose()">✕ CLOSE</button></div><div class="settings-body"><div class="settings-section"><div class="settings-theme-grid" id="settings-holiday-grid"></div></div></div></div>
 <div id="settings-screen-about" class="settings-screen"><div class="settings-header"><button class="settings-btn" onclick="settingsBack('main')">◀ BACK</button><span class="settings-title">ℹ ABOUT</span><button class="settings-btn settings-btn-close" onclick="settingsClose()">✕ CLOSE</button></div><div class="settings-body"><div class="settings-section">
@@ -1744,7 +1754,7 @@ async function _sensorsLoadGraph() {
 }
 </script>
 <script src="chart.min.js"></script>
-<script src="settings.js?v=18"></script>
+<script src="settings.js?v=19"></script>
 <script src="camera.js?v=2"></script>
 
 <script>
@@ -2579,17 +2589,7 @@ function settingsLoadTimeDate() {
   var ntpEl = document.getElementById('si-ntp');
   if (ntpEl) ntpEl.textContent = 'Active';
 }
-// Hook into settings nav
-var _origSettingsNav = typeof settingsNav === 'function' ? settingsNav : null;
-document.addEventListener('DOMContentLoaded', function() {
-  var origNav = window.settingsNav;
-  if (origNav) {
-    window.settingsNav = function(screen) {
-      origNav(screen);
-      if (screen === 'timedate') settingsLoadTimeDate();
-    };
-  }
-});
+// settingsNav hook handled by dispatcher below
 </script>
 
 <script>
@@ -2915,9 +2915,12 @@ async function notifLoadHistory() {
       if (screen === 'system' && typeof sysLoadAll === 'function') sysLoadAll();
       if (screen === 'devices' && typeof devRefresh === 'function') devRefresh();
       if (screen === 'notifications' && typeof notifLoad === 'function') notifLoad();
+      if (screen === 'theme_schedule' && typeof scheduleRenderList === 'function') scheduleRenderList();
+      if (screen === 'theme_carousel' && typeof carouselInit === 'function') carouselInit();
     };
   }
 })();
 </script>
+<div id="schedule-create" style="display:none;position:fixed;inset:0;background:var(--overlay-bg);z-index:2000;flex-direction:column;"><div class="settings-header"><span class="settings-title">📅 NEW SCHEDULE</span><button class="settings-btn settings-btn-close" onclick="scheduleHideCreate()">✕ CANCEL</button></div><div class="settings-body"><div class="settings-section" style="gap:16px;"><div><div class="auto-field-lbl">THEME</div><select class="auto-select" id="sch-theme" style="width:100%;margin-top:4px;"></select></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div><div class="auto-field-lbl">START (MM/DD)</div><input class="auto-input" id="sch-start" placeholder="12/01" style="margin-top:4px;"></div><div><div class="auto-field-lbl">END (MM/DD)</div><input class="auto-input" id="sch-end" placeholder="01/02" style="margin-top:4px;"></div></div><div><div class="auto-field-lbl">NAME</div><input class="auto-input" id="sch-name" placeholder="e.g. Christmas Season" style="margin-top:4px;"></div><button class="settings-btn" style="width:100%;padding:14px;margin-top:8px;" onclick="scheduleSave()">💾 SAVE</button></div></div></div></div>
 </body>
 </html>

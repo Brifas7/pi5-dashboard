@@ -9,7 +9,8 @@ const _settings = {
     {id:'cyber',name:'Cyberpunk',color:'#ff00ff'},
     {id:'nebula',name:'Nebula',color:'#7e22ff'},
     {id:'void',name:'Void',color:'#00f0ff'},
-    {id:'matrix',name:'Matrix',color:'#00ff41'}
+    {id:'matrix',name:'Matrix',color:'#00ff41'},
+    {id:'aquatic',name:'Deep Aquatic',color:'#00b8a9'}
   ],
   activeTheme:'water',
   navStack:[]
@@ -25,7 +26,8 @@ const _themeColors={
   cyber:{rgb:'255,0,255',accent:'#ff00ff',bg:'linear-gradient(to bottom, #220022 0%, #110011 40%, #001122 100%)',text:'#fff0ff',sub:'#ff88ff',notif:'rgba(180,0,180,0.45)',overlay:'rgba(20,0,30,0.97)',gauge:'#ff00ff',clock:'#ff00ff'},
   nebula:{rgb:'126,34,255',accent:'#7e22ff',bg:'linear-gradient(to bottom, #1a0033 0%, #0f0022 40%, #001122 100%)',text:'#f0e0ff',sub:'#c4a5ff',notif:'rgba(80,20,180,0.45)',overlay:'rgba(12,4,40,0.97)',gauge:'#7e22ff',clock:'#7e22ff'},
   void:{rgb:'0,240,255',accent:'#00f0ff',bg:'linear-gradient(to bottom, #001122 0%, #000a1a 40%, #000511 100%)',text:'#e0f8ff',sub:'#88ddff',notif:'rgba(0,80,120,0.45)',overlay:'rgba(0,10,20,0.97)',gauge:'#00f0ff',clock:'#00f0ff'},
-  matrix:{rgb:'0,255,65',accent:'#00ff41',bg:'linear-gradient(to bottom, #001100 0%, #000a00 40%, #001100 100%)',text:'#e0ffe8',sub:'#88ffaa',notif:'rgba(0,100,40,0.45)',overlay:'rgba(0,15,5,0.97)',gauge:'#00ff41',clock:'#00ff41'}
+  matrix:{rgb:'0,255,65',accent:'#00ff41',bg:'linear-gradient(to bottom, #001100 0%, #000a00 40%, #001100 100%)',text:'#e0ffe8',sub:'#88ffaa',notif:'rgba(0,100,40,0.45)',overlay:'rgba(0,15,5,0.97)',gauge:'#00ff41',clock:'#00ff41'},
+  aquatic:{rgb:'0,184,169',accent:'#00b8a9',bg:'linear-gradient(to bottom, #001a22 0%, #002833 40%, #00141a 100%)',text:'#e0f8f5',sub:'#6ee7d8',notif:'rgba(0,120,110,0.45)',overlay:'rgba(0,20,25,0.97)',gauge:'#00b8a9',clock:'#00b8a9'}
 };
 
 function _settingsHideAll(){
@@ -39,6 +41,8 @@ function settingsNav(id){
   if(id==='themes_list')_settingsRenderThemes();
   if(id==='about')_settingsLoadSysInfo();
   if(id==='holiday_themes')_settingsRenderHolidays();
+  if(id==='theme_schedule')scheduleRenderList();
+  if(id==='theme_carousel')carouselInit();
 }
 function settingsBack(target){
   _settingsHideAll();
@@ -119,3 +123,146 @@ function _settingsRenderHolidays(){
       +th.icon+' '+th.name+'</div>';
   }).join('');
 }
+
+// === THEME SCHEDULER ===
+var _holidayActive = false;
+
+function scheduleCheck() {
+  var schedules = JSON.parse(localStorage.getItem('themeSchedules') || '[]');
+  var now = new Date();
+  var month = now.getMonth() + 1;
+  var day = now.getDate();
+  for (var i = 0; i < schedules.length; i++) {
+    var s = schedules[i];
+    var sm = parseInt(s.start.split('/')[0]), sd = parseInt(s.start.split('/')[1]);
+    var em = parseInt(s.end.split('/')[0]), ed = parseInt(s.end.split('/')[1]);
+    var inRange = false;
+    if (sm <= em) {
+      inRange = (month > sm || (month === sm && day >= sd)) && (month < em || (month === em && day <= ed));
+    } else {
+      inRange = (month > sm || (month === sm && day >= sd)) || (month < em || (month === em && day <= ed));
+    }
+    if (inRange) {
+      _holidayActive = true;
+      applyTheme(s.themeId);
+      return;
+    }
+  }
+  _holidayActive = false;
+}
+
+function scheduleShowCreate() {
+  var sel = document.getElementById('sch-theme');
+  sel.innerHTML = _settings.themes.map(function(t) {
+    return '<option value="' + t.id + '">' + t.name + '</option>';
+  }).join('');
+  document.getElementById('sch-name').value = '';
+  document.getElementById('sch-start').value = '';
+  document.getElementById('sch-end').value = '';
+  document.getElementById('schedule-create').style.display = 'flex';
+}
+
+function scheduleHideCreate() {
+  document.getElementById('schedule-create').style.display = 'none';
+}
+
+function scheduleSave() {
+  var name = document.getElementById('sch-name').value.trim();
+  var start = document.getElementById('sch-start').value.trim();
+  var end = document.getElementById('sch-end').value.trim();
+  var themeId = document.getElementById('sch-theme').value;
+  if (!name || !start || !end) { alert('Fill in all fields.'); return; }
+  var schedules = JSON.parse(localStorage.getItem('themeSchedules') || '[]');
+  schedules.push({ id: Date.now(), name: name, themeId: themeId, start: start, end: end });
+  localStorage.setItem('themeSchedules', JSON.stringify(schedules));
+  scheduleHideCreate();
+  scheduleRenderList();
+  scheduleCheck();
+}
+
+function scheduleRenderList() {
+  var el = document.getElementById('schedule-list');
+  if (!el) return;
+  var schedules = JSON.parse(localStorage.getItem('themeSchedules') || '[]');
+  if (schedules.length === 0) {
+    el.innerHTML = '<div style="color:var(--text-sub);text-align:center;padding:40px;font-size:15px;">No schedules yet. Tap + NEW to create one.</div>';
+    return;
+  }
+  el.innerHTML = schedules.map(function(s) {
+    var c = _themeColors[s.themeId];
+    var color = c ? c.accent : '#1e5aff';
+    return '<div style="display:flex;align-items:center;gap:14px;background:rgba(var(--accent-rgb),0.08);border:1px solid rgba(var(--accent-rgb),0.2);border-radius:10px;padding:14px 18px;margin-bottom:10px;">'
+      + '<div style="width:14px;height:14px;border-radius:50%;background:' + color + ';flex-shrink:0;"></div>'
+      + '<div style="flex:1;"><div style="font-size:16px;font-weight:700;">' + s.name + '</div>'
+      + '<div style="font-size:13px;color:var(--text-sub);">' + s.start + ' → ' + s.end + ' · ' + s.themeId + '</div></div>'
+      + '<button class="settings-btn" style="background:rgba(220,40,40,0.15);border-color:rgba(220,40,40,0.4);color:#fca5a5;" onclick="scheduleDelete(' + s.id + ')">🗑</button>'
+      + '</div>';
+  }).join('');
+}
+
+function scheduleDelete(id) {
+  var schedules = JSON.parse(localStorage.getItem('themeSchedules') || '[]');
+  schedules = schedules.filter(function(s) { return s.id !== id; });
+  localStorage.setItem('themeSchedules', JSON.stringify(schedules));
+  scheduleRenderList();
+  scheduleCheck();
+}
+
+// === CAROUSEL ===
+var _carouselTimer = null;
+
+function carouselToggle(enabled) {
+  var val = parseInt(document.getElementById('carousel-val').value) || 1;
+  var unit = parseInt(document.getElementById('carousel-unit').value);
+  localStorage.setItem('carouselEnabled', enabled ? '1' : '0');
+  carouselSave();
+  if (enabled) carouselStart(); else carouselStop();
+}
+
+function carouselSave() {
+  var val = parseInt(document.getElementById('carousel-val').value) || 1;
+  var unit = parseInt(document.getElementById('carousel-unit').value);
+  localStorage.setItem('carouselInterval', val * unit);
+}
+
+function carouselStart() {
+  if (_holidayActive) return;
+  carouselStop();
+  var interval = parseInt(localStorage.getItem('carouselInterval') || '3600000');
+  _carouselTimer = setInterval(function() {
+    if (_holidayActive) { carouselStop(); return; }
+    var themes = _settings.themes;
+    var idx = themes.findIndex(function(t) { return t.id === _settings.activeTheme; });
+    var next = themes[(idx + 1) % themes.length];
+    applyTheme(next.id);
+  }, interval);
+}
+
+function carouselStop() {
+  if (_carouselTimer) { clearInterval(_carouselTimer); _carouselTimer = null; }
+}
+
+function carouselInit() {
+  var enabled = localStorage.getItem('carouselEnabled') === '1';
+  var interval = parseInt(localStorage.getItem('carouselInterval') || '3600000');
+  var toggle = document.getElementById('carousel-toggle');
+  if (toggle) toggle.checked = enabled;
+  var units = [60000, 3600000, 86400000, 604800000];
+  var unitEl = document.getElementById('carousel-unit');
+  var valEl = document.getElementById('carousel-val');
+  for (var u of units) {
+    if (interval % u === 0) {
+      if (unitEl) unitEl.value = u;
+      if (valEl) valEl.value = interval / u;
+      break;
+    }
+  }
+  if (enabled) carouselStart();
+}
+
+// Run on load
+scheduleCheck();
+setTimeout(carouselInit, 500);
+
+// Re-render list when screen opens
+

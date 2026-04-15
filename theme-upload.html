@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Upload Theme Backgrounds</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body { background: #0a0e1a; color: #e0e8ff; font-family: 'Rajdhani', sans-serif; padding: 20px; }
+h1 { font-size: 22px; margin-bottom: 20px; }
+form { display: flex; flex-direction: column; gap: 14px; max-width: 400px; }
+input[type=file] { background: rgba(30,90,255,0.12); border: 1px solid rgba(30,90,255,0.3); border-radius: 8px; padding: 12px; color: #e0e8ff; }
+button { background: rgba(30,90,255,0.2); border: 1px solid rgba(30,90,255,0.4); border-radius: 8px; padding: 14px; color: #e0e8ff; font-size: 16px; font-weight: 700; cursor: pointer; }
+button:active { background: rgba(30,90,255,0.4); }
+#status { margin-top: 14px; font-size: 14px; }
+.info { font-size: 13px; color: #8ea4d4; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<h1>Upload Theme Backgrounds</h1>
+<div class="info">Upload images to /static/themes/<br>Name files: water.jpg, titanium.jpg, emerald.jpg, purple.jpg, christmas.jpg, stpatricks.jpg</div>
+<input type="file" id="file" accept="image/*">
+<button onclick="upload()">UPLOAD</button>
+<div id="status"></div>
+<script>
+async function upload() {
+  var f = document.getElementById('file').files[0];
+  if (!f) { document.getElementById('status').textContent = 'Select a file first'; return; }
+  var fd = new FormData();
+  fd.append('file', f);
+  document.getElementById('status').textContent = 'Uploading...';
+  try {
+    var r = await fetch('/api/upload?dest=themes', { method: 'POST', body: fd });
+    var d = await r.json();
+    document.getElementById('status').textContent = d.success ? 'Uploaded: ' + f.name : 'Error: ' + (d.error || 'unknown');
+  } catch(e) {
+    document.getElementById('status').textContent = 'Upload failed';
+  }
+}
+</script>
+</body>
+</html>
