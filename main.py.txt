@@ -211,8 +211,8 @@ async def get_clips(camera:str=None,label:str=None,limit:int=100):
                 clips.append({"id":e["id"],"camera":e["camera"],"label":e.get("label","unknown"),
                     "score":round((e.get("top_score") or 0)*100),"start_time":start,
                     "duration":f"{dur//60:02d}:{dur%60:02d}",
-                    "thumbnail":f"http://localhost:5000/api/events/{e['id']}/thumbnail.jpg",
-                    "clip_url":f"http://localhost:5000/api/events/{e['id']}/clip.mp4"})
+                    "thumbnail":f"/api/clip/{e['id']}/thumbnail.jpg",
+                    "clip_url":f"/api/clip/{e['id']}/clip.mp4"})
             return {"clips":clips}
     except Exception as e: return {"clips":[],"error":str(e)}
 
@@ -820,6 +820,27 @@ async def set_retention(payload: dict):
         return {"success": True}
     except Exception as e:
         return {"success": False, "error": str(e)}
+
+
+@app.get("/api/clip/{event_id}/thumbnail.jpg")
+async def proxy_thumbnail(event_id: str):
+    async with httpx.AsyncClient() as client:
+        r = await client.get(f"http://localhost:5000/api/events/{event_id}/thumbnail.jpg", timeout=10)
+        return Response(content=r.content, media_type="image/jpeg")
+
+@app.get("/api/clip/{event_id}/clip.mp4")
+async def proxy_clip(event_id: str):
+    client = httpx.AsyncClient()
+    req = client.build_request("GET", f"http://localhost:5000/api/events/{event_id}/clip.mp4")
+    resp = await client.send(req, stream=True)
+    async def generate():
+        try:
+            async for chunk in resp.aiter_bytes(65536):
+                yield chunk
+        finally:
+            await resp.aclose()
+            await client.aclose()
+    return StreamingResponse(generate(), media_type="video/mp4")
 
 # --- CAMERA PROXY ---
 def _load_cameras():
