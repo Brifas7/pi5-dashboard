@@ -61,6 +61,9 @@ def init_db():
     conn.execute("""CREATE TABLE IF NOT EXISTS automation_log (
         id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp INTEGER,
         rule_id TEXT, rule_name TEXT, result TEXT, detail TEXT)""")
+    conn.execute("""CREATE TABLE IF NOT EXISTS system_readings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        timestamp INTEGER, metric TEXT, value REAL)""")
     conn.commit(); conn.close()
 
 @app.get("/api/health")
@@ -249,6 +252,16 @@ def ingest_sensor(payload:dict):
         conn.commit(); conn.close(); return {"success":True}
     except Exception as e: return {"success":False,"error":str(e)}
 
+@app.get("/api/system/temp-history")
+def get_temp_history(range:str="24h"):
+    try:
+        since=int(_time.time())-{"1h":3600,"24h":86400,"7d":604800}.get(range,86400)
+        conn=_db()
+        rows=conn.execute("SELECT timestamp,value FROM system_readings WHERE metric='cpu_temp_f' AND timestamp>? ORDER BY timestamp ASC",(since,)).fetchall()
+        conn.close()
+        return {"range":range,"points":[{"t":r[0],"v":r[1]} for r in rows]}
+    except Exception as e: return {"points":[],"error":str(e)}
+
 def _mqtt_publish(topic,payload):
     try:
         import paho.mqtt.publish as pub
@@ -394,6 +407,20 @@ def _mqtt_subscriber():
         client.connect("localhost",1883,60); client.loop_forever()
     except: pass
 
+def _cpu_temp_logger():
+    while True:
+        try:
+            t=subprocess.check_output(["vcgencmd","measure_temp"]).decode()
+            cpu_temp=float(t.replace("temp=","").replace("'C\n",""))
+            cpu_temp_f=round(cpu_temp*9/5+32,1)
+            now=int(_time.time())
+            conn=_db()
+            conn.execute("INSERT INTO system_readings (timestamp,metric,value) VALUES (?,?,?)",(now,"cpu_temp_f",cpu_temp_f))
+            conn.commit(); conn.close()
+        except: pass
+        _time.sleep(60)
+
+threading.Thread(target=_cpu_temp_logger,daemon=True).start()
 threading.Thread(target=_mqtt_subscriber,daemon=True).start()
 
 

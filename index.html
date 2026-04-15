@@ -1355,7 +1355,7 @@ async function opsLoadGraph() {
 <div class="settings-menu-item" onclick="settingsNav('theme_schedule')"><div style="display:flex;align-items:center;gap:14px;"><span style="font-size:22px;">📅</span><div><div class="settings-row-label">Schedule</div><div class="settings-row-sub">Auto-switch themes by date</div></div></div><span style="color:var(--text-sub);font-size:18px;">▶</span></div>
 <div class="settings-menu-item" onclick="settingsNav('theme_carousel')"><div style="display:flex;align-items:center;gap:14px;"><span style="font-size:22px;">🎠</span><div><div class="settings-row-label">Carousel</div><div class="settings-row-sub">Auto-cycle themes on a timer</div></div></div><span style="color:var(--text-sub);font-size:18px;">▶</span></div>
 </div></div></div>
-<div id="settings-screen-theme_schedule" class="settings-screen"><div class="settings-header"><button class="settings-btn" onclick="settingsBack('themes')">◀ BACK</button><span class="settings-title">📅 SCHEDULE</span><button class="settings-btn settings-btn-close" onclick="settingsClose()">✕ CLOSE</button></div><div class="settings-body"><div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button class="settings-btn" onclick="scheduleShowCreate()">+ NEW</button></div><div id="schedule-list"></div></div>
+<div id="settings-screen-theme_schedule" class="settings-screen"><div class="settings-header"><button class="settings-btn" onclick="settingsBack('themes')">◀ BACK</button><span class="settings-title">📅 SCHEDULE</span><button class="settings-btn settings-btn-close" onclick="settingsClose()">✕ CLOSE</button></div><div class="settings-body"><div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button class="settings-btn" onclick="scheduleShowCreate()">+ NEW</button></div><div id="schedule-list"></div></div></div>
 <div id="settings-screen-theme_carousel" class="settings-screen"><div class="settings-header"><button class="settings-btn" onclick="settingsBack('themes')">◀ BACK</button><span class="settings-title">🎠 CAROUSEL</span><button class="settings-btn settings-btn-close" onclick="settingsClose()">✕ CLOSE</button></div><div class="settings-body"><div class="settings-section" style="gap:16px;"><div class="settings-row"><div><div class="settings-row-label">Auto-Cycle Themes</div><div class="settings-row-sub">Cycles through all regular themes</div></div><label class="settings-toggle"><input type="checkbox" id="carousel-toggle" onchange="carouselToggle(this.checked)"><span class="settings-toggle-slider"></span></label></div><div class="settings-row"><div><div class="settings-row-label">Change Every</div></div><div style="display:flex;gap:8px;align-items:center;"><input type="number" class="auto-input" id="carousel-val" value="1" min="1" style="width:80px;" onchange="carouselSave()"><select class="auto-select" id="carousel-unit" onchange="carouselSave()"><option value="60000">Minutes</option><option value="3600000" selected>Hours</option><option value="86400000">Days</option><option value="604800000">Weeks</option></select></div></div></div></div></div>
 <div id="settings-screen-themes_list" class="settings-screen"><div class="settings-header"><button class="settings-btn" onclick="settingsBack('themes')">◀ BACK</button><span class="settings-title">🎨 THEMES</span><button class="settings-btn settings-btn-close" onclick="settingsClose()">✕ CLOSE</button></div><div class="settings-body"><div class="settings-section"><div class="settings-theme-grid" id="settings-theme-grid"></div></div></div></div>
 <div id="settings-screen-holiday_themes" class="settings-screen"><div class="settings-header"><button class="settings-btn" onclick="settingsBack('themes')">◀ BACK</button><span class="settings-title">🎄 HOLIDAY THEMES</span><button class="settings-btn settings-btn-close" onclick="settingsClose()">✕ CLOSE</button></div><div class="settings-body"><div class="settings-section"><div class="settings-theme-grid" id="settings-holiday-grid"></div></div></div></div>
@@ -1381,6 +1381,7 @@ async function opsLoadGraph() {
 <div class="settings-row"><span class="settings-row-label">Camera (eth0)</span><span class="settings-val" style="font-family:Rajdhani,sans-serif;" id="si-eth0">—</span></div>
 <div class="settings-row"><span class="settings-row-label">Tailscale</span><span class="settings-val" style="font-family:Rajdhani,sans-serif;" id="si-tailscale">—</span></div>
 </div></div></div>
+<div id="settings-screen-cpu_temp_graph" class="settings-screen"><div class="settings-header"><button class="settings-btn" onclick="settingsBack('system')">◀ BACK</button><span class="settings-title">🌡 CPU TEMP HISTORY</span><button class="settings-btn settings-btn-close" onclick="settingsClose()">✕ CLOSE</button></div><div class="settings-body" style="padding:0;"><div style="display:flex;gap:8px;padding:14px 20px;border-bottom:1px solid rgba(var(--accent-rgb),0.15);"><button class="sensors-range-btn active" id="cputemp-btn-1h" onclick="cpuTempLoad('1h',this)">1H</button><button class="sensors-range-btn" id="cputemp-btn-24h" onclick="cpuTempLoad('24h',this)">24H</button><button class="sensors-range-btn" id="cputemp-btn-7d" onclick="cpuTempLoad('7d',this)">7D</button></div><div style="flex:1;padding:16px;display:flex;flex-direction:column;gap:12px;min-height:0;"><div id="cputemp-sublabel" style="font-size:13px;color:var(--text-sub);font-weight:600;letter-spacing:1px;"></div><div style="flex:1;background:rgba(var(--accent-rgb),0.05);border:1px solid rgba(var(--accent-rgb),0.15);border-radius:10px;padding:12px;min-height:200px;"><canvas id="cputemp-canvas"></canvas><div id="cputemp-nodata" style="display:none;color:#475569;font-size:15px;font-weight:600;text-align:center;padding:40px;">No data for this range</div></div></div></div></div>
 <div id="settings-screen-timedate" class="settings-screen"><div class="settings-header"><button class="settings-btn" onclick="settingsBack('main')">◀ BACK</button><span class="settings-title">🕐 TIME &amp; DATE</span><button class="settings-btn settings-btn-close" onclick="settingsClose()">✕ CLOSE</button></div><div class="settings-body">
 <div class="settings-section">
 <div class="settings-section-label">TIME FORMAT</div>
@@ -1433,7 +1434,7 @@ async function opsLoadGraph() {
 <div class="settings-section">
 <div class="settings-section-label">SYSTEM STATUS</div>
 <div class="settings-row"><span class="settings-row-label">Uptime</span><span class="settings-val" style="font-family:Rajdhani,sans-serif;" id="sys-uptime">—</span></div>
-<div class="settings-row"><span class="settings-row-label">CPU Temp</span><span class="settings-val" style="font-family:Rajdhani,sans-serif;" id="sys-cputemp">—</span></div>
+<div class="settings-row"><span class="settings-row-label">CPU Temp</span><div style="display:flex;align-items:center;gap:10px;"><span class="settings-val" style="font-family:Rajdhani,sans-serif;" id="sys-cputemp">—</span><button class="settings-btn" style="padding:6px 12px;font-size:12px;" onclick="settingsNav('cpu_temp_graph')">📈 HISTORY</button></div></div>
 <div class="settings-row"><span class="settings-row-label">Storage</span><span class="settings-val" style="font-family:Rajdhani,sans-serif;" id="sys-storage">—</span></div>
 </div>
 <div class="settings-section">
@@ -2917,6 +2918,7 @@ async function notifLoadHistory() {
       if (screen === 'notifications' && typeof notifLoad === 'function') notifLoad();
       if (screen === 'theme_schedule' && typeof scheduleRenderList === 'function') scheduleRenderList();
       if (screen === 'theme_carousel' && typeof carouselInit === 'function') carouselInit();
+      if (screen === 'cpu_temp_graph') cpuTempLoad('1h', document.getElementById('cputemp-btn-1h'));
     };
   }
 })();
@@ -2924,3 +2926,70 @@ async function notifLoadHistory() {
 <div id="schedule-create" style="display:none;position:fixed;inset:0;background:var(--overlay-bg);z-index:2000;flex-direction:column;"><div class="settings-header"><span class="settings-title">📅 NEW SCHEDULE</span><button class="settings-btn settings-btn-close" onclick="scheduleHideCreate()">✕ CANCEL</button></div><div class="settings-body"><div class="settings-section" style="gap:16px;"><div><div class="auto-field-lbl">THEME</div><select class="auto-select" id="sch-theme" style="width:100%;margin-top:4px;"></select></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div><div class="auto-field-lbl">START (MM/DD)</div><input class="auto-input" id="sch-start" placeholder="12/01" style="margin-top:4px;"></div><div><div class="auto-field-lbl">END (MM/DD)</div><input class="auto-input" id="sch-end" placeholder="01/02" style="margin-top:4px;"></div></div><div><div class="auto-field-lbl">NAME</div><input class="auto-input" id="sch-name" placeholder="e.g. Christmas Season" style="margin-top:4px;"></div><button class="settings-btn" style="width:100%;padding:14px;margin-top:8px;" onclick="scheduleSave()">💾 SAVE</button></div></div></div></div>
 </body>
 </html>
+<script>
+var _cpuTempChart = null;
+var _cpuTempRange = '1h';
+
+async function cpuTempLoad(range, btn) {
+  _cpuTempRange = range;
+  document.querySelectorAll('#cputemp-btn-1h,#cputemp-btn-24h,#cputemp-btn-7d').forEach(function(b){b.classList.remove('active');});
+  if(btn) btn.classList.add('active');
+  var nodata = document.getElementById('cputemp-nodata');
+  var canvas = document.getElementById('cputemp-canvas');
+  var sublabel = document.getElementById('cputemp-sublabel');
+  try {
+    var r = await fetch('/api/system/temp-history?range=' + range);
+    var d = await r.json();
+    var points = d.points || [];
+    if(points.length === 0) {
+      nodata.style.display = 'block';
+      canvas.style.display = 'none';
+      if(_cpuTempChart){_cpuTempChart.destroy();_cpuTempChart=null;}
+      sublabel.textContent = '';
+      return;
+    }
+    nodata.style.display = 'none';
+    canvas.style.display = 'block';
+    var labels = points.map(function(p){
+      var dt = new Date(p.t * 1000);
+      if(range === '1h') return dt.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+      if(range === '24h') return dt.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+      return dt.toLocaleDateString([],{month:'short',day:'numeric'});
+    });
+    var values = points.map(function(p){return p.v;});
+    var min = Math.min.apply(null,values);
+    var max = Math.max.apply(null,values);
+    var latest = values[values.length-1];
+    sublabel.textContent = 'Min: '+min+'°F  Max: '+max+'°F  Latest: '+latest+'°F';
+    if(_cpuTempChart){_cpuTempChart.destroy();_cpuTempChart=null;}
+    var ctx = canvas.getContext('2d');
+    _cpuTempChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: values,
+          borderColor: '#ef4444',
+          backgroundColor: 'rgba(239,68,68,0.1)',
+          borderWidth: 2,
+          pointRadius: points.length > 100 ? 0 : 3,
+          pointBackgroundColor: '#ef4444',
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {legend:{display:false}},
+        scales: {
+          x: {ticks:{color:'var(--text-sub)',maxTicksLimit:8,font:{family:'Rajdhani',size:12}},grid:{color:'rgba(var(--accent-rgb),0.1)'}},
+          y: {ticks:{color:'var(--text-sub)',font:{family:'Orbitron',size:11},callback:function(v){return v+'°F';}},grid:{color:'rgba(var(--accent-rgb),0.1)'}}
+        }
+      }
+    });
+  } catch(e) {
+    nodata.style.display = 'block';
+    canvas.style.display = 'none';
+  }
+}
+</script>
