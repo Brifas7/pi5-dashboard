@@ -583,6 +583,41 @@ function camCycle(dir) {
   _camLoadLive();
 }
 function camBackToList() { _camStopStreams(); _camScreen('list'); _camRenderList(); }
+async function camShowClips() {
+  _camScreen('clips');
+  _cam.selectMode = false; _cam.selectedClips.clear();
+  document.getElementById('cam-select-mode-btn').textContent = 'SELECT MODE';
+  document.getElementById('cam-bulk-bar').style.display = 'none';
+  document.getElementById('cam-clip-list').innerHTML = '<div class="cam-loading">Loading clips...</div>';
+  try {
+    var r = await fetch('/api/clips?limit=100');
+    var data = await r.json();
+    _cam.clips = data.clips || [];
+    var camFilter = document.getElementById('cam-filter-camera');
+    var cams = [...new Set(_cam.clips.map(function(c) { return c.camera; }))];
+    camFilter.innerHTML = '<option value="all">All Cameras</option>' + cams.map(function(c) { return '<option value="' + c + '">' + _camFmt(c) + '</option>'; }).join('');
+    camApplyFilters();
+  } catch(e) { document.getElementById('cam-clip-list').innerHTML = '<div class="cam-empty">Failed to load clips</div>'; }
+}
+function _camRenderClips() {
+  var el = document.getElementById('cam-clip-list');
+  if (_cam.filteredClips.length === 0) { el.innerHTML = '<div class="cam-empty">No clips found</div>'; return; }
+  el.innerHTML = _cam.filteredClips.map(function(clip) {
+    var sel = _cam.selectedClips.has(clip.id);
+    var label = clip.label.charAt(0).toUpperCase() + clip.label.slice(1);
+    var score = clip.score > 0 ? ' \u00b7 ' + clip.score + '%' : '';
+    return '<div class="cam-clip-item ' + (sel ? 'selected' : '') + '" onclick="' + (_cam.selectMode ? "camToggleClipSelect('" + clip.id + "')" : "camPlayClip('" + clip.id + "','" + clip.camera + "','" + clip.clip_url + "')") + '">' +
+      '<img class="cam-clip-thumb" src="' + clip.thumbnail + '" onerror="this.style.background=\'#0a1428\'" alt="" />' +
+      '<div class="cam-clip-info">' +
+      '<div class="cam-clip-cam">' + _camFmt(clip.camera) + '</div>' +
+      '<div class="cam-clip-type">' + label + score + '</div>' +
+      '<div class="cam-clip-meta">' + _camFmtTime(clip.start_time) + ' \u00b7 ' + clip.duration + '</div>' +
+      '</div>' +
+      (_cam.selectMode ? '<div class="cam-check-circle ' + (sel ? 'checked' : '') + '">\u2713</div>' : '<button class="cam-delete-btn" onclick="event.stopPropagation(); camDeleteClip(\'' + clip.id + '\')">\ud83d\uddd1</button>') +
+      '</div>';
+  }).join('');
+}
+function _camUpdateBulkBar() { var btn = document.getElementById('cam-bulk-delete-btn'); if (btn) btn.textContent = 'DELETE SELECTED (' + _cam.selectedClips.size + ')'; }
 function camApplyFilters() {
   const cf = document.getElementById('cam-filter-camera').value;
   const lf = document.getElementById('cam-filter-label').value;
