@@ -163,6 +163,19 @@ async def set_display(payload:dict):
 @app.post("/api/exit-kiosk")
 def exit_kiosk(): subprocess.Popen(["pkill","chromium"]); return {"status":"exiting"}
 
+@app.delete("/api/photos/{filename}")
+def delete_photo(filename: str):
+    try:
+        import re
+        if not re.match(r'^[\w\-. ~()]+\.(jpg|jpeg|png|gif|webp)$', filename, re.IGNORECASE):
+            return {"success": False, "error": "Invalid filename"}
+        path = os.path.join(PHOTOS_DIR, filename)
+        if not os.path.exists(path):
+            return {"success": False, "error": "Not found"}
+        os.remove(path)
+        return {"success": True}
+    except Exception as e: return {"success": False, "error": str(e)}
+
 @app.get("/api/photos")
 def get_photos():
     try:
@@ -710,6 +723,13 @@ def get_sensor_averages():
         ).fetchone()
         if row and row[0] is not None:
             result["pres_24h"] = str(round(row[0], 1)) + " hPa"
+        # 24h dew point avg
+        row = conn.execute(
+            "SELECT AVG(value) FROM sensor_readings WHERE sensor_id='rak_dewpoint' AND timestamp>?",
+            (now - 86400,)
+        ).fetchone()
+        if row and row[0] is not None:
+            result["dew_24h"] = str(round(row[0], 1)) + " °F"
         conn.close()
         return result
     except Exception as e:
