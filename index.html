@@ -2992,7 +2992,7 @@ async function cpuTempLoad(range, btn) {
       if(range === '24h') return dt.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
       return dt.toLocaleDateString([],{month:'short',day:'numeric'});
     });
-    var values = points.map(function(p){return p.v;});
+    var values = points.map(function(p){return p.v;}).filter(function(v){return v>100;});
     var min = Math.min.apply(null,values);
     var max = Math.max.apply(null,values);
     var latest = values[values.length-1];
@@ -3018,8 +3018,8 @@ async function cpuTempLoad(range, btn) {
         responsive: true, maintainAspectRatio: false,
         plugins: {legend:{display:false}},
         scales: {
-          x: {ticks:{color:'var(--text-sub)',maxTicksLimit:8,font:{family:'Rajdhani',size:12}},grid:{color:'rgba(var(--accent-rgb),0.1)'}},
-          y: {ticks:{color:'var(--text-sub)',font:{family:'Orbitron',size:11},callback:function(v){return v+'°F';}},grid:{color:'rgba(var(--accent-rgb),0.1)'}}
+          x: {ticks:{color:'#8ea4d4',maxTicksLimit:8,font:{family:'Rajdhani',size:12}},grid:{color:'rgba(var(--accent-rgb),0.1)'}},
+          y: {ticks:{color:'#8ea4d4',font:{family:'Orbitron',size:11},callback:function(v){return v+'°F';}},grid:{color:'rgba(var(--accent-rgb),0.1)'}}
         }
       }
     });
