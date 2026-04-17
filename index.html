@@ -185,7 +185,8 @@ function buildGauges(data) {
     const pct = g.max ? Math.min(g.value/g.max*100,100) : g.value;
     const dash = (pct/100)*circ;
     const suffix = g.suffix||'%';
-    gaugesEl.innerHTML += `<div style="display:flex;flex-direction:column;align-items:center;gap:6px;"><div style="position:relative;width:145px;height:145px;"><svg width="145" height="145" viewBox="0 0 145 145"><circle cx="72" cy="72" r="58" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="8"/><circle cx="72" cy="72" r="58" fill="none" stroke="var(--accent)" stroke-width="8" stroke-dasharray="${dash} ${circ}" stroke-linecap="round" transform="rotate(-90 72 72)"/></svg><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Orbitron',monospace;font-size:18px;color:var(--text);font-weight:700;">${g.value}${suffix}</div></div><div style="font-size:15px;color:var(--text-sub);font-weight:600;text-transform:uppercase;letter-spacing:1px;">${g.label}</div></div>`;
+    const gaugeColor = getComputedStyle(document.documentElement).getPropertyValue('--gauge').trim()||'#1e5aff';
+    gaugesEl.innerHTML += `<div style="display:flex;flex-direction:column;align-items:center;gap:6px;"><div style="position:relative;width:145px;height:145px;"><svg width="145" height="145" viewBox="0 0 145 145"><circle cx="72" cy="72" r="58" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="8"/><circle cx="72" cy="72" r="58" fill="none" stroke="${gaugeColor}" stroke-width="8" stroke-dasharray="${dash} ${circ}" stroke-linecap="round" transform="rotate(-90 72 72)"/></svg><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Orbitron',monospace;font-size:18px;color:var(--text);font-weight:700;">${g.value}${suffix}</div></div><div style="font-size:15px;color:var(--text-sub);font-weight:600;text-transform:uppercase;letter-spacing:1px;">${g.label}</div></div>`;
   });
 }
 
@@ -1790,7 +1791,7 @@ async function _sensorsLoadGraph() {
 }
 </script>
 <script src="chart.min.js"></script>
-<script src="settings.js?v=19"></script>
+<script src="settings.js?v=21"></script>
 <script src="camera.js?v=2"></script>
 
 <script>
