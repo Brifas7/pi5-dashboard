@@ -16,7 +16,27 @@ const _themeColors={
   aquatic:{rgb:'0,184,169',accent:'#00b8a9',bg:'linear-gradient(to bottom, #001a22 0%, #002833 40%, #00141a 100%)',text:'#e0f8f5',sub:'#6ee7d8',notif:'rgba(0,120,110,0.45)',overlay:'rgba(0,20,25,0.97)',gauge:'#00b8a9',clock:'#00b8a9'},
   christmas:{rgb:'34,197,94',accent:'#22c55e',bg:'linear-gradient(to bottom, #0a1a0a 0%, #051505 40%, #0a0f0a 100%)',text:'#e0ffe8',sub:'#86efac',notif:'rgba(20,80,20,0.45)',overlay:'rgba(5,12,5,0.97)',gauge:'#dc2626',clock:'#f59e0b',navBg:'#dc2626',widgetBg:'#22c55e',bezelGlow:'#f59e0b'},
   stpatricks:{rgb:'0,255,65',accent:'#00ff41',bg:'linear-gradient(to bottom, #001100 0%, #000a00 40%, #001100 100%)',text:'#a8f0c0',sub:'#6ee7a0',notif:'rgba(0,100,40,0.45)',overlay:'rgba(0,15,5,0.97)',gauge:'#00ff41',clock:'#d4a017'},
-  mothersday:{rgb:'219,112,147',accent:'#db7093',bg:'linear-gradient(to bottom, #1a0a10 0%, #0d0508 40%, #0a0d0d 100%)',text:'#ffe4e8',sub:'#c4848e',notif:'rgba(180,60,90,0.45)',overlay:'rgba(15,5,8,0.97)',gauge:'#db7093',clock:'#db7093'}
+  mothersday:{rgb:'219,112,147',accent:'#db7093',bg:'linear-gradient(to bottom, #1a0a10 0%, #0d0508 40%, #0a0d0d 100%)',text:'#ffe4e8',sub:'#c4848e',notif:'rgba(180,60,90,0.45)',overlay:'rgba(15,5,8,0.97)',gauge:'#db7093',clock:'#db7093'},
+  july4:{rgb:'220,38,38',accent:'#1e3a8a',bg:'linear-gradient(to bottom, #0a0f1a 0%, #050810 40%, #0a0f1a 100%)',text:'#f8fafc',sub:'#93c5fd',notif:'rgba(30,58,138,0.45)',overlay:'rgba(5,8,20,0.97)',gauge:'#dc2626',clock:'#f8fafc',navBg:'#dc2626',widgetBg:'#1e3a8a',bezelGlow:'#f8fafc'},
+  flagday:{rgb:'30,58,138',accent:'#1e3a8a',bg:'linear-gradient(to bottom, #0a0f1a 0%, #1a0505 40%, #0a0f1a 100%)',text:'#f8fafc',sub:'#93c5fd',notif:'rgba(30,58,138,0.45)',overlay:'rgba(5,5,15,0.97)',gauge:'#cc2200',clock:'#f8fafc',navBg:'#1e3a8a',widgetBg:'#7f1d1d',bezelGlow:'#f8fafc'},
+  laborday:{rgb:'107,114,128',accent:'#6b7280',bg:'linear-gradient(to bottom, #111827 0%, #0a0f18 40%, #111827 100%)',text:'#f8fafc',sub:'#d1d5db',notif:'rgba(107,114,128,0.45)',overlay:'rgba(10,15,25,0.97)',gauge:'#d1d5db',clock:'#f8fafc',navBg:'#374151',widgetBg:'#374151',bezelGlow:'#f8fafc'},
+  veteransday:{rgb:'30,58,138',accent:'#1e3a8a',bg:'linear-gradient(to bottom, #0a0f1a 0%, #050810 40%, #1a0f05 100%)',text:'#f8fafc',sub:'#93c5fd',notif:'rgba(30,58,138,0.45)',overlay:'rgba(5,8,20,0.97)',gauge:'#dc2626',clock:'#f59e0b',navBg:'#1e3a8a',widgetBg:'#1e3a8a',bezelGlow:'#f59e0b'},
+  memorialday:{rgb:'30,58,138',accent:'#1e3a8a',bg:'linear-gradient(to bottom, #0a0f1a 0%, #050810 40%, #0a0f1a 100%)',text:'#f8fafc',sub:'#93c5fd',notif:'rgba(30,58,138,0.45)',overlay:'rgba(5,8,20,0.97)',gauge:'#dc2626',clock:'#f8fafc',navBg:'#1e3a8a',widgetBg:'#1e3a8a',bezelGlow:'#f8fafc'},
+  womensday:{rgb:'192,38,211',accent:'#c026d3',bg:'linear-gradient(to bottom, #1a0520 0%, #0f0215 40%, #1a0520 100%)',text:'#fff1f2',sub:'#f9a8d4',notif:'rgba(192,38,211,0.45)',overlay:'rgba(15,2,18,0.97)',gauge:'#f472b6',clock:'#f59e0b',navBg:'#c026d3',widgetBg:'#c026d3',bezelGlow:'#f472b6'},
+  soviet:{rgb:'204,0,0',accent:'#cc0000',bg:'linear-gradient(to bottom, #1a0000 0%, #0f0000 40%, #1a0000 100%)',text:'#fff8e7',sub:'#fde68a',notif:'rgba(204,0,0,0.45)',overlay:'rgba(15,0,0,0.97)',gauge:'#f59e0b',clock:'#f59e0b',navBg:'#cc0000',widgetBg:'#cc0000',bezelGlow:'#f59e0b'},
+  easter:{rgb:'147,51,234',accent:'#9333ea',bg:'linear-gradient(to bottom, #1a0a2e 0%, #0f0518 40%, #1a0a2e 100%)',text:'#f8fafc',sub:'#e9d5ff',notif:'rgba(147,51,234,0.45)',overlay:'rgba(10,5,20,0.97)',gauge:'#4ade80',clock:'#f59e0b',navBg:'#9333ea',widgetBg:'#9333ea',bezelGlow:'#4ade80'},
+  valentine:{rgb:'190,18,60',accent:'#be123c',bg:'linear-gradient(to bottom, #1a0510 0%, #0f0208 40%, #1a0510 100%)',text:'#fff1f2',sub:'#fda4af',notif:'rgba(190,18,60,0.45)',overlay:'rgba(15,2,8,0.97)',gauge:'#f472b6',clock:'#f59e0b',navBg:'#be123c',widgetBg:'#be123c',bezelGlow:'#f472b6'},
+  flagday:{rgb:'30,58,138',accent:'#1e3a8a',bg:'linear-gradient(to bottom, #0a0f1a 0%, #1a0505 40%, #0a0f1a 100%)',text:'#f8fafc',sub:'#93c5fd',notif:'rgba(30,58,138,0.45)',overlay:'rgba(5,5,15,0.97)',gauge:'#cc2200',clock:'#f8fafc',navBg:'#1e3a8a',widgetBg:'#7f1d1d',bezelGlow:'#f8fafc'},
+  laborday:{rgb:'107,114,128',accent:'#6b7280',bg:'linear-gradient(to bottom, #111827 0%, #0a0f18 40%, #111827 100%)',text:'#f8fafc',sub:'#d1d5db',notif:'rgba(107,114,128,0.45)',overlay:'rgba(10,15,25,0.97)',gauge:'#d1d5db',clock:'#f8fafc',navBg:'#374151',widgetBg:'#374151',bezelGlow:'#f8fafc'},
+  veteransday:{rgb:'30,58,138',accent:'#1e3a8a',bg:'linear-gradient(to bottom, #0a0f1a 0%, #050810 40%, #1a0f05 100%)',text:'#f8fafc',sub:'#93c5fd',notif:'rgba(30,58,138,0.45)',overlay:'rgba(5,8,20,0.97)',gauge:'#dc2626',clock:'#f59e0b',navBg:'#1e3a8a',widgetBg:'#1e3a8a',bezelGlow:'#f59e0b'},
+  memorialday:{rgb:'30,58,138',accent:'#1e3a8a',bg:'linear-gradient(to bottom, #0a0f1a 0%, #050810 40%, #0a0f1a 100%)',text:'#f8fafc',sub:'#93c5fd',notif:'rgba(30,58,138,0.45)',overlay:'rgba(5,8,20,0.97)',gauge:'#dc2626',clock:'#f8fafc',navBg:'#1e3a8a',widgetBg:'#1e3a8a',bezelGlow:'#f8fafc'},
+  womensday:{rgb:'192,38,211',accent:'#c026d3',bg:'linear-gradient(to bottom, #1a0520 0%, #0f0215 40%, #1a0520 100%)',text:'#fff1f2',sub:'#f9a8d4',notif:'rgba(192,38,211,0.45)',overlay:'rgba(15,2,18,0.97)',gauge:'#f472b6',clock:'#f59e0b',navBg:'#c026d3',widgetBg:'#c026d3',bezelGlow:'#f472b6'},
+  soviet:{rgb:'204,0,0',accent:'#cc0000',bg:'linear-gradient(to bottom, #1a0000 0%, #0f0000 40%, #1a0000 100%)',text:'#fff8e7',sub:'#fde68a',notif:'rgba(204,0,0,0.45)',overlay:'rgba(15,0,0,0.97)',gauge:'#f59e0b',clock:'#f59e0b',navBg:'#cc0000',widgetBg:'#cc0000',bezelGlow:'#f59e0b'},
+  easter:{rgb:'147,51,234',accent:'#9333ea',bg:'linear-gradient(to bottom, #1a0a2e 0%, #0f0518 40%, #1a0a2e 100%)',text:'#f8fafc',sub:'#e9d5ff',notif:'rgba(147,51,234,0.45)',overlay:'rgba(10,5,20,0.97)',gauge:'#4ade80',clock:'#f59e0b',navBg:'#9333ea',widgetBg:'#9333ea',bezelGlow:'#4ade80'},
+  valentine:{rgb:'190,18,60',accent:'#be123c',bg:'linear-gradient(to bottom, #1a0510 0%, #0f0208 40%, #1a0510 100%)',text:'#fff1f2',sub:'#fda4af',notif:'rgba(190,18,60,0.45)',overlay:'rgba(15,2,8,0.97)',gauge:'#f472b6',clock:'#f59e0b',navBg:'#be123c',widgetBg:'#be123c',bezelGlow:'#f472b6'},
+  newyears:{rgb:'245,158,11',accent:'#f59e0b',bg:'linear-gradient(to bottom, #0a0a0f 0%, #05050a 40%, #0a0a0f 100%)',text:'#f8fafc',sub:'#cbd5e1',notif:'rgba(245,158,11,0.45)',overlay:'rgba(5,5,10,0.97)',gauge:'#e2e8f0',clock:'#f59e0b',navBg:'#f59e0b',widgetBg:'#0f172a',bezelGlow:'#f59e0b'},
+  thanksgiving:{rgb:'146,64,14',accent:'#92400e',bg:'linear-gradient(to bottom, #1a0f05 0%, #0f0802 40%, #1a0f05 100%)',text:'#fef3c7',sub:'#fed7aa',notif:'rgba(146,64,14,0.45)',overlay:'rgba(15,8,2,0.97)',gauge:'#f97316',clock:'#f59e0b',navBg:'#92400e',widgetBg:'#92400e',bezelGlow:'#f59e0b'},
+  halloween:{rgb:'168,85,247',accent:'#a855f7',bg:'linear-gradient(to bottom, #0a0010 0%, #050008 40%, #0a0010 100%)',text:'#f0e0ff',sub:'#c4a5e0',notif:'rgba(80,20,140,0.45)',overlay:'rgba(8,0,15,0.97)',gauge:'#ff4500',clock:'#ff4500',navBg:'#a855f7',widgetBg:'#0a0a0a',bezelGlow:'#ff9933'}
 };
 
 function _settingsHideAll(){
@@ -106,6 +126,26 @@ async function _settingsLoadSysInfo(){
 var _holidayThemes=[
   {id:'christmas',name:'Christmas',color:'#22c55e',icon:'\u{1F384}'},
   {id:'stpatricks',name:"St. Patrick's",color:'#16a34a',icon:'\u{2618}\u{FE0F}'},
+  {id:'flagday',name:'Flag Day',color:'#1e3a8a',icon:'\u{1F1FA}\u{1F1F8}'},
+  {id:'laborday',name:'Labor Day',color:'#6b7280',icon:'\u{1F528}'},
+  {id:'veteransday',name:'Veterans Day',color:'#1e3a8a',icon:'\u{1F1FA}\u{1F1F8}'},
+  {id:'memorialday',name:'Memorial Day',color:'#1e3a8a',icon:'\u{1F1FA}\u{1F1F8}'},
+  {id:'womensday',name:"Women's Day",color:'#c026d3',icon:'\u{1F338}'},
+  {id:'soviet',name:'Victory Day',color:'#cc0000',icon:'\u{2B50}'},
+  {id:'easter',name:'Easter',color:'#9333ea',icon:'\u{1F430}'},
+  {id:'valentine',name:"Valentine's Day",color:'#be123c',icon:'\u{1F496}'},
+  {id:'flagday',name:'Flag Day',color:'#1e3a8a',icon:'\u{1F1FA}\u{1F1F8}'},
+  {id:'laborday',name:'Labor Day',color:'#6b7280',icon:'\u{1F528}'},
+  {id:'veteransday',name:'Veterans Day',color:'#1e3a8a',icon:'\u{1F1FA}\u{1F1F8}'},
+  {id:'memorialday',name:'Memorial Day',color:'#1e3a8a',icon:'\u{1F1FA}\u{1F1F8}'},
+  {id:'womensday',name:"Women's Day",color:'#c026d3',icon:'\u{1F338}'},
+  {id:'soviet',name:'Victory Day',color:'#cc0000',icon:'\u{2B50}'},
+  {id:'easter',name:'Easter',color:'#9333ea',icon:'\u{1F430}'},
+  {id:'valentine',name:"Valentine's Day",color:'#be123c',icon:'\u{1F496}'},
+  {id:'newyears',name:"New Year's",color:'#f59e0b',icon:'\u{1F386}'},
+  {id:'halloween',name:'Halloween',color:'#a855f7',icon:'\u{1F383}'},
+  {id:'thanksgiving',name:'Thanksgiving',color:'#f97316',icon:'\u{1F983}'},
+  {id:'july4',name:'4th of July',color:'#dc2626',icon:'\u{1F386}'},
   {id:'mothersday',name:"Mother's Day",color:'#db7093',icon:'\u{1F338}'}
 ];
 function _settingsRenderHolidays(){
