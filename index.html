@@ -1372,6 +1372,8 @@ async function opsLoadGraph() {
 <select class="settings-select" id="settings-ss-duration"><option value="3">3 seconds</option><option value="5" selected>5 seconds</option><option value="10">10 seconds</option><option value="15">15 seconds</option><option value="30">30 seconds</option></select></div>
 <div class="settings-row"><div><div class="settings-row-label">Clock Overlay</div><div class="settings-row-sub">Show time over photos</div></div>
 <label class="settings-toggle"><input type="checkbox" id="settings-ss-clock"><span class="settings-toggle-slider"></span></label></div>
+<div class="settings-row"><div><div class="settings-row-label">Album</div><div class="settings-row-sub">Which photo album to display</div></div>
+<select class="settings-select" id="settings-ss-album" onchange="settingsSaveAlbum(this.value)"><option value="1">Album 1</option><option value="2">Album 2</option><option value="3">Album 3</option><option value="4">Album 4</option><option value="5">Album 5</option></select></div>
 </div></div></div>
 <div id="settings-screen-themes" class="settings-screen"><div class="settings-header"><button class="settings-btn" onclick="settingsBack('main')">◀ BACK</button><span class="settings-title">🎨 THEMES</span><button class="settings-btn settings-btn-close" onclick="settingsClose()">✕ CLOSE</button></div><div class="settings-body"><div class="settings-section" style="display:flex;flex-direction:column;gap:14px;">
 <div class="settings-menu-item" onclick="settingsNav('themes_list')"><div style="display:flex;align-items:center;gap:14px;"><span style="font-size:22px;">🎨</span><div><div class="settings-row-label">Themes</div><div class="settings-row-sub">Select visual theme</div></div></div><span style="color:var(--text-sub);font-size:18px;">▶</span></div>
@@ -1842,7 +1844,7 @@ async function _ssActivate(){
   const ov=document.getElementById('screensaver');
   ov.style.display='flex';
   document.getElementById('ss-clock-wrap').style.display=_ssClockOn()?'block':'none';
-  try{const r=await fetch('/api/photos');const d=await r.json();_ss.photos=d.photos||[];}catch(e){_ss.photos=[];}
+  try{const _alb=localStorage.getItem('dashSsAlbum')||'1';const r=await fetch('/api/photos?album='+_alb);const d=await r.json();_ss.photos=d.photos||[];}catch(e){_ss.photos=[];}
   _ss.photoIdx=0;_ssNextPhoto();_ssTick();
 }
 function _ssNextPhoto(){
@@ -2579,6 +2581,15 @@ function _mobileClose() {
 </script>
 
 <script>
+// Screensaver album
+function settingsSaveAlbum(val) {
+  localStorage.setItem('dashSsAlbum', val);
+}
+function settingsLoadScreensaverAlbum() {
+  var v = localStorage.getItem('dashSsAlbum') || '1';
+  var el = document.getElementById('settings-ss-album');
+  if (el) el.value = v;
+}
 // Time & Date settings
 function settingsSetTimeFormat(val) {
   localStorage.setItem('dashTimeFormat', val);
@@ -2941,6 +2952,7 @@ async function notifLoadHistory() {
       if (screen === 'system' && typeof sysLoadAll === 'function') sysLoadAll();
       if (screen === 'devices' && typeof devRefresh === 'function') devRefresh();
       if (screen === 'notifications' && typeof notifLoad === 'function') notifLoad();
+      if (screen === 'screensaver' && typeof settingsLoadScreensaverAlbum === 'function') settingsLoadScreensaverAlbum();
       if (screen === 'theme_schedule' && typeof scheduleRenderList === 'function') scheduleRenderList();
       if (screen === 'theme_carousel' && typeof carouselInit === 'function') carouselInit();
       if (screen === 'cpu_temp_graph') cpuTempLoad('1h', document.getElementById('cputemp-btn-1h'));

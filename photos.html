@@ -7,6 +7,9 @@
 <style>
 body { background:#051c35; color:#e0e8ff; font-family:'Rajdhani',sans-serif; padding:16px; margin:0; }
 h2 { text-align:center; font-size:22px; margin-bottom:16px; letter-spacing:2px; }
+.album-bar { display:flex; justify-content:center; gap:6px; margin-bottom:16px; flex-wrap:wrap; }
+.album-btn { background:rgba(30,90,255,0.15); border:1px solid rgba(30,90,255,0.3); color:#e0e8ff; border-radius:8px; padding:10px 18px; font-family:'Rajdhani',sans-serif; font-size:15px; font-weight:700; cursor:pointer; letter-spacing:1px; }
+.album-btn.active { background:rgba(30,90,255,0.5); border-color:#1e5aff; box-shadow:0 0 10px rgba(30,90,255,0.4); }
 .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:12px; }
 .card { background:rgba(30,90,255,0.1); border:1px solid rgba(30,90,255,0.3); border-radius:10px; overflow:hidden; display:flex; flex-direction:column; }
 .card img { width:100%; aspect-ratio:16/9; object-fit:cover; display:block; }
@@ -24,22 +27,42 @@ a.upload-link { background:rgba(30,90,255,0.2); border:1px solid rgba(30,90,255,
 </head>
 <body>
 <h2>📷 SCREENSAVER PHOTOS</h2>
+<div class="album-bar" id="album-bar"></div>
 <div id="msg"></div>
 <div class="toolbar">
   <span class="count" id="count"></span>
-  <a class="upload-link" href="/upload.html">+ UPLOAD</a>
+  <a class="upload-link" id="upload-link" href="/upload.html">+ UPLOAD</a>
 </div>
 <div class="grid" id="grid"></div>
-
 <script>
+var currentAlbum = localStorage.getItem('photoManagerAlbum') || '1';
+
+function renderAlbumBar() {
+  var bar = document.getElementById('album-bar');
+  var html = '';
+  for (var i = 1; i <= 5; i++) {
+    var active = (String(i) === currentAlbum) ? ' active' : '';
+    html += '<button class="album-btn' + active + '" onclick="selectAlbum(\'' + i + '\')">Album ' + i + '</button>';
+  }
+  bar.innerHTML = html;
+}
+
+function selectAlbum(n) {
+  currentAlbum = n;
+  localStorage.setItem('photoManagerAlbum', n);
+  document.getElementById('upload-link').href = '/upload.html?album=' + n;
+  renderAlbumBar();
+  load();
+}
+
 async function load() {
-  var r = await fetch('/api/photos');
+  var r = await fetch('/api/photos?album=' + currentAlbum);
   var d = await r.json();
   var photos = d.photos || [];
-  document.getElementById('count').textContent = photos.length + ' photo' + (photos.length !== 1 ? 's' : '');
+  document.getElementById('count').textContent = 'Album ' + currentAlbum + ' · ' + photos.length + ' photo' + (photos.length !== 1 ? 's' : '');
   var grid = document.getElementById('grid');
   if (photos.length === 0) {
-    grid.innerHTML = '<div class="empty">No photos yet.<br>Tap UPLOAD to add some.</div>';
+    grid.innerHTML = '<div class="empty">No photos in Album ' + currentAlbum + '.<br>Tap UPLOAD to add some.</div>';
     return;
   }
   grid.innerHTML = photos.map(function(p) {
@@ -53,9 +76,9 @@ async function load() {
 }
 
 async function del(name) {
-  if (!confirm('Delete ' + name + '?')) return;
+  if (!confirm('Delete ' + name + ' from Album ' + currentAlbum + '?')) return;
   var msg = document.getElementById('msg');
-  var r = await fetch('/api/photos/' + encodeURIComponent(name), {method:'DELETE'});
+  var r = await fetch('/api/photos/' + encodeURIComponent(name) + '?album=' + currentAlbum, {method:'DELETE'});
   var d = await r.json();
   if (d.success) {
     msg.className = 'msg ok';
@@ -68,6 +91,8 @@ async function del(name) {
   setTimeout(function(){msg.textContent='';msg.className='';}, 3000);
 }
 
+document.getElementById('upload-link').href = '/upload.html?album=' + currentAlbum;
+renderAlbumBar();
 load();
 </script>
 </body>

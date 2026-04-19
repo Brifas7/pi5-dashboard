@@ -20,15 +20,37 @@ button:disabled { opacity:0.5; }
 <h2>Upload Files</h2>
 <div class="box">
   <label>Destination:</label>
-  <select id="dest">
+  <select id="dest" onchange="toggleAlbum()">
     <option value="photos">Screensaver Photos</option>
     <option value="themes">Theme Backgrounds</option>
+  </select>
+  <label id="album-label">Album:</label>
+  <select id="album">
+    <option value="1">Album 1</option>
+    <option value="2">Album 2</option>
+    <option value="3">Album 3</option>
+    <option value="4">Album 4</option>
+    <option value="5">Album 5</option>
   </select>
   <input type="file" id="file" accept="image/*" multiple>
   <button onclick="doUpload()" id="btn">Upload</button>
   <div id="msg"></div>
 </div>
 <script>
+function toggleAlbum(){
+  var dest=document.getElementById('dest').value;
+  var show=(dest==='photos');
+  document.getElementById('album-label').style.display=show?'block':'none';
+  document.getElementById('album').style.display=show?'block':'none';
+}
+(function(){
+  var params=new URLSearchParams(window.location.search);
+  var alb=params.get('album');
+  if(alb && ['1','2','3','4','5'].indexOf(alb)>=0){
+    document.getElementById('album').value=alb;
+  }
+  toggleAlbum();
+})();
 async function doUpload(){
   var files=document.getElementById('file').files;
   var dest=document.getElementById('dest').value;
@@ -41,7 +63,7 @@ async function doUpload(){
     var fd=new FormData();
     fd.append('file',files[i]);
     try{
-      var r=await fetch('/api/upload?dest='+dest,{method:'POST',body:fd});
+      var album=document.getElementById('album').value;var url='/api/upload?dest='+dest+(dest==='photos'?'&album='+album:'');var r=await fetch(url,{method:'POST',body:fd});
       var d=await r.json();
       if(d.success)ok++;else fail++;
     }catch(e){fail++;}

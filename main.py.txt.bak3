@@ -1,0 +1,946 @@
+from fastapi import FastAPI
+from fastapi.responses import StreamingResponse, Response
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+import psutil, subprocess, json, httpx, logging
+import sqlite3, time as _time, uuid, datetime, threading, os
+from astral import LocationInfo
+from astral.sun import sun
+from astral.moon import phase as moon_phase
+
+log = logging.getLogger("dashboard")
+
+app = FastAPI()
+app.add_middleware(CORSMiddleware,allow_origins=["*"],allow_methods=["*"],allow_headers=["*"])
+
+from fastapi import Header, HTTPException, Depends, UploadFile, File, Query
+
+def _load_pin():
+    try:
+        with open(os.path.join(os.path.dirname(__file__), "cameras.json"), "r") as f:
+            return json.load(f).get("dashboard_pin", "5046")
+    except:
+        return "5046"
+
+DASHBOARD_PIN = _load_pin()
+
+async def verify_pin(x_pin: str = Header(None)):
+    if x_pin != DASHBOARD_PIN:
+        raise HTTPException(status_code=403, detail="Invalid PIN")
+
+
+PHOTOS_DIR = "/home/brifas/dashboard-html/photos"
+os.makedirs(PHOTOS_DIR, exist_ok=True)
+app.mount("/photos", StaticFiles(directory=PHOTOS_DIR), name="photos")
+
+DB_PATH = "/home/brifas/dashboard.db"
+LOCATION = LocationInfo("Tallmansville","WV","America/New_York",38.8376,-80.1284)
+
+def _db():
+    return sqlite3.connect(DB_PATH)
+
+@app.on_event("startup")
+def init_db():
+    conn = _db()
+    conn.execute("""CREATE TABLE IF NOT EXISTS device_registry (
+        id TEXT PRIMARY KEY, name TEXT, category TEXT DEFAULT 'light',
+        type TEXT DEFAULT 'switch', state TEXT DEFAULT 'off',
+        brightness INTEGER DEFAULT 100, color TEXT DEFAULT '#ffffff',
+        online INTEGER DEFAULT 0, ip TEXT, uptime TEXT, rssi INTEGER,
+        summary TEXT, last_seen INTEGER)""")
+    conn.execute("""CREATE TABLE IF NOT EXISTS sensor_registry (
+        id TEXT PRIMARY KEY, name TEXT, unit TEXT, source TEXT,
+        last_seen INTEGER, last_value REAL)""")
+    conn.execute("""CREATE TABLE IF NOT EXISTS sensor_readings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp INTEGER,
+        sensor_id TEXT, sensor_name TEXT, value REAL, unit TEXT)""")
+    conn.execute("""CREATE TABLE IF NOT EXISTS automation_rules (
+        id TEXT PRIMARY KEY, name TEXT, category TEXT DEFAULT 'general',
+        enabled INTEGER DEFAULT 1, trigger_type TEXT, trigger_config TEXT,
+        conditions TEXT, actions TEXT, created INTEGER, last_triggered INTEGER)""")
+    conn.execute("""CREATE TABLE IF NOT EXISTS automation_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp INTEGER,
+        rule_id TEXT, rule_name TEXT, result TEXT, detail TEXT)""")
+    conn.execute("""CREATE TABLE IF NOT EXISTS system_readings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        timestamp INTEGER, metric TEXT, value REAL)""")
+    conn.commit(); conn.close()
+
+@app.get("/api/health")
+def health(): return {"status":"ok"}
+
+@app.get("/api/system")
+def system_stats():
+    cpu=psutil.cpu_percent(interval=0); ram=psutil.virtual_memory(); disk=psutil.disk_usage("/")
+    try:
+        t=subprocess.check_output(["vcgencmd","measure_temp"]).decode()
+        cpu_temp=float(t.replace("temp=","").replace("'C\n",""))
+    except: cpu_temp=0.0
+    return {"cpu_percent":cpu,"cpu_temp":cpu_temp,"ram_percent":ram.percent,
+            "ram_used_gb":round(ram.used/1024**3,1),"ram_total_gb":round(ram.total/1024**3,1),
+            "disk_percent":disk.percent,"disk_used_gb":round(disk.used/1024**3,1),
+            "disk_total_gb":round(disk.total/1024**3,1),"cpu_temp_f":round(cpu_temp*9/5+32,1)}
+
+@app.get("/api/sysinfo")
+async def sysinfo():
+    import os
+    try:
+        hn=subprocess.check_output(["hostname"]).decode().strip()
+        ips=subprocess.check_output(["hostname","-I"]).decode().strip().split()
+        ip=next((i for i in ips if i.startswith("192.168.1.")),ips[0] if ips else "unknown")
+        eth0=next((i for i in ips if i.startswith("192.168.2.")),"not connected")
+        up=subprocess.check_output(["uptime","-p"]).decode().strip()
+        try: db_size=round(os.path.getsize("/home/brifas/dashboard.db")/1024/1024,2)
+        except: db_size=0
+        try: hailo=subprocess.check_output(["cat","/sys/module/hailo_pci/version"]).decode().strip()
+        except: hailo="not detected"
+        try: kern=subprocess.check_output(["uname","-r"]).decode().strip()
+        except: kern="unknown"
+        try: py=subprocess.check_output(["python3","--version"]).decode().strip()
+        except: py="unknown"
+        ram=psutil.virtual_memory()
+        disk=psutil.disk_usage("/")
+        return {"hostname":hn,"ip":ip,"eth0":eth0,"tailscale":"100.76.61.67","uptime":up,
+            "version":"1.0.0","kernel":kern,"python":py,
+            "hailo":hailo,"ram_total":str(round(ram.total/1024**3,1))+" GB",
+            "storage_total":str(round(disk.total/1024**3,1))+" GB",
+            "db_size":str(db_size)+" MB","astral":"active"}
+    except: return {"hostname":"pi5-dashboard","ip":"unknown","eth0":"unknown","tailscale":"100.76.61.67","uptime":"unknown",
+        "version":"1.0.0","kernel":"unknown","python":"unknown","hailo":"unknown",
+        "ram_total":"unknown","storage_total":"unknown","db_size":"unknown","astral":"unknown"}
+
+
+@app.get("/api/notifications")
+async def notifications():
+    items=[]
+    try:
+        r=httpx.get("http://localhost:5000/api/events?limit=5",timeout=3)
+        for e in r.json():
+            items.append({"type":"camera","icon":"📷","source":e.get("camera","camera"),
+                "message":e.get("label","motion")+" detected","time":e.get("start_time",0)})
+    except: pass
+    try:
+        cpu_temp=0.0
+        try:
+            t2=subprocess.check_output(["vcgencmd","measure_temp"]).decode()
+            cpu_temp=float(t2.replace("temp=","").replace("'C\n","").strip().rstrip("'C"))
+        except: pass
+        cpu_f=cpu_temp*9/5+32
+        if cpu_f>160: items.append({"type":"system","icon":"🔥","source":"System","message":f"CPU temp {cpu_f:.0f}°F","time":_time.time()})
+        disk=psutil.disk_usage("/")
+        if disk.percent>90: items.append({"type":"system","icon":"💾","source":"System","message":f"Storage {disk.percent}% full","time":_time.time()})
+    except: pass
+    items.sort(key=lambda x:x.get("time",0),reverse=True)
+    return items[:5]
+
+
+
+@app.post("/api/upload")
+async def upload_file(file: UploadFile = File(...), dest: str = Query("photos")):
+    import os
+    folders = {
+        "photos": "/home/brifas/dashboard-html/photos/",
+        "themes": "/home/brifas/dashboard-html/static/themes/"
+    }
+    folder = folders.get(dest)
+    if not folder: return {"error": "invalid destination"}
+    os.makedirs(folder, exist_ok=True)
+    path = os.path.join(folder, file.filename)
+    with open(path, "wb") as f2:
+        f2.write(await file.read())
+    return {"success": True, "path": path}
+
+@app.post("/api/brightness")
+async def set_brightness(payload:dict):
+    val=int(payload.get("value",80)); subprocess.Popen(["ddcutil","setvcp","10",str(val)])
+    return {"success":True,"value":val}
+
+@app.post("/api/display")
+async def set_display(payload:dict):
+    subprocess.Popen(["vcgencmd","display_power","1" if payload.get("state")=="on" else "0"])
+    return {"success":True}
+
+@app.post("/api/exit-kiosk")
+def exit_kiosk(): subprocess.Popen(["pkill","chromium"]); return {"status":"exiting"}
+
+@app.delete("/api/photos/{filename}")
+def delete_photo(filename: str):
+    try:
+        import re
+        if not re.match(r'^[\w\-. ~()]+\.(jpg|jpeg|png|gif|webp)$', filename, re.IGNORECASE):
+            return {"success": False, "error": "Invalid filename"}
+        path = os.path.join(PHOTOS_DIR, filename)
+        if not os.path.exists(path):
+            return {"success": False, "error": "Not found"}
+        os.remove(path)
+        return {"success": True}
+    except Exception as e: return {"success": False, "error": str(e)}
+
+@app.get("/api/photos")
+def get_photos():
+    try:
+        exts={".jpg",".jpeg",".png",".gif",".webp"}
+        files=sorted([f for f in os.listdir(PHOTOS_DIR) if os.path.splitext(f)[1].lower() in exts])
+        return {"photos":[f"/photos/{f}" for f in files]}
+    except Exception as e: return {"photos":[],"error":str(e)}
+
+@app.get("/api/solar")
+def get_solar():
+    try:
+        today=datetime.date.today(); s=sun(LOCATION.observer,date=today,tzinfo=LOCATION.timezone)
+        mp=moon_phase(today)
+        names=["New Moon","Waxing Crescent","First Quarter","Waxing Gibbous","Full Moon","Waning Gibbous","Last Quarter","Waning Crescent"]
+        icons=["🌑","🌒","🌓","🌔","🌕","🌖","🌗","🌘"]
+        thresholds=[1,7,8,14,15,21,22,29]
+        idx=next((i for i,t in enumerate(thresholds) if mp<t),7)
+        return {"sunrise":s["sunrise"].strftime("%H:%M"),"sunset":s["sunset"].strftime("%H:%M"),
+                "dawn":s["dawn"].strftime("%H:%M"),"dusk":s["dusk"].strftime("%H:%M"),
+                "solar_noon":s["noon"].strftime("%H:%M"),"moon_phase":round(mp,1),
+                "moon_phase_name":names[idx],"moon_icon":icons[idx]}
+    except Exception as e: return {"error":str(e)}
+
+@app.get("/api/events")
+async def get_events():
+    try:
+        async with httpx.AsyncClient() as c:
+            r=await c.get("http://localhost:5000/api/events?limit=5",timeout=3)
+            return [{"camera":e.get("camera",""),"label":e.get("label",""),
+                     "score":round(e.get("score",0)*100),"time":e.get("start_time",0)} for e in r.json()]
+    except: return []
+
+
+
+@app.get("/api/clips")
+async def get_clips(camera:str=None,label:str=None,limit:int=100):
+    try:
+        async with httpx.AsyncClient() as c:
+            url=f"http://localhost:5000/api/events?limit={limit}&has_clip=1&include_thumbnails=1"
+            if camera and camera!="all": url+=f"&camera={camera}"
+            if label and label!="all": url+=f"&label={label}"
+            clips=[]
+            for e in (await c.get(url,timeout=10)).json():
+                start=e.get("start_time",0); end=e.get("end_time") or start
+                dur=round(end-start) if end>start else 0
+                clips.append({"id":e["id"],"camera":e["camera"],"label":e.get("label","unknown"),
+                    "score":round((e.get("top_score") or 0)*100),"start_time":start,
+                    "duration":f"{dur//60:02d}:{dur%60:02d}",
+                    "thumbnail":f"/api/clip/{e['id']}/thumbnail.jpg",
+                    "clip_url":f"/api/clip/{e['id']}/clip.mp4"})
+            return {"clips":clips}
+    except Exception as e: return {"clips":[],"error":str(e)}
+
+@app.delete("/api/clips/{event_id}")
+async def delete_clip(event_id:str):
+    try:
+        async with httpx.AsyncClient() as c:
+            r=await c.delete(f"http://localhost:5000/api/events/{event_id}",timeout=5)
+            return {"success":r.status_code==200}
+    except Exception as e: return {"success":False,"error":str(e)}
+
+@app.get("/api/sensors")
+def get_sensors():
+    try:
+        conn=_db(); rows=conn.execute("SELECT id,name,unit,source,last_seen,last_value FROM sensor_registry").fetchall(); conn.close()
+        return {"sensors":[{"id":r[0],"name":r[1],"unit":r[2],"source":r[3],"last_seen":r[4],"last_value":r[5]} for r in rows]}
+    except Exception as e: return {"sensors":[],"error":str(e)}
+
+@app.get("/api/sensors/{sensor_id}/history")
+def get_sensor_history(sensor_id:str,range:str="24h"):
+    try:
+        since=int(_time.time())-{"24h":86400,"7d":604800,"30d":2592000,"6m":15552000,"1y":31536000}.get(range,86400)
+        conn=_db(); rows=conn.execute("SELECT timestamp,value FROM sensor_readings WHERE sensor_id=? AND timestamp>? ORDER BY timestamp ASC",(sensor_id,since)).fetchall(); conn.close()
+        return {"sensor_id":sensor_id,"range":range,"points":[{"t":r[0],"v":r[1]} for r in rows]}
+    except Exception as e: return {"points":[],"error":str(e)}
+
+@app.post("/api/sensors/ingest")
+def ingest_sensor(payload:dict):
+    try:
+        now=int(_time.time()); conn=_db()
+        for rd in payload.get("readings",[]):
+            conn.execute("INSERT INTO sensor_readings (timestamp,sensor_id,sensor_name,value,unit) VALUES (?,?,?,?,?)",(now,rd["id"],rd.get("name",""),rd["value"],rd.get("unit","")))
+            conn.execute("""INSERT INTO sensor_registry (id,name,unit,source,last_seen,last_value)
+                VALUES (?,?,?,?,?,?)
+                ON CONFLICT(id) DO UPDATE SET last_seen=excluded.last_seen,last_value=excluded.last_value""",
+                (rd["id"],rd.get("name",""),rd.get("unit",""),"RAK WisBlock",now,rd["value"]))
+        conn.commit(); conn.close(); return {"success":True}
+    except Exception as e: return {"success":False,"error":str(e)}
+
+@app.get("/api/system/temp-history")
+def get_temp_history(range:str="24h"):
+    try:
+        since=int(_time.time())-{"1h":3600,"24h":86400,"7d":604800}.get(range,86400)
+        conn=_db()
+        rows=conn.execute("SELECT timestamp,value FROM system_readings WHERE metric='cpu_temp_f' AND timestamp>? ORDER BY timestamp ASC",(since,)).fetchall()
+        conn.close()
+        return {"range":range,"points":[{"t":r[0],"v":r[1]} for r in rows]}
+    except Exception as e: return {"points":[],"error":str(e)}
+
+def _mqtt_publish(topic,payload):
+    try:
+        import paho.mqtt.publish as pub
+        pub.single(topic,payload,hostname="localhost",port=1883)
+    except: pass
+
+@app.get("/api/lights")
+def get_lights():
+    try:
+        conn=_db(); rows=conn.execute("SELECT id,name,type,state,brightness,color,last_seen FROM device_registry WHERE category='light'").fetchall(); conn.close()
+        return {"devices":[{"id":r[0],"name":r[1],"type":r[2],"state":r[3] or "off","brightness":r[4] if r[4] is not None else 100,"color":r[5] or "#ffffff","last_seen":r[6]} for r in rows]}
+    except Exception as e: return {"devices":[],"error":str(e)}
+
+@app.post("/api/lights/{device_id}/control")
+async def control_light(device_id:str,command:dict):
+    try:
+        conn=_db(); a=command.get("action"); v=command.get("value")
+        if a=="state": conn.execute("UPDATE device_registry SET state=? WHERE id=?",(v,device_id))
+        elif a=="brightness": conn.execute("UPDATE device_registry SET brightness=? WHERE id=?",(v,device_id))
+        elif a=="color": conn.execute("UPDATE device_registry SET color=? WHERE id=?",(v,device_id))
+        conn.commit(); conn.close()
+        _mqtt_publish(f"dashboard/lights/{device_id}/set",json.dumps(command))
+        return {"success":True}
+    except Exception as e: return {"success":False,"error":str(e)}
+
+@app.get("/api/systems")
+def get_systems():
+    try:
+        conn=_db(); rows=conn.execute("SELECT id,name,type,online,ip,uptime,rssi,summary,last_seen FROM device_registry WHERE category='system'").fetchall(); conn.close()
+        return {"systems":[{"id":r[0],"name":r[1],"type":r[2],"online":bool(r[3]),"ip":r[4],"uptime":r[5],"rssi":r[6],"summary":r[7],"last_seen":r[8],"sensors":[],"controls":[],"events":[]} for r in rows]}
+    except Exception as e: return {"systems":[],"error":str(e)}
+
+@app.post("/api/systems/{system_id}/control")
+async def control_system(system_id:str,command:dict):
+    try: _mqtt_publish(f"dashboard/systems/{system_id}/set",json.dumps(command)); return {"success":True}
+    except Exception as e: return {"success":False,"error":str(e)}
+
+@app.post("/api/devices/register")
+def register_device(device:dict):
+    try:
+        now=int(_time.time()); conn=_db()
+        conn.execute("""INSERT INTO device_registry (id,name,category,type,state,brightness,color,online,ip,last_seen,summary)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?)
+            ON CONFLICT(id) DO UPDATE SET name=excluded.name,online=1,last_seen=excluded.last_seen,ip=excluded.ip""",
+            (device["id"],device["name"],device.get("category","light"),device.get("type","switch"),
+             device.get("state","off"),device.get("brightness",100),device.get("color","#ffffff"),
+             1,device.get("ip",""),now,device.get("summary","")))
+        conn.commit(); conn.close(); return {"success":True}
+    except Exception as e: return {"success":False,"error":str(e)}
+
+@app.get("/api/automation/rules")
+def get_rules():
+    try:
+        conn=_db(); rows=conn.execute("SELECT id,name,category,enabled,trigger_type,trigger_config,conditions,actions,last_triggered FROM automation_rules ORDER BY category,name").fetchall(); conn.close()
+        return {"rules":[{"id":r[0],"name":r[1],"category":r[2],"enabled":r[3],"trigger_type":r[4],
+            "trigger_config":json.loads(r[5] or "{}"),"conditions":json.loads(r[6] or "[]"),
+            "actions":json.loads(r[7] or "[]"),"last_triggered":r[8]} for r in rows]}
+    except Exception as e: return {"rules":[],"error":str(e)}
+
+@app.post("/api/automation/rules")
+def create_rule(rule:dict):
+    try:
+        rid=str(uuid.uuid4())[:8]; now=int(_time.time()); conn=_db()
+        conn.execute("INSERT INTO automation_rules (id,name,category,enabled,trigger_type,trigger_config,conditions,actions,created) VALUES (?,?,?,?,?,?,?,?,?)",
+            (rid,rule["name"],rule.get("category","general"),rule.get("enabled",1),rule["trigger_type"],
+             json.dumps(rule.get("trigger_config",{})),json.dumps(rule.get("conditions",[])),json.dumps(rule.get("actions",[])),now))
+        conn.commit(); conn.close(); return {"success":True,"id":rid}
+    except Exception as e: return {"success":False,"error":str(e)}
+
+@app.put("/api/automation/rules/{rule_id}")
+def update_rule(rule_id:str,rule:dict):
+    try:
+        conn=_db()
+        conn.execute("UPDATE automation_rules SET name=?,category=?,enabled=?,trigger_type=?,trigger_config=?,conditions=?,actions=? WHERE id=?",
+            (rule["name"],rule.get("category","general"),rule.get("enabled",1),rule["trigger_type"],
+             json.dumps(rule.get("trigger_config",{})),json.dumps(rule.get("conditions",[])),json.dumps(rule.get("actions",[])),rule_id))
+        conn.commit(); conn.close(); return {"success":True}
+    except Exception as e: return {"success":False,"error":str(e)}
+
+@app.delete("/api/automation/rules/{rule_id}")
+def delete_rule(rule_id:str):
+    try:
+        conn=_db(); conn.execute("DELETE FROM automation_rules WHERE id=?",(rule_id,)); conn.commit(); conn.close()
+        return {"success":True}
+    except Exception as e: return {"success":False,"error":str(e)}
+
+@app.post("/api/automation/rules/{rule_id}/toggle")
+def toggle_rule(rule_id:str):
+    try:
+        conn=_db(); row=conn.execute("SELECT enabled FROM automation_rules WHERE id=?",(rule_id,)).fetchone()
+        if not row: return {"success":False,"error":"Not found"}
+        new=0 if row[0] else 1
+        conn.execute("UPDATE automation_rules SET enabled=? WHERE id=?",(new,rule_id))
+        conn.commit(); conn.close(); return {"success":True,"enabled":new}
+    except Exception as e: return {"success":False,"error":str(e)}
+
+@app.post("/api/automation/rules/{rule_id}/trigger")
+async def manual_trigger(rule_id:str):
+    try:
+        conn=_db(); row=conn.execute("SELECT actions FROM automation_rules WHERE id=?",(rule_id,)).fetchone(); conn.close()
+        if not row: return {"success":False,"error":"Not found"}
+        async with httpx.AsyncClient() as c:
+            for a in json.loads(row[0] or "[]"):
+                if a.get("type")=="light_control":
+                    await c.post(f"http://localhost:8000/api/lights/{a['device_id']}/control",json=a.get("command",{}),timeout=5)
+                elif a.get("type")=="system_control":
+                    await c.post(f"http://localhost:8000/api/systems/{a['system_id']}/control",json=a.get("command",{}),timeout=5)
+        return {"success":True}
+    except Exception as e: return {"success":False,"error":str(e)}
+
+@app.get("/api/automation/log")
+def get_automation_log(limit:int=50):
+    try:
+        conn=_db(); rows=conn.execute("SELECT timestamp,rule_name,result,detail FROM automation_log ORDER BY timestamp DESC LIMIT ?",(limit,)).fetchall(); conn.close()
+        return {"log":[{"timestamp":r[0],"rule_name":r[1],"result":r[2],"detail":r[3]} for r in rows]}
+    except Exception as e: return {"log":[],"error":str(e)}
+
+def _mqtt_subscriber():
+    try:
+        import paho.mqtt.client as mqtt
+        def on_connect(client,userdata,flags,rc):
+            client.subscribe("dashboard/lights/+/status")
+            client.subscribe("dashboard/systems/+/status")
+            client.subscribe("dashboard/devices/+/register")
+        def on_message(client,userdata,msg):
+            try:
+                parts=msg.topic.split("/"); payload=json.loads(msg.payload.decode())
+                device_id=parts[2]; now=int(_time.time()); conn=_db()
+                if parts[3]=="register":
+                    conn.execute("""INSERT INTO device_registry (id,name,category,type,state,online,ip,last_seen,summary)
+                        VALUES (?,?,?,?,?,?,?,?,?)
+                        ON CONFLICT(id) DO UPDATE SET name=excluded.name,online=1,last_seen=excluded.last_seen,ip=excluded.ip""",
+                        (device_id,payload.get("name",device_id),payload.get("category","light"),
+                         payload.get("type","switch"),payload.get("state","off"),1,
+                         payload.get("ip",""),now,payload.get("summary","")))
+                else:
+                    if "state" in payload: conn.execute("UPDATE device_registry SET state=?,online=1,last_seen=? WHERE id=?",(payload["state"],now,device_id))
+                    if "brightness" in payload: conn.execute("UPDATE device_registry SET brightness=? WHERE id=?",(payload["brightness"],device_id))
+                    if "color" in payload: conn.execute("UPDATE device_registry SET color=? WHERE id=?",(payload["color"],device_id))
+                conn.commit(); conn.close()
+            except: pass
+        client=mqtt.Client(); client.on_connect=on_connect; client.on_message=on_message
+        client.connect("localhost",1883,60); client.loop_forever()
+    except: pass
+
+def _cpu_temp_logger():
+    while True:
+        try:
+            t=subprocess.check_output(["vcgencmd","measure_temp"]).decode()
+            cpu_temp=float(t.replace("temp=","").replace("'C\n",""))
+            cpu_temp_f=round(cpu_temp*9/5+32,1)
+            now=int(_time.time())
+            conn=_db()
+            conn.execute("INSERT INTO system_readings (timestamp,metric,value) VALUES (?,?,?)",(now,"cpu_temp_f",cpu_temp_f))
+            conn.commit(); conn.close()
+        except: pass
+        _time.sleep(60)
+
+threading.Thread(target=_cpu_temp_logger,daemon=True).start()
+threading.Thread(target=_mqtt_subscriber,daemon=True).start()
+
+
+
+@app.post("/api/settime")
+async def set_time(payload: dict, pin=Depends(verify_pin)):
+    dt = payload.get("datetime", "")
+    if not dt:
+        return {"success": False, "error": "no datetime"}
+    try:
+        subprocess.run(
+            ["sudo", "date", "-s", dt],
+            capture_output=True, timeout=5
+        )
+        return {"success": True}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@app.get("/api/network")
+def get_network():
+    import subprocess as sp
+    info = {}
+    try:
+        ips = sp.check_output(["hostname", "-I"]).decode().strip().split()
+        info["wlan_ip"] = next((i for i in ips if i.startswith("192.168.1.")), "not connected")
+        info["eth0_ip"] = next((i for i in ips if i.startswith("192.168.2.")), "not connected")
+    except:
+        info["wlan_ip"] = "unknown"
+        info["eth0_ip"] = "unknown"
+    try:
+        ssid = sp.check_output(["iwgetid", "-r"]).decode().strip()
+        info["ssid"] = ssid if ssid else "not connected"
+    except:
+        info["ssid"] = "unknown"
+    try:
+        signal = sp.check_output(["bash", "-c", "cat /proc/net/wireless | tail -1 | awk '{print $3}'"]).decode().strip().rstrip(".")
+        info["signal"] = signal + " dBm" if signal else "unknown"
+    except:
+        info["signal"] = "unknown"
+    try:
+        eth0_state = sp.check_output(["cat", "/sys/class/net/eth0/operstate"]).decode().strip()
+        info["eth0_status"] = "Connected" if eth0_state == "up" else "Down"
+    except:
+        info["eth0_status"] = "unknown"
+    try:
+        ts_ip = sp.check_output(["tailscale", "ip", "-4"]).decode().strip()
+        info["ts_ip"] = ts_ip if ts_ip else "not connected"
+        ts_status = sp.check_output(["tailscale", "status", "--json"]).decode()
+        info["ts_status"] = "Connected"
+    except:
+        info["ts_ip"] = "unknown"
+        info["ts_status"] = "unknown"
+    try:
+        sp.check_output(["ping", "-c", "1", "-W", "2", "8.8.8.8"])
+        info["internet"] = "Connected"
+    except:
+        info["internet"] = "No connection"
+    return info
+
+
+@app.get("/api/system/services")
+def get_services():
+    import subprocess as sp
+    services = ["dashboard-api", "rak-reader", "automation-engine"]
+    result = []
+    for svc in services:
+        try:
+            out = sp.check_output(["systemctl", "is-active", svc]).decode().strip()
+            result.append({"name": svc, "status": out})
+        except:
+            result.append({"name": svc, "status": "inactive"})
+    # Frigate is Docker
+    try:
+        out = sp.check_output(["docker", "inspect", "-f", "{{.State.Status}}", "frigate"]).decode().strip()
+        result.append({"name": "frigate", "status": out})
+    except:
+        result.append({"name": "frigate", "status": "unknown"})
+    return {"services": result}
+
+@app.post("/api/system/restart-service")
+async def restart_service(payload: dict):
+    svc = payload.get("service", "")
+    if not svc:
+        return {"success": False, "error": "no service"}
+    try:
+        if svc == "frigate":
+            subprocess.Popen(["bash", "-c", "cd /home/brifas/frigate && docker compose restart"])
+        else:
+            subprocess.Popen(["sudo", "systemctl", "restart", svc])
+        return {"success": True}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.get("/api/system/logs")
+def get_logs(service: str = "dashboard-api", lines: int = 20):
+    import subprocess as sp
+    try:
+        if service == "frigate":
+            out = sp.check_output(
+                ["docker", "logs", "frigate", "--tail", str(lines)],
+                stderr=sp.STDOUT
+            ).decode()
+        else:
+            out = sp.check_output(
+                ["journalctl", "-u", service, "-n", str(lines), "--no-pager"],
+                stderr=sp.STDOUT
+            ).decode()
+        return {"logs": out}
+    except Exception as e:
+        return {"logs": str(e)}
+
+@app.get("/api/system/backup-info")
+def backup_info():
+    import glob
+    try:
+        backups = sorted(glob.glob("/home/brifas/backups/*"))
+        if backups:
+            latest = os.path.basename(backups[-1])
+            mtime = os.path.getmtime(backups[-1])
+            return {"last_backup": latest, "timestamp": mtime}
+        return {"last_backup": "none", "timestamp": 0}
+    except:
+        return {"last_backup": "unknown", "timestamp": 0}
+
+@app.post("/api/system/backup")
+async def run_backup():
+    try:
+        subprocess.Popen(["bash", "/home/brifas/backup.sh"])
+        return {"success": True}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.post("/api/system/git-push")
+async def git_push(pin=Depends(verify_pin)):
+    try:
+        result = subprocess.check_output(
+            ["bash", "-c", "cd /home/brifas/dashboard-html && git add -A && git commit -m \"dashboard auto-save\" && git push origin master"],
+            stderr=subprocess.STDOUT, timeout=30
+        ).decode()
+        return {"success": True, "output": result}
+    except subprocess.CalledProcessError as e:
+        return {"success": False, "output": e.output.decode()}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.post("/api/system/reboot")
+async def reboot_system(pin=Depends(verify_pin)):
+    subprocess.Popen(["sudo", "reboot"])
+    return {"success": True}
+
+@app.post("/api/system/shutdown")
+async def shutdown_system(pin=Depends(verify_pin)):
+    subprocess.Popen(["sudo", "shutdown", "-h", "now"])
+    return {"success": True}
+
+
+@app.delete("/api/devices/{device_id}")
+def delete_device(device_id: str):
+    try:
+        conn = _db()
+        conn.execute("DELETE FROM device_registry WHERE id=?", (device_id,))
+        conn.commit()
+        conn.close()
+        return {"success": True}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@app.get("/api/system/hardware")
+def get_hardware():
+    import subprocess as sp
+    hw = []
+    # Pi 5
+    try:
+        t = sp.check_output(["vcgencmd", "measure_temp"]).decode()
+        temp = float(t.replace("temp=","").replace("'C\n","").strip().rstrip("'C"))
+        temp_f = round(temp * 9/5 + 32, 1)
+    except:
+        temp_f = 0
+    try:
+        up = sp.check_output(["uptime", "-p"]).decode().strip()
+    except:
+        up = "unknown"
+    ram = __import__("psutil").virtual_memory()
+    hw.append({"name": "Raspberry Pi 5 8GB", "status": "online",
+        "detail": f"CPU {temp_f}\u00b0F \u00b7 {up}",
+        "extra": f"RAM {ram.percent}%"})
+    # Hailo-8L
+    try:
+        ver = sp.check_output(["cat", "/sys/module/hailo_pci/version"]).decode().strip()
+        hw.append({"name": "Hailo-8L AI Accelerator", "status": "online",
+            "detail": f"Driver {ver}", "extra": ""})
+    except:
+        hw.append({"name": "Hailo-8L AI Accelerator", "status": "offline",
+            "detail": "Not detected", "extra": ""})
+
+    # Waveshare Display
+    try:
+        disp = sp.check_output(["vcgencmd", "display_power"]).decode().strip()
+        power = "On" if "1" in disp else "Off"
+        hw.append({"name": "Waveshare 13.3\" Display", "status": "online",
+            "detail": f"Power: {power} \u00b7 1920x1080", "extra": ""})
+    except:
+        hw.append({"name": "Waveshare 13.3\" Display", "status": "online",
+            "detail": "1920x1080", "extra": ""})
+    # NVMe SSD
+    disk = __import__("psutil").disk_usage("/")
+    hw.append({"name": "512GB NVMe SSD", "status": "online",
+        "detail": f"{round(disk.used/1024**3,1)} / {round(disk.total/1024**3,1)} GB used",
+        "extra": f"{disk.percent}%"})
+    return {"hardware": hw}
+
+
+@app.get("/api/system/registered-devices")
+def get_registered_devices():
+    import glob
+    devices = []
+    # RAK WisBlock
+    try:
+        acm = glob.glob("/dev/ttyACM*")
+        if acm:
+            devices.append({"name": "RAK WisBlock Weather Station",
+                "status": "online",
+                "detail": "RAK4631 + RAK1906 \u00b7 USB " + acm[0] + " \u00b7 Meshtastic 2.7.15",
+                "extra": "", "id": "rak_wisblock"})
+        else:
+            devices.append({"name": "RAK WisBlock Weather Station",
+                "status": "offline",
+                "detail": "RAK4631 + RAK1906 \u00b7 Not connected",
+                "extra": "", "id": "rak_wisblock"})
+    except:
+        devices.append({"name": "RAK WisBlock Weather Station",
+            "status": "offline",
+            "detail": "RAK4631 + RAK1906 \u00b7 Not connected",
+            "extra": "", "id": "rak_wisblock"})
+    # Cameras
+    for cam in CAMERAS:
+        devices.append({"name": cam["name"],
+            "status": "online",
+            "detail": cam["type"] + " \u00b7 " + cam["ip"],
+            "extra": "", "id": cam["id"]})
+    # MQTT devices from registry
+    try:
+        conn = _db()
+        rows = conn.execute("SELECT id,name,category,type,online,ip,last_seen FROM device_registry").fetchall()
+        conn.close()
+        for r in rows:
+            devices.append({"name": r[1],
+                "status": "online" if r[4] else "offline",
+                "detail": (r[3] or "") + " \u00b7 " + (r[2] or "") + ("  \u00b7 " + r[5] if r[5] else ""),
+                "extra": "",
+                "id": r[0]})
+    except:
+        pass
+    return {"devices": devices}
+
+
+@app.get("/api/sensors/averages")
+def get_sensor_averages():
+    try:
+        now = int(_time.time())
+        conn = _db()
+        result = {}
+        for period, label, secs in [("24h", "24h", 86400), ("7d", "7d", 604800), ("30d", "30d", 2592000)]:
+            since = now - secs
+            row = conn.execute(
+                "SELECT AVG(value), MAX(value), MIN(value) FROM sensor_readings WHERE sensor_id='rak_temp' AND timestamp>?",
+                (since,)
+            ).fetchone()
+            if row and row[0] is not None:
+                result["temp_" + label] = str(round(row[0], 1)) + " \u00b0F"
+                if label == "24h":
+                    result["temp_24h_high"] = str(round(row[1], 1)) + " \u00b0F"
+                    result["temp_24h_low"] = str(round(row[2], 1)) + " \u00b0F"
+        # 24h humidity avg
+        row = conn.execute(
+            "SELECT AVG(value) FROM sensor_readings WHERE sensor_id='rak_humidity' AND timestamp>?",
+            (now - 86400,)
+        ).fetchone()
+        if row and row[0] is not None:
+            result["humid_24h"] = str(round(row[0], 1)) + " %"
+        # 24h pressure avg
+        row = conn.execute(
+            "SELECT AVG(value) FROM sensor_readings WHERE sensor_id='rak_pressure' AND timestamp>?",
+            (now - 86400,)
+        ).fetchone()
+        if row and row[0] is not None:
+            result["pres_24h"] = str(round(row[0], 1)) + " hPa"
+        # 24h dew point avg
+        row = conn.execute(
+            "SELECT AVG(value) FROM sensor_readings WHERE sensor_id='rak_dewpoint' AND timestamp>?",
+            (now - 86400,)
+        ).fetchone()
+        if row and row[0] is not None:
+            result["dew_24h"] = str(round(row[0], 1)) + " °F"
+        conn.close()
+        return result
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/api/notifications/settings")
+def get_notif_settings():
+    try:
+        conn = _db()
+        conn.execute("""CREATE TABLE IF NOT EXISTS notification_settings (
+            key TEXT PRIMARY KEY, value TEXT)""")
+        rows = conn.execute("SELECT key, value FROM notification_settings").fetchall()
+        conn.close()
+        settings = {}
+        for r in rows:
+            try: settings[r[0]] = json.loads(r[1])
+            except: settings[r[0]] = r[1]
+        # Defaults
+        if "camera_motion" not in settings: settings["camera_motion"] = True
+        if "system_alerts" not in settings: settings["system_alerts"] = True
+        if "sensor_alerts" not in settings: settings["sensor_alerts"] = True
+        if "automation_alerts" not in settings: settings["automation_alerts"] = True
+        if "sound" not in settings: settings["sound"] = False
+        if "quiet_start" not in settings: settings["quiet_start"] = ""
+        if "quiet_end" not in settings: settings["quiet_end"] = ""
+        if "sensor_thresholds" not in settings: settings["sensor_thresholds"] = []
+        return settings
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.post("/api/notifications/settings")
+def save_notif_settings(payload: dict):
+    try:
+        conn = _db()
+        conn.execute("""CREATE TABLE IF NOT EXISTS notification_settings (
+            key TEXT PRIMARY KEY, value TEXT)""")
+        for k, v in payload.items():
+            conn.execute(
+                "INSERT INTO notification_settings (key, value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=?",
+                (k, json.dumps(v), json.dumps(v)))
+        conn.commit()
+        conn.close()
+        return {"success": True}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.get("/api/notifications/history")
+def get_notif_history(limit: int = 50):
+    try:
+        conn = _db()
+        conn.execute("""CREATE TABLE IF NOT EXISTS notification_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp INTEGER, type TEXT, source TEXT,
+            message TEXT, icon TEXT)""")
+        rows = conn.execute(
+            "SELECT timestamp, type, source, message, icon FROM notification_history ORDER BY timestamp DESC LIMIT ?",
+            (limit,)).fetchall()
+        conn.close()
+        return {"notifications": [
+            {"timestamp": r[0], "type": r[1], "source": r[2], "message": r[3], "icon": r[4]}
+            for r in rows]}
+    except Exception as e:
+        return {"notifications": [], "error": str(e)}
+
+
+@app.get("/api/camera/retention")
+def get_retention():
+    try:
+        import yaml
+        with open("/home/brifas/frigate/config/config.yml", "r") as f:
+            cfg = yaml.safe_load(f)
+        rec = cfg.get("record", {})
+        cont = rec.get("continuous", {}).get("days", 7)
+        det = rec.get("detections", {}).get("retain", {}).get("days", 14)
+        snap = cfg.get("snapshots", {}).get("retain", {}).get("default", 7)
+        return {"continuous": cont, "clips": det, "snapshots": snap}
+    except Exception as e:
+        return {"continuous": 7, "clips": 14, "snapshots": 7, "error": str(e)}
+
+@app.post("/api/camera/retention")
+async def set_retention(payload: dict):
+    try:
+        import yaml
+        with open("/home/brifas/frigate/config/config.yml", "r") as f:
+            cfg = yaml.safe_load(f)
+        cont = payload.get("continuous", 7)
+        clips = payload.get("clips", 14)
+        snaps = payload.get("snapshots", 7)
+        if "record" not in cfg:
+            cfg["record"] = {}
+        if "continuous" not in cfg["record"]:
+            cfg["record"]["continuous"] = {}
+        cfg["record"]["continuous"]["days"] = cont
+        if "detections" not in cfg["record"]:
+            cfg["record"]["detections"] = {"retain": {}}
+        if "retain" not in cfg["record"]["detections"]:
+            cfg["record"]["detections"]["retain"] = {}
+        cfg["record"]["detections"]["retain"]["days"] = clips
+        if "snapshots" not in cfg:
+            cfg["snapshots"] = {"retain": {}}
+        if "retain" not in cfg["snapshots"]:
+            cfg["snapshots"]["retain"] = {}
+        cfg["snapshots"]["retain"]["default"] = snaps
+        with open("/home/brifas/frigate/config/config.yml", "w") as f:
+            yaml.dump(cfg, f, default_flow_style=False)
+        subprocess.Popen(["bash", "-c", "cd /home/brifas/frigate && docker compose restart"])
+        return {"success": True}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@app.get("/api/clip/{event_id}/thumbnail.jpg")
+async def proxy_thumbnail(event_id: str):
+    async with httpx.AsyncClient() as client:
+        r = await client.get(f"http://localhost:5000/api/events/{event_id}/thumbnail.jpg", timeout=10)
+        return Response(content=r.content, media_type="image/jpeg")
+
+@app.get("/api/clip/{event_id}/clip.mp4")
+async def proxy_clip(event_id: str):
+    client = httpx.AsyncClient()
+    req = client.build_request("GET", f"http://localhost:5000/api/events/{event_id}/clip.mp4")
+    resp = await client.send(req, stream=True)
+    async def generate():
+        try:
+            async for chunk in resp.aiter_bytes(65536):
+                yield chunk
+        finally:
+            await resp.aclose()
+            await client.aclose()
+    return StreamingResponse(generate(), media_type="video/mp4")
+
+# --- CAMERA PROXY ---
+def _load_cameras():
+    try:
+        with open(os.path.join(os.path.dirname(__file__), "cameras.json"), "r") as f:
+            return json.load(f).get("cameras", [])
+    except:
+        return []
+
+CAMERAS = _load_cameras()
+
+@app.get("/api/camera/list")
+async def camera_list():
+    result = []
+    for cam in CAMERAS:
+        online = False
+        if cam["type"] == "amcrest":
+            try:
+                auth = httpx.DigestAuth(cam["user"], cam["pass"])
+                async with httpx.AsyncClient() as client:
+                    r = await client.get(
+                        f"http://{cam['ip']}/cgi-bin/magicBox.cgi?action=getSystemInfo",
+                        auth=auth, timeout=3
+                    )
+                    online = r.status_code == 200
+            except:
+                pass
+        result.append({"id": cam["id"], "name": cam["name"], "type": cam["type"], "online": online})
+    return {"cameras": result}
+
+@app.get("/api/camera/{cam_id}/snapshot")
+async def camera_snapshot(cam_id: str):
+    cam = next((c for c in CAMERAS if c["id"] == cam_id), None)
+    if not cam:
+        return Response(status_code=404)
+    if cam["type"] == "amcrest":
+        url = f"http://{cam['ip']}/cgi-bin/mjpg/video.cgi"
+        url += "?channel=1&subtype=1"
+        auth = httpx.DigestAuth(cam["user"], cam["pass"])
+        async with httpx.AsyncClient() as client:
+            async with client.stream(
+                "GET", url, auth=auth, timeout=10
+            ) as r:
+                buf = b""
+                async for chunk in r.aiter_bytes(4096):
+                    buf += chunk
+                    start = buf.find(b"\xff\xd8")
+                    end = buf.find(b"\xff\xd9", start + 2)
+                    if start >= 0 and end >= 0:
+                        return Response(
+                            content=buf[start:end+2],
+                            media_type="image/jpeg"
+                        )
+        return Response(status_code=500)
+    return Response(status_code=400)
+
+@app.get("/api/camera/{cam_id}/stream")
+async def camera_stream(cam_id: str):
+    cam = next((c for c in CAMERAS if c["id"] == cam_id), None)
+    if not cam:
+        return Response(status_code=404)
+    if cam["type"] == "amcrest":
+        url = f"http://{cam['ip']}/cgi-bin/mjpg/video.cgi"
+        url += "?channel=1&subtype=1"
+        auth = httpx.DigestAuth(cam["user"], cam["pass"])
+        client = httpx.AsyncClient()
+        req = client.build_request("GET", url)
+        resp = await client.send(req, auth=auth, stream=True)
+        ct = resp.headers.get(
+            "content-type",
+            "multipart/x-mixed-replace; boundary=myboundary"
+        )
+        async def generate():
+            try:
+                async for chunk in resp.aiter_bytes(65536):
+                    yield chunk
+            finally:
+                await resp.aclose()
+                await client.aclose()
+        return StreamingResponse(generate(), media_type=ct)
+    return Response(status_code=400)
+
+app.mount("/", StaticFiles(directory="/home/brifas/dashboard-html", html=True), name="dashboard")
