@@ -28,26 +28,30 @@ button:disabled { opacity:0.5; }
   <label id="theme-label" style="display:none;">For Theme:</label>
   <select id="theme" style="display:none;">
     <option value="">— Pick a theme —</option>
+    <option value="water">Water</option>
+    <option value="emerald">Emerald</option>
+    <option value="titanium">Titanium</option>
+    <option value="purple">Electric Purple</option>
+    <option value="nebula">Nebula</option>
+    <option value="void">Void</option>
+    <option value="matrix">Matrix</option>
     <option value="aquatic">Aquatic</option>
     <option value="christmas">Christmas</option>
-    <option value="easter">Easter</option>
-    <option value="flagday">Flag Day</option>
-    <option value="gadsden">Gadsden</option>
-    <option value="halloween">Halloween</option>
-    <option value="july4">July 4th</option>
-    <option value="laborday">Labor Day</option>
-    <option value="matrix">Matrix</option>
-    <option value="memorialday">Memorial Day</option>
-    <option value="mothersday">Mother's Day</option>
-    <option value="nebula">Nebula</option>
-    <option value="newyears">New Year's</option>
-    <option value="soviet">Soviet</option>
     <option value="stpatricks">St Patrick's</option>
-    <option value="thanksgiving">Thanksgiving</option>
-    <option value="valentine">Valentine</option>
+    <option value="mothersday">Mother's Day</option>
+    <option value="july4">July 4th</option>
+    <option value="gadsden">Gadsden</option>
+    <option value="flagday">Flag Day</option>
+    <option value="laborday">Labor Day</option>
     <option value="veteransday">Veterans Day</option>
-    <option value="void">Void</option>
+    <option value="memorialday">Memorial Day</option>
     <option value="womensday">Women's Day</option>
+    <option value="soviet">Soviet</option>
+    <option value="easter">Easter</option>
+    <option value="valentine">Valentine</option>
+    <option value="newyears">New Year's</option>
+    <option value="thanksgiving">Thanksgiving</option>
+    <option value="halloween">Halloween</option>
   </select>
   <label id="album-label">Album:</label>
   <select id="album">

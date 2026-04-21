@@ -274,25 +274,10 @@ function _clockSecondColor(){
   return '#ef4444';
 }
 function _clockFaceVal(){
-  if(typeof _themeColors==='undefined'||typeof _settings==='undefined')return null;
-  var themeName=_settings.activeTheme;
-  var c=_themeColors[themeName];
-  if(!c)return null;
-  // 1. Explicit clockFace field wins (manual override)
-  if(c.clockFace)return c.clockFace;
-  // 2. Auto-discover: try /static/clocks/{themename}_clock.png
-  var autoPath='/static/clocks/'+themeName+'_clock.png';
-  // Cache discovery result so we don't probe every frame
-  if(typeof _clockAutoCache==='undefined')window._clockAutoCache={};
-  if(_clockAutoCache[themeName]!==undefined){
-    return _clockAutoCache[themeName]; // either path string or null
+  if(typeof _themeColors!=='undefined'&&typeof _settings!=='undefined'){
+    var c=_themeColors[_settings.activeTheme];
+    if(c&&c.clockFace)return c.clockFace;
   }
-  // Probe by attempting to load the image
-  var probe=new Image();
-  probe.onload=function(){_clockAutoCache[themeName]=autoPath;};
-  probe.onerror=function(){_clockAutoCache[themeName]=null;};
-  probe.src=autoPath;
-  _clockAutoCache[themeName]=null; // assume null while probe pending; will update after load
   return null;
 }
 const _clockFaceImgs={};
@@ -312,21 +297,13 @@ function drawClock() {
   const hrs = now.getHours(), mins = now.getMinutes(), secs = now.getSeconds();
   const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   ctx.clearRect(0,0,C,C);
-  var _faceVal=_clockFaceVal();
-  // Always start with a solid black face (also acts as fallback)
   ctx.beginPath();
   ctx.arc(R,R,R-4,0,Math.PI*2);
-  ctx.fillStyle='#0d0d0d';
-  ctx.fill();
-  // If clockFace is a hex color, overlay it
-  if(_faceVal&&typeof _faceVal==='string'&&_faceVal.charAt(0)==='#'){
-    ctx.beginPath();
-    ctx.arc(R,R,R-4,0,Math.PI*2);
-    ctx.fillStyle=_faceVal;
-    ctx.fill();
-  }
-  // If clockFace is an image path, clip and draw image inside the circle
+  var _faceVal=_clockFaceVal();
+  if(!window._debugClockLogged){window._debugClockLogged=true;console.log('[CLOCK DEBUG] activeTheme=',_settings&&_settings.activeTheme,'faceVal=',_faceVal,'type=',typeof _faceVal);}
   if(_faceVal&&typeof _faceVal==='string'&&_faceVal.charAt(0)!=='#'){
+    ctx.fillStyle='#0d0d0d';
+    ctx.fill();
     var _faceImg=_getClockFaceImg(_faceVal);
     if(_faceImg){
       ctx.save();
@@ -336,6 +313,12 @@ function drawClock() {
       ctx.drawImage(_faceImg,4,4,C-8,C-8);
       ctx.restore();
     }
+  }else if(_faceVal&&typeof _faceVal==='string'&&_faceVal.charAt(0)==='#'){
+    ctx.fillStyle=_faceVal;
+    ctx.fill();
+  }else{
+    ctx.fillStyle='#0d0d0d';
+    ctx.fill();
   }
   for(let i=0;i<60;i++){
     const ang=(i*6-90)*Math.PI/180;
