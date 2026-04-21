@@ -299,26 +299,8 @@ function drawClock() {
   ctx.clearRect(0,0,C,C);
   ctx.beginPath();
   ctx.arc(R,R,R-4,0,Math.PI*2);
-  var _faceVal=_clockFaceVal();
-  if(_faceVal&&typeof _faceVal==='string'&&_faceVal.charAt(0)!=='#'){
-    ctx.fillStyle='#0d0d0d';
-    ctx.fill();
-    var _faceImg=_getClockFaceImg(_faceVal);
-    if(_faceImg){
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(R,R,R-4,0,Math.PI*2);
-      ctx.clip();
-      ctx.drawImage(_faceImg,4,4,C-8,C-8);
-      ctx.restore();
-    }
-  }else if(_faceVal&&typeof _faceVal==='string'&&_faceVal.charAt(0)==='#'){
-    ctx.fillStyle=_faceVal;
-    ctx.fill();
-  }else{
-    ctx.fillStyle='#0d0d0d';
-    ctx.fill();
-  }
+  ctx.fillStyle='#0d0d0d';
+  ctx.fill();
   for(let i=0;i<60;i++){
     const ang=(i*6-90)*Math.PI/180;
     const isMaj=i%5===0;

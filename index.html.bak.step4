@@ -299,26 +299,8 @@ function drawClock() {
   ctx.clearRect(0,0,C,C);
   ctx.beginPath();
   ctx.arc(R,R,R-4,0,Math.PI*2);
-  var _faceVal=_clockFaceVal();
-  if(_faceVal&&typeof _faceVal==='string'&&_faceVal.charAt(0)!=='#'){
-    ctx.fillStyle='#0d0d0d';
-    ctx.fill();
-    var _faceImg=_getClockFaceImg(_faceVal);
-    if(_faceImg){
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(R,R,R-4,0,Math.PI*2);
-      ctx.clip();
-      ctx.drawImage(_faceImg,4,4,C-8,C-8);
-      ctx.restore();
-    }
-  }else if(_faceVal&&typeof _faceVal==='string'&&_faceVal.charAt(0)==='#'){
-    ctx.fillStyle=_faceVal;
-    ctx.fill();
-  }else{
-    ctx.fillStyle='#0d0d0d';
-    ctx.fill();
-  }
+  ctx.fillStyle='#0d0d0d';
+  ctx.fill();
   for(let i=0;i<60;i++){
     const ang=(i*6-90)*Math.PI/180;
     const isMaj=i%5===0;
@@ -354,24 +336,24 @@ function drawClock() {
   ctx.beginPath();
   ctx.moveTo(R,R);
   ctx.lineTo(R+162*Math.cos(hourDeg),R+162*Math.sin(hourDeg));
-  ctx.strokeStyle=_clockHands();
+  ctx.strokeStyle=_clockAccent();
   ctx.lineWidth=10;
   ctx.stroke();
   ctx.beginPath();
   ctx.moveTo(R,R);
   ctx.lineTo(R+220*Math.cos(minDeg),R+220*Math.sin(minDeg));
-  ctx.strokeStyle=_clockHands();
+  ctx.strokeStyle=_clockAccent();
   ctx.lineWidth=6;
   ctx.stroke();
   ctx.beginPath();
   ctx.moveTo(R,R);
   ctx.lineTo(R+248*Math.cos(secDeg),R+248*Math.sin(secDeg));
-  ctx.strokeStyle=_clockSecondColor();
+  ctx.strokeStyle='#ef4444';
   ctx.lineWidth=2.5;
   ctx.stroke();
   ctx.beginPath();
   ctx.arc(R,R,14,0,Math.PI*2);
-  ctx.fillStyle=_clockHands();
+  ctx.fillStyle=_clockAccent();
   ctx.fill();
   const m=String(mins).padStart(2,'0');
   const s=String(secs).padStart(2,'0');
