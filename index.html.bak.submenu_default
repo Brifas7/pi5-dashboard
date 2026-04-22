@@ -2003,20 +2003,6 @@ _ssResetTimer();
 .auto-empty{padding:40px;text-align:center;color:var(--text-sub);font-size:16px;font-weight:600;letter-spacing:1px;}
 .auto-cat-group{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
 .auto-cat-label{font-size:12px;font-weight:700;letter-spacing:2px;color:var(--text-sub);text-transform:uppercase;padding-left:4px;}
-
-/* Submenu theme lock - submenus always use aquatic color palette regardless of active theme */
-.settings-screen {
-  --accent: #00b8a9;
-  --accent-rgb: 0,184,169;
-  --text: #e0f8f5;
-  --text-sub: #6ee7d8;
-  --notif-bg: rgba(0,120,110,0.45);
-  --overlay-bg: rgba(0,20,25,0.97);
-  --nav-bg: #00b8a9;
-  --widget-bg: #00b8a9;
-  --bezel-glow: #00b8a9;
-}
-
 </style>
 
 <div id="auto-overlay" style="display:none;position:fixed;inset:0;background:var(--overlay-bg);z-index:1000;flex-direction:column;">
