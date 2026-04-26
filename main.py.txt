@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Query, Response, WebSocket
 from fastapi.responses import StreamingResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -136,18 +136,51 @@ async def notifications():
 
 
 @app.post("/api/upload")
-async def upload_file(file: UploadFile = File(...), dest: str = Query("photos")):
+async def upload_file(file: UploadFile = File(...), dest: str = Query("photos"), album: int = Query(1)):
     import os
-    folders = {
-        "photos": "/home/brifas/dashboard-html/photos/",
-        "themes": "/home/brifas/dashboard-html/static/themes/"
-    }
-    folder = folders.get(dest)
-    if not folder: return {"error": "invalid destination"}
+    if dest == "photos":
+        if album < 1 or album > 5:
+            return {"error": "album must be 1-5"}
+        folder = f"/home/brifas/dashboard-html/photos/album{album}/"
+    elif dest == "themes":
+        folder = "/home/brifas/dashboard-html/static/themes/"
+    elif dest == "clocks":
+        folder = "/home/brifas/dashboard-html/static/clocks/"
+    else:
+        return {"error": "invalid destination"}
     os.makedirs(folder, exist_ok=True)
     path = os.path.join(folder, file.filename)
+    raw = await file.read()
     with open(path, "wb") as f2:
-        f2.write(await file.read())
+        f2.write(raw)
+    # For clocks: auto-crop to a centered circle and save a PNG version
+    if dest == "clocks":
+        try:
+            from PIL import Image, ImageDraw
+            import io
+            img = Image.open(io.BytesIO(raw)).convert("RGBA")
+            w, h = img.size
+            side = min(w, h)
+            left = (w - side) // 2
+            top = (h - side) // 2
+            img = img.crop((left, top, left + side, top + side))
+            # Resize to 400x400 (comfortably larger than display size for sharpness)
+            img = img.resize((400, 400), Image.LANCZOS)
+            # Apply circular alpha mask
+            mask = Image.new("L", (400, 400), 0)
+            draw = ImageDraw.Draw(mask)
+            draw.ellipse((0, 0, 400, 400), fill=255)
+            img.putalpha(mask)
+            # Save as PNG (keeps transparency outside the circle)
+            base = os.path.splitext(file.filename)[0]
+            final_path = os.path.join(folder, base + ".png")
+            img.save(final_path, "PNG")
+            # Remove the raw upload, keep only the cropped PNG
+            if path != final_path:
+                os.remove(path)
+            return {"success": True, "path": final_path, "filename": base + ".png"}
+        except Exception as e:
+            return {"success": False, "error": f"crop failed: {e}"}
     return {"success": True, "path": path}
 
 @app.post("/api/brightness")
@@ -164,12 +197,14 @@ async def set_display(payload:dict):
 def exit_kiosk(): subprocess.Popen(["pkill","chromium"]); return {"status":"exiting"}
 
 @app.delete("/api/photos/{filename}")
-def delete_photo(filename: str):
+def delete_photo(filename: str, album: int = Query(1)):
     try:
         import re
+        if album < 1 or album > 5:
+            return {"success": False, "error": "album must be 1-5"}
         if not re.match(r'^[\w\-. ~()]+\.(jpg|jpeg|png|gif|webp)$', filename, re.IGNORECASE):
             return {"success": False, "error": "Invalid filename"}
-        path = os.path.join(PHOTOS_DIR, filename)
+        path = os.path.join(PHOTOS_DIR, f"album{album}", filename)
         if not os.path.exists(path):
             return {"success": False, "error": "Not found"}
         os.remove(path)
@@ -177,12 +212,44 @@ def delete_photo(filename: str):
     except Exception as e: return {"success": False, "error": str(e)}
 
 @app.get("/api/photos")
-def get_photos():
+def get_photos(album: int = Query(1)):
     try:
+        if album < 1 or album > 5:
+            return {"photos":[],"error":"album must be 1-5"}
         exts={".jpg",".jpeg",".png",".gif",".webp"}
-        files=sorted([f for f in os.listdir(PHOTOS_DIR) if os.path.splitext(f)[1].lower() in exts])
-        return {"photos":[f"/photos/{f}" for f in files]}
+        album_dir = os.path.join(PHOTOS_DIR, f"album{album}")
+        if not os.path.isdir(album_dir):
+            return {"photos":[]}
+        files=sorted([f for f in os.listdir(album_dir) if os.path.splitext(f)[1].lower() in exts])
+        return {"photos":[f"/photos/album{album}/{f}" for f in files]}
     except Exception as e: return {"photos":[],"error":str(e)}
+
+
+@app.get("/api/clocks")
+def get_clocks():
+    try:
+        clocks_dir = "/home/brifas/dashboard-html/static/clocks"
+        if not os.path.isdir(clocks_dir):
+            return {"clocks": []}
+        exts = {".png", ".jpg", ".jpeg", ".webp"}
+        files = sorted([f for f in os.listdir(clocks_dir) if os.path.splitext(f)[1].lower() in exts])
+        return {"clocks": [f"/static/clocks/{f}" for f in files]}
+    except Exception as e:
+        return {"clocks": [], "error": str(e)}
+
+@app.delete("/api/clocks/{filename}")
+def delete_clock(filename: str):
+    try:
+        import re
+        if not re.match(r'^[\w\-. ~()]+\.(png|jpg|jpeg|webp)$', filename, re.IGNORECASE):
+            return {"success": False, "error": "Invalid filename"}
+        path = os.path.join("/home/brifas/dashboard-html/static/clocks", filename)
+        if not os.path.exists(path):
+            return {"success": False, "error": "Not found"}
+        os.remove(path)
+        return {"success": True}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 @app.get("/api/solar")
 def get_solar():
@@ -274,6 +341,21 @@ def get_temp_history(range:str="24h"):
         conn.close()
         return {"range":range,"points":[{"t":r[0],"v":r[1]} for r in rows]}
     except Exception as e: return {"points":[],"error":str(e)}
+
+@app.get("/api/camera/ui")
+async def camera_ui():
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="http://192.168.2.26")
+
+@app.get("/api/camera/ui/{path:path}")
+async def camera_ui_proxy(path: str, request: Request):
+    import httpx
+    from fastapi.responses import Response
+    url = f"http://192.168.2.26/{path}"
+    params = dict(request.query_params)
+    async with httpx.AsyncClient() as client:
+        r = await client.get(url, params=params, timeout=10)
+        return Response(content=r.content, media_type=r.headers.get("content-type","text/html"))
 
 def _mqtt_publish(topic,payload):
     try:
@@ -915,32 +997,6 @@ async def camera_snapshot(cam_id: str):
                             media_type="image/jpeg"
                         )
         return Response(status_code=500)
-    return Response(status_code=400)
-
-@app.get("/api/camera/{cam_id}/stream")
-async def camera_stream(cam_id: str):
-    cam = next((c for c in CAMERAS if c["id"] == cam_id), None)
-    if not cam:
-        return Response(status_code=404)
-    if cam["type"] == "amcrest":
-        url = f"http://{cam['ip']}/cgi-bin/mjpg/video.cgi"
-        url += "?channel=1&subtype=1"
-        auth = httpx.DigestAuth(cam["user"], cam["pass"])
-        client = httpx.AsyncClient()
-        req = client.build_request("GET", url)
-        resp = await client.send(req, auth=auth, stream=True)
-        ct = resp.headers.get(
-            "content-type",
-            "multipart/x-mixed-replace; boundary=myboundary"
-        )
-        async def generate():
-            try:
-                async for chunk in resp.aiter_bytes(65536):
-                    yield chunk
-            finally:
-                await resp.aclose()
-                await client.aclose()
-        return StreamingResponse(generate(), media_type=ct)
     return Response(status_code=400)
 
 app.mount("/", StaticFiles(directory="/home/brifas/dashboard-html", html=True), name="dashboard")

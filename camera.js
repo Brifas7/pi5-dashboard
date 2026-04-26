@@ -1,18 +1,13 @@
-async function _camLoadLive() {
-  const cam = _cam.cameras[_cam.currentIdx];
-  if (!cam) return;
-  document.getElementById('cam-live-title').textContent = _camFmt(cam.name);
-  const c = document.getElementById('cam-live-container');
-  c.innerHTML = '';
-  var img = document.createElement('img');
-  img.src = '/api/camera/' + cam.id + '/stream';
-  img.style.cssText = 'width:100%;height:100%;object-fit:contain;border-radius:8px;border:1px solid rgba(var(--accent-rgb),0.3);background:#000;';
-  img.onerror = function() { c.innerHTML = '<div style="color:#f87171;text-align:center;padding:40px;">Feed unavailable</div>'; };
-  c.appendChild(img);
+function _camOpenFrigate(cameraId) {
+  var iframe = document.getElementById('cam-frigate-iframe');
+  if (!iframe) return;
+  var host = window.location.hostname;
+  var path = cameraId ? ('/cameras/' + cameraId) : '/';
+  iframe.src = 'http://' + host + ':8082' + path;
 }
 function _camStopStreams() {
-  var c = document.getElementById('cam-live-container');
-  if (c) c.innerHTML = '';
+  var iframe = document.getElementById('cam-frigate-iframe');
+  if (iframe) iframe.src = 'about:blank';
   var vid = document.getElementById('cam-playback-video');
   if (vid) { vid.pause(); vid.src = ''; }
 }

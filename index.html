@@ -478,32 +478,24 @@ drawClock();
         <div class="cam-col-label">LIVE FEEDS</div>
         <div id="cam-feed-scroll" class="cam-feed-scroll"></div>
         
-      </div>
+      
+    <div style="padding:16px 20px;background:rgba(0,0,0,0.3);border-top:1px solid rgba(var(--accent-rgb),0.2);">
+      <button class="cam-btn" onclick="camOpenFrigateFull()" style="width:100%;padding:14px;font-size:15px;font-weight:700;letter-spacing:1px;">🎥 OPEN FULL FRIGATE UI</button>
+    </div>
+  </div>
       <div class="cam-actions-col">
         <button class="cam-btn" onclick="camShowClips()">🎬  SAVED CLIPS</button>
         <button class="cam-btn" onclick="camShowSettings()">⚙  CAM SETTINGS</button>
       </div>
     </div>
   </div>
-  <div id="cam-screen-live" class="cam-screen">
-    <div class="cam-header">
-      <div style="display:flex; align-items:center; gap:14px;">
-        <span id="cam-live-title" class="cam-title"></span>
-        <div class="cam-live-badge"><div class="cam-live-badge-dot"></div>LIVE</div>
-      </div>
-      <div style="display:flex; gap:10px;">
-        
-        <button class="cam-btn cam-btn-close" onclick="camBackToList()">✕ CLOSE</button>
-      </div>
+  <div id="cam-screen-frigate" class="cam-screen" style="display:flex;flex-direction:column;background:#000;">
+    <div class="cam-header" style="background:rgba(0,0,0,0.85);">
+      <span id="cam-frigate-title" class="cam-title">📹 LIVE FEED</span>
+      <button class="cam-btn cam-btn-close" onclick="camCloseFrigate()">✕ CLOSE</button>
     </div>
-    <div class="cam-live-body">
-      <button class="cam-arrow cam-arrow-left" onclick="camCycle(-1)">◀</button>
-      <div id="cam-live-container" style="width:calc(100% - 120px);height:100%;display:flex;align-items:center;justify-content:center;"></div>
-      <button class="cam-arrow cam-arrow-right" onclick="camCycle(1)">▶</button>
-    </div>
+    <iframe id="cam-frigate-iframe" src="about:blank" style="flex:1;width:100%;border:0;background:#000;" allow="autoplay; fullscreen; picture-in-picture"></iframe>
   </div>
-  
-  
   <div id="cam-screen-clips" class="cam-screen">
     <div class="cam-header">
       <span class="cam-title">🎬  SAVED CLIPS</span>
@@ -611,8 +603,6 @@ function _camScreen(id) {
   if (el) el.classList.add('active');
 }
 function _camStopStreams() {
-  var container = document.getElementById('cam-live-container');
-  if (container) container.innerHTML = '';
   var vid = document.getElementById('cam-playback-video');
   if (vid) { vid.pause(); vid.src = ''; }
 }
@@ -642,13 +632,25 @@ function _camRenderList() {
     </div>
   `).join('');
 }
-function camOpenLive(idx) { _cam.currentIdx = idx; _camScreen('live'); _camLoadLive(); }
-
-function camCycle(dir) {
-  _camStopStreams();
-  _cam.currentIdx = (_cam.currentIdx + dir + _cam.cameras.length) % _cam.cameras.length;
-  _camLoadLive();
+function camOpenLive(idx) {
+  _cam.currentIdx = idx;
+  var cam = _cam.cameras[idx];
+  if (!cam) return;
+  document.getElementById('cam-frigate-title').textContent = '📹 ' + _camFmt(cam.name).toUpperCase();
+  _camScreen('frigate');
+  _camOpenFrigate(cam.id);
 }
+function camOpenFrigateFull() {
+  document.getElementById('cam-frigate-title').textContent = '📹 FRIGATE';
+  _camScreen('frigate');
+  _camOpenFrigate(null);
+}
+function camCloseFrigate() {
+  _camStopStreams();
+  _camScreen('list');
+}
+
+
 function camBackToList() { _camStopStreams(); _camScreen('list'); _camRenderList(); }
 async function camShowClips() {
   _camScreen('clips');
@@ -1861,7 +1863,7 @@ async function _sensorsLoadGraph() {
 </script>
 <script src="chart.min.js"></script>
 <script src="settings.js?v=21"></script>
-<script src="camera.js?v=2"></script>
+<script src="camera.js?v=4"></script>
 
 <script>
 (function() {

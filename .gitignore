@@ -1,1 +1,7 @@
 *.bak
+*.bak
+*.bak-*
+test_*.jpg
+test_*.png
+photos/
+static/clocks/
