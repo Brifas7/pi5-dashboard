@@ -926,7 +926,7 @@ async def set_retention(payload: dict):
             cfg["snapshots"]["retain"] = {}
         cfg["snapshots"]["retain"]["default"] = snaps
         with open("/home/brifas/frigate/config/config.yml", "w") as f:
-            yaml.dump(cfg, f, default_flow_style=False)
+            yaml.dump(cfg, f, default_flow_style=False, sort_keys=False)
         subprocess.Popen(["bash", "-c", "cd /home/brifas/frigate && docker compose restart"])
         return {"success": True}
     except Exception as e:

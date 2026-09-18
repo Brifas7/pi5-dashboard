@@ -54,6 +54,8 @@ def main():
             iface = meshtastic.serial_interface.SerialInterface("/dev/ttyACM0")
             pub.subscribe(on_telemetry, "meshtastic.receive.telemetry")
             log.info("Connected. Listening for telemetry...")
+            _mi=getattr(iface,"myInfo",None)
+            log.info(f"Local node num: {getattr(_mi,'my_node_num',None)} (None = sender filter INACTIVE)")
             # Register weather station as a system in device registry
             try:
                 requests.post("http://localhost:8000/api/devices/register", json={
