@@ -1,3 +1,4 @@
+var _themeApplyTransient=false;
 const _settings = {
   themes: [
     {id:'nebula',name:'Nebula',color:'#7e22ff'},
@@ -90,6 +91,7 @@ function applyTheme(id){
   r.setProperty('--bezel-glow',c.bezelGlow||c.accent);
   document.body.style.background='url(static/themes/'+id+'.jpg) center/cover no-repeat #051c35';
   _settings.activeTheme=id;
+  if(!_themeApplyTransient)localStorage.setItem('dashBaseTheme',id);
   localStorage.setItem('dashTheme',id);
   _settingsRenderThemes();
   if(typeof fetchStats==='function')fetchStats();
@@ -165,11 +167,19 @@ function scheduleCheck() {
     }
     if (inRange) {
       _holidayActive = true;
-      applyTheme(s.themeId);
+      if(_settings.activeTheme!==s.themeId){_themeApplyTransient=true;applyTheme(s.themeId);_themeApplyTransient=false;}
       return;
     }
   }
+  if(_holidayActive){
+    var base=localStorage.getItem('dashBaseTheme');
+    if(base&&_themeColors[base]&&base!==_settings.activeTheme)applyTheme(base);
+  }
   _holidayActive = false;
+}
+function _scheduleMidnightTimer(){
+  var n=new Date(),m=new Date(n.getFullYear(),n.getMonth(),n.getDate()+1,0,0,30);
+  setTimeout(function(){scheduleCheck();_scheduleMidnightTimer();},m-n);
 }
 
 function scheduleShowCreate() {
@@ -289,7 +299,9 @@ function carouselInit() {
 }
 
 // Run on load
+if(!localStorage.getItem('dashBaseTheme'))localStorage.setItem('dashBaseTheme',localStorage.getItem('dashTheme')||'aquatic');
 scheduleCheck();
+_scheduleMidnightTimer();
 setTimeout(carouselInit, 500);
 
 // Re-render list when screen opens
