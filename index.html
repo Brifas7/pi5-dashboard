@@ -416,9 +416,20 @@ function drawClock() {
   }
   const mo=now.getMonth()+1, d=now.getDate(), y=now.getFullYear();
   document.getElementById('datetext').textContent=`${days[now.getDay()]} · ${mo}/${d}/${y}`;
-  requestAnimationFrame(drawClock);
 }
-drawClock();
+var _clockLastSec=-1,_clockLastTheme=null;
+function _clockLoop(){
+  requestAnimationFrame(_clockLoop);
+  var d=new Date(),sec=d.getSeconds();
+  var th=(typeof _settings!=='undefined')?_settings.activeTheme:null;
+  if(sec===_clockLastSec&&th===_clockLastTheme)return;
+  if(document.hidden)return;
+  var ss=document.getElementById('screensaver');
+  if(ss&&ss.style.display!=='none'&&ss.style.display!=='')return;
+  _clockLastSec=sec;_clockLastTheme=th;
+  drawClock();
+}
+_clockLoop();
 </script>
 
 <!-- ============================================================
