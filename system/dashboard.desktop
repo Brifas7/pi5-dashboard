@@ -1,0 +1,4 @@
+[Desktop Entry]
+Type=Application
+Name=Dashboard
+Exec=chromium-browser --ozone-platform=wayland --kiosk --no-sandbox http://localhost:8000/

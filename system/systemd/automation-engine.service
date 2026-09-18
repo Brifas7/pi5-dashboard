@@ -1,0 +1,15 @@
+[Unit]
+Description=Dashboard Automation Engine
+After=network.target dashboard-api.service
+Requires=dashboard-api.service
+
+[Service]
+Type=simple
+User=brifas
+WorkingDirectory=/home/brifas
+ExecStart=/usr/bin/python3 /home/brifas/automation_engine.py
+Restart=always
+RestartSec=15
+
+[Install]
+WantedBy=multi-user.target

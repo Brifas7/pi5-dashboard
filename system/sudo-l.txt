@@ -1,0 +1,14 @@
+Matching Defaults entries for brifas on pi5-dashboard:
+    env_reset, mail_badpass,
+    secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin,
+    use_pty, env_keep+=NO_AT_BRIDGE,
+    env_keep+=DPKG_DEB_THREADS_MAX,
+    timestamp_type=global, env_keep+="http_proxy
+    HTTP_PROXY", env_keep+="https_proxy HTTPS_PROXY",
+    env_keep+="ftp_proxy FTP_PROXY",
+    env_keep+=RSYNC_PROXY, env_keep+="no_proxy NO_PROXY"
+
+User brifas may run the following commands on
+        pi5-dashboard:
+    (ALL : ALL) ALL
+    (ALL) NOPASSWD: ALL

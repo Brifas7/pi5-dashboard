@@ -1,0 +1,16 @@
+[Unit]
+Description=RAK WisBlock Sensor Reader
+After=network.target dashboard-api.service
+Requires=dashboard-api.service
+
+[Service]
+Type=simple
+User=brifas
+WorkingDirectory=/home/brifas
+ExecStartPre=/bin/sleep 45
+ExecStart=/usr/bin/python3 /home/brifas/rak_reader.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

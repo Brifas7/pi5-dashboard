@@ -1,0 +1,7 @@
+NAME             TYPE      DEVICE          
+preconfigured    wifi      wlan0           
+tailscale0       tun       tailscale0      
+br-d930f66eed8e  bridge    br-d930f66eed8e 
+cameras          ethernet  eth0            
+lo               loopback  lo              
+docker0          bridge    docker0         

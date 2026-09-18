@@ -1,0 +1,20 @@
+services:
+  frigate:
+    container_name: frigate
+    restart: unless-stopped
+    image: ghcr.io/blakeblackshear/frigate:stable
+    privileged: true
+    shm_size: "256mb"
+    devices:
+      - /dev/hailo0:/dev/hailo0
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ~/frigate/config:/config
+      - ~/frigate/storage:/media/frigate
+    ports:
+      - "1984:1984"
+      - "5000:5000"
+      - "8971:8971"
+      - "8554:8554"
+      - "8555:8555/tcp"
+      - "8555:8555/udp"

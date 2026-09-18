@@ -1,0 +1,9 @@
+server {
+    listen 8086;
+    location / {
+        proxy_pass http://192.168.2.28;
+        proxy_set_header Host 192.168.2.28;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_buffering off;
+    }
+}
