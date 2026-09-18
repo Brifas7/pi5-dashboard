@@ -149,7 +149,8 @@ async def upload_file(file: UploadFile = File(...), dest: str = Query("photos"),
     else:
         return {"error": "invalid destination"}
     os.makedirs(folder, exist_ok=True)
-    path = os.path.join(folder, file.filename)
+    _fn = os.path.basename((file.filename or "upload").replace("\\","/"))
+    path = os.path.join(folder, _fn)
     raw = await file.read()
     with open(path, "wb") as f2:
         f2.write(raw)
@@ -172,7 +173,7 @@ async def upload_file(file: UploadFile = File(...), dest: str = Query("photos"),
             draw.ellipse((0, 0, 400, 400), fill=255)
             img.putalpha(mask)
             # Save as PNG (keeps transparency outside the circle)
-            base = os.path.splitext(file.filename)[0]
+            base = os.path.splitext(_fn)[0]
             final_path = os.path.join(folder, base + ".png")
             img.save(final_path, "PNG")
             # Remove the raw upload, keep only the cropped PNG
