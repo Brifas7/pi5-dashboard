@@ -5,3 +5,4 @@ test_*.jpg
 test_*.png
 photos/
 static/clocks/
+*.backup-*

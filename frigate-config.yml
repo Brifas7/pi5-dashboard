@@ -1,20 +1,35 @@
 mqtt:
   enabled: false
+
 detectors:
   hailo:
     type: hailo8l
     device: PCIe
+    model:
+      width: 320
+      height: 320
+      input_tensor: nhwc
+      input_pixel_format: rgb
+      input_dtype: int
+      model_type: yolo-generic
+
 record:
   enabled: true
   continuous:
-    days: 7
+    days: 3
   detections:
     retain:
-      days: 14
+      days: 3
+
 go2rtc:
   streams:
     front_left:
       - rtsp://admin:Wayne5046@192.168.2.26:554/cam/realmonitor?channel=1&subtype=0
+    front_left_new:
+      - rtsp://admin:Wayne5046@192.168.2.27:554/cam/realmonitor?channel=1&subtype=0
+    front_right:
+      - rtsp://admin:Wayne5046@192.168.2.28:554/cam/realmonitor?channel=1&subtype=0
+
 cameras:
   front_left:
     enabled: true
@@ -22,9 +37,11 @@ cameras:
       enabled: true
       width: 1280
       height: 720
+      fps: 5
     ffmpeg:
       inputs:
         - path: rtsp://127.0.0.1:8554/front_left
+          input_args: preset-rtsp-restream
           roles:
             - record
             - detect
@@ -34,8 +51,46 @@ cameras:
         - car
         - dog
         - cat
+
+  front_left_new:
+    enabled: false
+    detect:
+      enabled: false
+    ffmpeg:
+      inputs:
+        - path: rtsp://127.0.0.1:8554/front_left_new
+          input_args: preset-rtsp-restream
+          roles:
+            - record
+            - detect
+    objects:
+      track:
+        - person
+        - car
+        - dog
+        - cat
+
+  front_right:
+    enabled: false
+    detect:
+      enabled: false
+    ffmpeg:
+      inputs:
+        - path: rtsp://127.0.0.1:8554/front_right
+          input_args: preset-rtsp-restream
+          roles:
+            - record
+            - detect
+    objects:
+      track:
+        - person
+        - car
+        - dog
+        - cat
+
 snapshots:
   enabled: true
   retain:
     default: 7
+
 version: 0.17-0

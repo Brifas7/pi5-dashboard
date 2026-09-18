@@ -174,12 +174,13 @@ function scheduleCheck() {
 
 function scheduleShowCreate() {
   var sel = document.getElementById('sch-theme');
-  sel.innerHTML = _settings.themes.map(function(t) {
+  sel.innerHTML = _settings.themes.concat(_holidayThemes).map(function(t) {
     return '<option value="' + t.id + '">' + t.name + '</option>';
   }).join('');
-  document.getElementById('sch-name').value = '';
-  document.getElementById('sch-start').value = '';
-  document.getElementById('sch-end').value = '';
+  document.getElementById('sch-start-m').value = '1';
+  document.getElementById('sch-start-d').value = '1';
+  document.getElementById('sch-end-m').value = '1';
+  document.getElementById('sch-end-d').value = '1';
   document.getElementById('schedule-create').style.display = 'flex';
 }
 
@@ -188,11 +189,17 @@ function scheduleHideCreate() {
 }
 
 function scheduleSave() {
-  var name = document.getElementById('sch-name').value.trim();
-  var start = document.getElementById('sch-start').value.trim();
-  var end = document.getElementById('sch-end').value.trim();
   var themeId = document.getElementById('sch-theme').value;
-  if (!name || !start || !end) { alert('Fill in all fields.'); return; }
+  var sm = document.getElementById('sch-start-m').value;
+  var sd = document.getElementById('sch-start-d').value;
+  var em = document.getElementById('sch-end-m').value;
+  var ed = document.getElementById('sch-end-d').value;
+  if (!sm || !sd || !em || !ed) { alert('Pick start and end month and day.'); return; }
+  var start = sm + '/' + sd;
+  var end = em + '/' + ed;
+  var all = _settings.themes.concat(_holidayThemes);
+  var t = all.find(function(x){ return x.id === themeId; });
+  var name = (t ? t.name : themeId) + ' ' + start + '\u2013' + end;
   var schedules = JSON.parse(localStorage.getItem('themeSchedules') || '[]');
   schedules.push({ id: Date.now(), name: name, themeId: themeId, start: start, end: end });
   localStorage.setItem('themeSchedules', JSON.stringify(schedules));

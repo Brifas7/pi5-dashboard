@@ -39,6 +39,18 @@ body { width: 100vw; height: 100vh; overflow: hidden; font-family: 'Rajdhani', s
 #clock { display: block; border-radius: 50%; }
 
 
+
+/* GLOBAL OVERLAY BACKGROUND OVERRIDE */
+#cam-overlay,
+#light-overlay,
+#ops-overlay,
+#settings-overlay,
+#sensors-overlay,
+#auto-overlay,
+#schedule-create {
+  background: rgba(0,0,0,0.97) !important;
+}
+
 </style>
 </head>
 <body>
@@ -2007,7 +2019,18 @@ _ssResetTimer();
 .auto-cat-label{font-size:12px;font-weight:700;letter-spacing:2px;color:var(--text-sub);text-transform:uppercase;padding-left:4px;}
 
 /* Submenu theme lock - submenus always use aquatic color palette regardless of active theme */
-.settings-screen {
+#settings-overlay,
+#auto-overlay,
+#cam-overlay,
+#light-overlay,
+#ops-overlay,
+#sensors-overlay,
+.settings-screen,
+.auto-screen,
+.cam-screen,
+.light-screen,
+.ops-screen,
+.sensors-screen {
   --accent: #00b8a9;
   --accent-rgb: 0,184,169;
   --text: #e0f8f5;
@@ -3054,7 +3077,7 @@ async function notifLoadHistory() {
   }
 })();
 </script>
-<div id="schedule-create" style="display:none;position:fixed;inset:0;background:var(--overlay-bg);z-index:2000;flex-direction:column;"><div class="settings-header"><span class="settings-title">📅 NEW SCHEDULE</span><button class="settings-btn settings-btn-close" onclick="scheduleHideCreate()">✕ CANCEL</button></div><div class="settings-body"><div class="settings-section" style="gap:16px;"><div><div class="auto-field-lbl">THEME</div><select class="auto-select" id="sch-theme" style="width:100%;margin-top:4px;"></select></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div><div class="auto-field-lbl">START (MM/DD)</div><input class="auto-input" id="sch-start" placeholder="12/01" style="margin-top:4px;"></div><div><div class="auto-field-lbl">END (MM/DD)</div><input class="auto-input" id="sch-end" placeholder="01/02" style="margin-top:4px;"></div></div><div><div class="auto-field-lbl">NAME</div><input class="auto-input" id="sch-name" placeholder="e.g. Christmas Season" style="margin-top:4px;"></div><button class="settings-btn" style="width:100%;padding:14px;margin-top:8px;" onclick="scheduleSave()">💾 SAVE</button></div></div></div></div>
+<div id="schedule-create" style="display:none;position:fixed;inset:0;background:var(--overlay-bg);z-index:2000;flex-direction:column;"><div class="settings-header"><span class="settings-title">📅 NEW SCHEDULE</span><button class="settings-btn settings-btn-close" onclick="scheduleHideCreate()">✕ CANCEL</button></div><div class="settings-body"><div class="settings-section" style="gap:16px;"><div><div class="auto-field-lbl">THEME</div><select class="auto-select" id="sch-theme" style="width:100%;margin-top:4px;"></select></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div><div class="auto-field-lbl">START</div><div style="display:flex;gap:8px;"><div class="auto-field-lbl" style="flex:1;font-size:13px;color:#fff;">MONTH</div><div class="auto-field-lbl" style="flex:1;font-size:13px;color:#fff;">DAY</div></div><div style="display:flex;gap:8px;margin-top:4px;"><select class="auto-select" id="sch-start-m" style="flex:1;"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select><select class="auto-select" id="sch-start-d" style="flex:1;"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option></select></div></div><div><div class="auto-field-lbl">END</div><div style="display:flex;gap:8px;"><div class="auto-field-lbl" style="flex:1;font-size:13px;color:#fff;">MONTH</div><div class="auto-field-lbl" style="flex:1;font-size:13px;color:#fff;">DAY</div></div><div style="display:flex;gap:8px;margin-top:4px;"><select class="auto-select" id="sch-end-m" style="flex:1;"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select><select class="auto-select" id="sch-end-d" style="flex:1;"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option></select></div></div></div><button class="settings-btn" style="width:100%;padding:14px;margin-top:8px;" onclick="scheduleSave()">💾 SAVE</button></div></div></div></div>
 </body>
 </html>
 <script>

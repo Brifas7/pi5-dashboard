@@ -16,6 +16,10 @@ def c_to_f(c):
 
 def on_telemetry(packet, interface):
     try:
+        my=getattr(getattr(interface,'myInfo',None),'my_node_num',None)
+        if my is not None and packet.get('from')!=my:
+            log.info(f"Ignored telemetry from {packet.get('fromId')}")
+            return
         telemetry = packet.get('decoded', {}).get('telemetry', {})
         env = telemetry.get('environmentMetrics', {})
         if not env:
@@ -47,7 +51,6 @@ def main():
     while True:
         try:
             log.info("Connecting to RAK via USB...")
-            iface = None
             iface = meshtastic.serial_interface.SerialInterface("/dev/ttyACM0")
             pub.subscribe(on_telemetry, "meshtastic.receive.telemetry")
             log.info("Connected. Listening for telemetry...")
@@ -68,14 +71,7 @@ def main():
                 time.sleep(1)
         except Exception as e:
             log.error(f"Connection error: {e}. Retrying in 10s...")
-        finally:
-            if iface:
-                try:
-                    iface.close()
-                    log.info("Serial interface closed.")
-                except Exception:
-                    pass
-        time.sleep(10)
+            time.sleep(10)
 
 if __name__ == "__main__":
     main()

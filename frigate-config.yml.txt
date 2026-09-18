@@ -16,10 +16,10 @@ detectors:
 record:
   enabled: true
   continuous:
-    days: 7
+    days: 3
   detections:
     retain:
-      days: 14
+      days: 3
 
 go2rtc:
   streams:
@@ -53,12 +53,9 @@ cameras:
         - cat
 
   front_left_new:
-    enabled: true
+    enabled: false
     detect:
-      enabled: true
-      width: 1280
-      height: 720
-      fps: 5
+      enabled: false
     ffmpeg:
       inputs:
         - path: rtsp://127.0.0.1:8554/front_left_new
@@ -74,12 +71,9 @@ cameras:
         - cat
 
   front_right:
-    enabled: true
+    enabled: false
     detect:
-      enabled: true
-      width: 1280
-      height: 720
-      fps: 5
+      enabled: false
     ffmpeg:
       inputs:
         - path: rtsp://127.0.0.1:8554/front_right
