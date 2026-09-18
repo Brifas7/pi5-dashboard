@@ -1,9 +1,10 @@
 #!/bin/bash
-pkill -9 chromium 2>/dev/null
-pkill -9 chromium-browser 2>/dev/null
-sleep 3
-while pgrep -x chromium > /dev/null || pgrep -x chromium-browser > /dev/null; do
+pkill chromium 2>/dev/null
+for i in $(seq 1 10); do
+  pgrep chromium >/dev/null || break
   sleep 1
 done
-chromium-browser --ozone-platform=wayland --kiosk --no-sandbox --disable-session-crashed-bubble --disable-infobars --noerrdialogs http://localhost:8000/ &
+pkill -9 chromium 2>/dev/null
+sleep 1
+nohup chromium-browser --ozone-platform=wayland --kiosk --no-sandbox --disable-session-crashed-bubble --disable-infobars --noerrdialogs http://localhost:8000/ >/dev/null 2>&1 &
 disown

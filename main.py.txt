@@ -515,8 +515,14 @@ def _cpu_temp_logger():
         except: pass
         _time.sleep(60)
 
-threading.Thread(target=_cpu_temp_logger,daemon=True).start()
-threading.Thread(target=_mqtt_subscriber,daemon=True).start()
+import fcntl
+_bg_lock=open('/tmp/dashboard-bg.lock','w')
+try:
+    fcntl.flock(_bg_lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+    threading.Thread(target=_cpu_temp_logger,daemon=True).start()
+    threading.Thread(target=_mqtt_subscriber,daemon=True).start()
+except OSError:
+    pass  # another worker already runs the background threads
 
 
 
@@ -901,6 +907,9 @@ async def set_retention(payload: dict):
         cont = payload.get("continuous", 7)
         clips = payload.get("clips", 14)
         snaps = payload.get("snapshots", 7)
+        for _v in (cont, clips, snaps):
+            if type(_v) is not int or not 1 <= _v <= 365:
+                return {"success": False, "error": "retention must be whole days 1-365"}
         if "record" not in cfg:
             cfg["record"] = {}
         if "continuous" not in cfg["record"]:

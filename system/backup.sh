@@ -6,7 +6,7 @@ KEEP_DAYS=30
 mkdir -p "$BACKUP_DIR"
 
 # SQLite database
-cp /home/brifas/dashboard.db "$BACKUP_DIR/dashboard_$DATE.db"
+sqlite3 /home/brifas/dashboard.db ".backup $BACKUP_DIR/dashboard_$DATE.db"
 
 # Config files
 cp /home/brifas/frigate/config/config.yml "$BACKUP_DIR/frigate_config_$DATE.yml"
