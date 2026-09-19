@@ -6,3 +6,5 @@ test_*.png
 photos/
 static/clocks/
 *.backup-*
+*.bak*
+backend/
