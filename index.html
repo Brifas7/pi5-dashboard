@@ -1487,11 +1487,11 @@ async function opsLoadGraph() {
 </div></div></div>
 <div id="settings-screen-screensaver" class="settings-screen"><div class="settings-header"><button class="settings-btn" onclick="settingsBack('main')">◀ BACK</button><span class="settings-title">🌅 SCREENSAVER</span><button class="settings-btn settings-btn-close" onclick="settingsClose()">✕ CLOSE</button></div><div class="settings-body"><div class="settings-section">
 <div class="settings-row"><div><div class="settings-row-label">Timeout</div><div class="settings-row-sub">Inactivity before screensaver</div></div>
-<select class="settings-select" id="settings-ss-timeout"><option value="15">15 seconds</option><option value="30">30 seconds</option><option value="60" selected>1 minute</option><option value="120">2 minutes</option><option value="300">5 minutes</option><option value="0">Disabled</option></select></div>
+<select class="settings-select" id="settings-ss-timeout" onchange="_ssSave()"><option value="15">15 seconds</option><option value="30">30 seconds</option><option value="60" selected>1 minute</option><option value="120">2 minutes</option><option value="300">5 minutes</option><option value="0">Disabled</option></select></div>
 <div class="settings-row"><div><div class="settings-row-label">Photo Duration</div><div class="settings-row-sub">Time per photo</div></div>
-<select class="settings-select" id="settings-ss-duration"><option value="3">3 seconds</option><option value="5" selected>5 seconds</option><option value="10">10 seconds</option><option value="15">15 seconds</option><option value="30">30 seconds</option></select></div>
+<select class="settings-select" id="settings-ss-duration" onchange="_ssSave()"><option value="3">3 seconds</option><option value="5" selected>5 seconds</option><option value="10">10 seconds</option><option value="15">15 seconds</option><option value="30">30 seconds</option></select></div>
 <div class="settings-row"><div><div class="settings-row-label">Clock Overlay</div><div class="settings-row-sub">Show time over photos</div></div>
-<label class="settings-toggle"><input type="checkbox" id="settings-ss-clock"><span class="settings-toggle-slider"></span></label></div>
+<label class="settings-toggle"><input type="checkbox" id="settings-ss-clock" onchange="_ssSave()"><span class="settings-toggle-slider"></span></label></div>
 <div class="settings-row"><div><div class="settings-row-label">Album</div><div class="settings-row-sub">Which photo album to display</div></div>
 <select class="settings-select" id="settings-ss-album" onchange="settingsSaveAlbum(this.value)"><option value="1">Album 1</option><option value="2">Album 2</option><option value="3">Album 3</option><option value="4">Album 4</option><option value="5">Album 5</option></select></div>
 </div></div></div>
@@ -1955,6 +1955,23 @@ async function _sensorsLoadGraph() {
 
 <script>
 const _ss={timer:null,photoTimer:null,photos:[],photoIdx:0,active:false};
+function _ssSave(){
+  var g=function(id){var e=document.getElementById(id);return e?e.value:null;};
+  var t=g('settings-ss-timeout'),d=g('settings-ss-duration');
+  var c=document.getElementById('settings-ss-clock');
+  if(t!==null)localStorage.setItem('dashSsTimeout',t);
+  if(d!==null)localStorage.setItem('dashSsDuration',d);
+  if(c)localStorage.setItem('dashSsClock',c.checked?'1':'0');
+  _ssResetTimer();
+}
+function _ssLoadSettings(){
+  var s=function(id,k){var e=document.getElementById(id),v=localStorage.getItem(k);
+    if(e&&v!==null){for(var i=0;i<e.options.length;i++){if(e.options[i].value===v){e.value=v;return;}}}};
+  s('settings-ss-timeout','dashSsTimeout');
+  s('settings-ss-duration','dashSsDuration');
+  var c=document.getElementById('settings-ss-clock'),cv=localStorage.getItem('dashSsClock');
+  if(c)c.checked=(cv===null?true:cv==='1');
+}
 function _ssTimeout(){const el=document.getElementById('settings-ss-timeout');const v=el?parseInt(el.value):60;return v===0?null:v*1000;}
 function _ssDuration(){const el=document.getElementById('settings-ss-duration');return(el?parseInt(el.value):5)*1000;}
 function _ssClockOn(){const el=document.getElementById('settings-ss-clock');return el?el.checked:true;}
@@ -2001,6 +2018,7 @@ function _ssTick(){
 ['touchstart','mousemove','keydown','click'].forEach(ev=>{
   document.addEventListener(ev,()=>{if(_ss.active)_ssDismiss();else _ssResetTimer();},{passive:true});
 });
+_ssLoadSettings();
 _ssResetTimer();
 </script>
 
@@ -3098,6 +3116,7 @@ async function notifLoadHistory() {
       if (screen === 'devices' && typeof devRefresh === 'function') devRefresh();
       if (screen === 'notifications' && typeof notifLoad === 'function') notifLoad();
       if (screen === 'screensaver' && typeof settingsLoadScreensaverAlbum === 'function') settingsLoadScreensaverAlbum();
+      if (screen === 'screensaver' && typeof _ssLoadSettings === 'function') _ssLoadSettings();
       if (screen === 'theme_schedule' && typeof scheduleRenderList === 'function') scheduleRenderList();
       if (screen === 'theme_carousel' && typeof carouselInit === 'function') carouselInit();
       if (screen === 'cpu_temp_graph') cpuTempLoad('1h', document.getElementById('cputemp-btn-1h'));
