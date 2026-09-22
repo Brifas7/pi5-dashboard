@@ -72,8 +72,8 @@ def main():
             while True:
                 time.sleep(1)
         except Exception as e:
-            log.error(f"Connection error: {e}. Retrying in 10s...")
-            time.sleep(10)
+            log.error(f"Connection error: {e}. Exiting so systemd restarts a clean process")
+            import sys; sys.exit(1)
 
 if __name__ == "__main__":
     main()
