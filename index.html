@@ -425,7 +425,7 @@ function _clockLoop(){
   if(sec===_clockLastSec&&th===_clockLastTheme)return;
   if(document.hidden)return;
   var ss=document.getElementById('screensaver');
-  if(ss&&ss.style.display!=='none'&&ss.style.display!=='')return;
+  if(ss&&ss.style.display!=='none'&&ss.style.display!==''&&!(typeof _ss!=='undefined'&&_ss.peek))return;
   _clockLastSec=sec;_clockLastTheme=th;
   drawClock();
 }
@@ -1954,7 +1954,7 @@ async function _sensorsLoadGraph() {
 </div>
 
 <script>
-const _ss={timer:null,photoTimer:null,photos:[],photoIdx:0,active:false};
+const _ss={timer:null,photoTimer:null,photos:[],photoIdx:0,active:false,peek:false,cycleTimer:null};
 function _ssSave(){
   var g=function(id){var e=document.getElementById(id);return e?e.value:null;};
   var t=g('settings-ss-timeout'),d=g('settings-ss-duration');
@@ -1982,7 +1982,7 @@ async function _ssActivate(){
   ov.style.display='flex';
   document.getElementById('ss-clock-wrap').style.display=_ssClockOn()?'block':'none';
   try{const _alb=localStorage.getItem('dashSsAlbum')||'1';const r=await fetch('/api/photos?album='+_alb);const d=await r.json();_ss.photos=d.photos||[];}catch(e){_ss.photos=[];}
-  _ss.photoIdx=0;_ssNextPhoto();_ssTick();
+  _ss.photoIdx=0;_ssNextPhoto();_ssTick();_ssCycleSchedule();
 }
 function _ssNextPhoto(){
   clearTimeout(_ss.photoTimer);
@@ -1993,13 +1993,28 @@ function _ssNextPhoto(){
     el.style.backgroundImage='url('+_ss.photos[_ss.photoIdx]+')';
     el.classList.add('ss-on');
     _ss.photoIdx=(_ss.photoIdx+1)%_ss.photos.length;
-    _ss.photoTimer=setTimeout(_ssNextPhoto,_ssDuration());
+    if(!_ss.peek)_ss.photoTimer=setTimeout(_ssNextPhoto,_ssDuration());
   },1200);
+}
+const _SS_PHOTO_MS=60*1000,_SS_PEEK_MS=10*60*1000;
+function _ssCycleSchedule(){clearTimeout(_ss.cycleTimer);_ss.cycleTimer=setTimeout(_ssPeekStart,_SS_PHOTO_MS);}
+function _ssPeekStart(){
+  if(!_ss.active)return;
+  if(!(typeof _holidayActive!=='undefined'&&_holidayActive)){_ssCycleSchedule();return;}
+  _ss.peek=true;clearTimeout(_ss.photoTimer);
+  const ov=document.getElementById('screensaver');
+  ov.style.transition='opacity 1.5s ease';ov.style.opacity='0';
+  _ss.cycleTimer=setTimeout(_ssPeekEnd,_SS_PEEK_MS);
+}
+function _ssPeekEnd(){
+  if(!_ss.active)return;
+  _ss.peek=false;document.getElementById('screensaver').style.opacity='1';
+  _ssNextPhoto();_ssCycleSchedule();
 }
 function _ssDismiss(){
   if(!_ss.active)return;
   _ss.active=false;
-  clearTimeout(_ss.photoTimer);clearTimeout(_ss.timer);
+  clearTimeout(_ss.photoTimer);clearTimeout(_ss.timer);clearTimeout(_ss.cycleTimer);_ss.peek=false;document.getElementById('screensaver').style.opacity='';
   document.getElementById('screensaver').style.display='none';
   document.getElementById('ss-photo').classList.remove('ss-on');
   _ssResetTimer();
