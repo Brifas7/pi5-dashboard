@@ -2026,7 +2026,7 @@ function _ssTick(){
   const m=String(now.getMinutes()).padStart(2,'0');
   const s=String(now.getSeconds()).padStart(2,'0');
   const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  document.getElementById('ss-time').textContent=h+':'+m+':'+s;
+  var _tf2=localStorage.getItem('dashTimeFormat')||'24';document.getElementById('ss-time').textContent=_tf2==='12'?((now.getHours()%12||12)+':'+m+':'+s+' '+(now.getHours()>=12?'PM':'AM')):(h+':'+m+':'+s);
   document.getElementById('ss-date').textContent=days[now.getDay()]+'  ·  '+(now.getMonth()+1)+'/'+now.getDate()+'/'+now.getFullYear();
   setTimeout(_ssTick,1000);
 }
@@ -2035,6 +2035,21 @@ function _ssTick(){
 });
 _ssLoadSettings();
 _ssResetTimer();
+async function _uiStateSync(){
+  try{
+    var d=await (await fetch('/api/ui/state')).json(); var st=d.state||{};
+    if(st.time_format){
+      if(localStorage.getItem('dashTimeFormat')!==st.time_format){
+        localStorage.setItem('dashTimeFormat',st.time_format);
+        var sel=document.getElementById('settings-time-format'); if(sel)sel.value=st.time_format;
+      }
+    }else{
+      fetch('/api/ui/state',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({key:'time_format',value:localStorage.getItem('dashTimeFormat')||'24'})}).catch(function(){});
+    }
+  }catch(e){}
+}
+_uiStateSync();setInterval(_uiStateSync,30000);
 </script>
 
 <!-- AUTOMATION SUBMENU -->
@@ -2771,6 +2786,7 @@ function settingsLoadScreensaverAlbum() {
 // Time & Date settings
 function settingsSetTimeFormat(val) {
   localStorage.setItem('dashTimeFormat', val);
+  fetch('/api/ui/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'time_format',value:val})}).catch(function(){});
 }
 function settingsSetTimeSource(val) {
   var manual = document.getElementById('settings-manual-time');

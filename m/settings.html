@@ -7,6 +7,8 @@
 <div id="health"></div>
 <div class="name" style="margin:18px 0 8px">Services</div>
 <div id="svc"></div>
+<div class="name" style="margin:18px 0 8px">Wall display</div>
+<div id="disp"></div>
 <a class="btn" href="/?mobile=settings" style="border-left-color:var(--sub);margin-top:18px">Full settings (wall UI) ›</a>
 <script src="m.js"></script>
 <script>
@@ -47,4 +49,22 @@ async function svc(){
  }catch(e){el.textContent='unreachable'}
 }
 health();svc();setInterval(health,30000);
+async function disp(){
+ const el=document.getElementById('disp');
+ try{
+  const d=await (await fetch('/api/ui/state')).json();
+  let is24=(d.state||{}).time_format!=='12';
+  const sw=document.createElement('div'); sw.className='sw'+(is24?' on':'');
+  sw.onclick=async()=>{
+   const nv=is24?'12':'24'; sw.classList.toggle('on');
+   try{
+    const r=await (await fetch('/api/ui/state',{method:'POST',headers:{'Content-Type':'application/json'},
+     body:JSON.stringify({key:'time_format',value:nv})})).json();
+    if(!r.success)throw 0; is24=!is24;
+   }catch(e){sw.classList.toggle('on');alert('Could not change clock format');}
+  };
+  el.textContent=''; el.append(row('24-hour clock','',sw));
+ }catch(e){el.textContent='unreachable'}
+}
+disp();
 </script></body></html>

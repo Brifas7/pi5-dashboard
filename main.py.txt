@@ -1016,4 +1016,27 @@ async def camera_snapshot(cam_id: str):
         return Response(status_code=500)
     return Response(status_code=400)
 
+# ── Server-side UI state (pilot: time_format). Must sit above the "/" mount. ──
+UI_STATE_ALLOWED={"time_format":{"12","24"}}
+def _ui_db():
+    conn=_db()
+    conn.execute("CREATE TABLE IF NOT EXISTS ui_state (key TEXT PRIMARY KEY, value TEXT NOT NULL, updated INTEGER NOT NULL)")
+    return conn
+@app.get("/api/ui/state")
+def get_ui_state():
+    try:
+        conn=_ui_db(); rows=conn.execute("SELECT key,value,updated FROM ui_state").fetchall(); conn.close()
+        return {"state":{r[0]:r[1] for r in rows},"updated":max([r[2] for r in rows] or [0])}
+    except Exception as e: return {"state":{},"updated":0,"error":str(e)}
+@app.post("/api/ui/state")
+def set_ui_state(payload:dict):
+    k=payload.get("key"); v=str(payload.get("value",""))
+    if k not in UI_STATE_ALLOWED or v not in UI_STATE_ALLOWED[k]:
+        return {"success":False,"error":"key or value not allowed"}
+    try:
+        conn=_ui_db()
+        conn.execute("INSERT INTO ui_state(key,value,updated) VALUES(?,?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated=excluded.updated",(k,v,int(_time.time())))
+        conn.commit(); conn.close(); return {"success":True}
+    except Exception as e: return {"success":False,"error":str(e)}
+
 app.mount("/", StaticFiles(directory="/home/brifas/dashboard-html", html=True), name="dashboard")
