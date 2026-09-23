@@ -1,0 +1,35 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lights</title><link rel="stylesheet" href="m.css?v=3"></head><body>
+<a class="back" href="index.html">‹ Back</a>
+<div class="title">Lights</div>
+<div id="list"></div>
+<script>
+let devs=[];
+async function load(){
+ try{devs=(await (await fetch('/api/lights')).json()).devices||[]}catch(e){devs=null}
+ render();
+}
+function render(){
+ const el=document.getElementById('list'); el.textContent='';
+ if(devs===null){el.textContent='Offline';return}
+ if(!devs.length){el.textContent='No lights yet.';return}
+ devs.forEach((d,i)=>{
+  const r=document.createElement('div'); r.className='row'; r.onclick=()=>flip(i);
+  const n=document.createElement('div'); n.className='val'; n.style.fontSize='18px';
+  n.textContent=(d.name||d.id).replace(/[-_]/g,' ');
+  const s=document.createElement('div'); s.className='sw'+(d.state==='on'?' on':'');
+  r.append(n,s); el.append(r);
+ });
+}
+async function flip(i){
+ const d=devs[i], next=d.state==='on'?'off':'on';
+ d.state=next; render();
+ try{
+  const r=await fetch('/api/lights/'+encodeURIComponent(d.id)+'/control',{method:'POST',
+   headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'state',value:next})});
+  if(!(await r.json()).success)throw 0;
+ }catch(e){d.state=next==='on'?'off':'on'; render()}
+}
+load(); setInterval(load,30000);
+</script></body></html>
