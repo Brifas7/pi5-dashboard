@@ -10,6 +10,7 @@ m $H/rak_reader.py rak_reader.py
 m $H/automation_engine.py automation_engine.py
 m $H/backup.sh system/backup.sh
 m $H/relaunch-dashboard.sh system/relaunch-dashboard.sh
+m $H/.config/autostart/dashboard.desktop system/dashboard.desktop
 m $H/frigate/docker-compose.yml system/docker-compose.yml
 for u in dashboard-api rak-reader automation-engine; do
   m /etc/systemd/system/$u.service system/systemd/$u.service
