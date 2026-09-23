@@ -1,0 +1,29 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Operations</title><link rel="stylesheet" href="m.css"></head><body>
+<a class="back" href="index.html">‹ Back</a>
+<div class="title">Operations</div>
+<div id="list"></div>
+<script src="m.js"></script>
+<script>
+const PAGES={weather_station:'weather.html'};
+async function load(){
+ const el=document.getElementById('list'); let s=[];
+ try{s=(await (await fetch('/api/systems')).json()).systems||[]}catch(e){}
+ el.textContent='';
+ if(!s.length){el.textContent='No systems yet.';return}
+ s.forEach(x=>{
+  const r=document.createElement('a'); r.className='row';
+  r.style.textDecoration='none'; r.style.color='inherit';
+  if(PAGES[x.type])r.href=PAGES[x.type];
+  const old=ageMin(x.last_seen)>30; if(old)r.classList.add('stale');
+  const l=document.createElement('div');
+  const n=document.createElement('div'); n.className='val'; n.style.fontSize='18px'; n.textContent=x.name||x.id;
+  const a=document.createElement('div'); a.className='age'; a.textContent=old?'offline · '+ago(x.last_seen):'online';
+  l.append(n,a);
+  const c=document.createElement('div'); c.className='name'; c.textContent=PAGES[x.type]?'›':'';
+  r.append(l,c); el.append(r);
+ });
+}
+load();setInterval(load,60000);
+</script></body></html>

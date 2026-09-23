@@ -1,0 +1,49 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Settings</title><link rel="stylesheet" href="m.css"></head><body>
+<a class="back" href="index.html">‹ Back</a>
+<div class="title">Settings</div>
+<div class="name" style="margin:4px 0 8px">Pi health</div>
+<div id="health"></div>
+<div class="name" style="margin:18px 0 8px">Services</div>
+<div id="svc"></div>
+<script src="m.js"></script>
+<script>
+function row(label,value,extra){
+ const r=document.createElement('div'); r.className='row';
+ const n=document.createElement('div'); n.className='name'; n.textContent=label;
+ const v=document.createElement('div'); v.className='val'; v.textContent=value;
+ r.append(n,extra||v); return r;
+}
+async function health(){
+ const el=document.getElementById('health');
+ try{
+  const d=await (await fetch('/api/system')).json(); el.textContent='';
+  el.append(row('Disk ('+d.disk_used_gb+' of '+d.disk_total_gb+' GB)',d.disk_percent+'%'),
+   row('CPU temp',Math.round(d.cpu_temp_f)+'°F'),
+   row('CPU',Math.round(d.cpu_percent)+'%'),
+   row('RAM',Math.round(d.ram_percent)+'%'));
+ }catch(e){el.textContent='unreachable'}
+}
+async function svc(){
+ const el=document.getElementById('svc');
+ try{
+  const d=await (await fetch('/api/system/services')).json(); el.textContent='';
+  (d.services||[]).forEach(s=>{
+   const ok=s.status==='active'||s.status==='running';
+   const b=document.createElement('button');
+   b.style.cssText='background:none;border:1px solid var(--sub);color:var(--text);font-size:15px;padding:8px 14px';
+   b.textContent='Restart';
+   b.onclick=async()=>{
+    if(!confirm('Restart '+s.name+'?'))return;
+    b.textContent='…';
+    await fetch('/api/system/restart-service',{method:'POST',
+     headers:{'Content-Type':'application/json'},body:JSON.stringify({service:s.name})});
+    setTimeout(svc,5000);
+   };
+   el.append(row((ok?'🟢 ':'🔴 ')+s.name,'',b));
+  });
+ }catch(e){el.textContent='unreachable'}
+}
+health();svc();setInterval(health,30000);
+</script></body></html>
