@@ -1,0 +1,30 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Home</title><link rel="stylesheet" href="m.css"></head><body>
+<a class="card" id="wx" href="weather.html" style="text-align:center">
+<div id="t" style="font-size:56px;font-weight:600;line-height:1">--°</div>
+<div id="s" style="font-size:15px;color:var(--sub);margin-top:6px">loading…</div>
+<div id="a" class="age"></div></a>
+<a class="btn" id="cam"><span class="ico">📷</span>Cameras</a>
+<a class="btn" href="lights.html" style="border-left-color:var(--amber)"><span class="ico">💡</span>Lights</a>
+<a class="btn" href="ops.html" style="border-left-color:var(--teal)"><span class="ico">⚙️</span>Operations</a>
+<a class="btn" href="auto.html" style="border-left-color:var(--purple)"><span class="ico">⚡</span>Automation</a>
+<a class="btn" href="/upload.html" style="border-left-color:var(--coral)"><span class="ico">📤</span>Upload</a>
+<script src="m.js"></script>
+<script>
+document.getElementById('cam').href='http://'+location.hostname+':5000/';
+async function wx(){
+ const s=await sensors(), t=s.rak_temp;
+ if(!t){document.getElementById('s').textContent='weather station offline';return}
+ document.getElementById('t').textContent=Math.round(t.last_value)+'°';
+ const p=[];
+ if(s.rak_humidity)p.push(Math.round(s.rak_humidity.last_value)+'%');
+ if(s.rak_pressure)p.push(Math.round(s.rak_pressure.last_value)+' hPa');
+ if(s.rak_airquality)p.push('AQI '+Math.round(s.rak_airquality.last_value));
+ document.getElementById('s').textContent=p.join(' · ');
+ const old=ageMin(t.last_seen)>30;
+ document.getElementById('wx').classList.toggle('stale',old);
+ document.getElementById('a').textContent=old?'offline · last reading '+ago(t.last_seen):'';
+}
+wx();setInterval(wx,60000);
+</script></body></html>

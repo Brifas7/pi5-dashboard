@@ -1,0 +1,15 @@
+:root{--bg:#0d1117;--card:#161d27;--text:#f5f7fa;--sub:#8fa3b8;
+--blue:#378ADD;--amber:#EF9F27;--teal:#5DCAA5;--purple:#AFA9EC;--coral:#F0997B}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,Roboto,sans-serif;padding:14px;min-height:100vh}
+.btn{display:flex;align-items:center;gap:12px;width:100%;background:var(--card);border-left:4px solid var(--blue);padding:18px 14px;margin-bottom:10px;color:var(--text);font-size:18px;font-weight:600;text-decoration:none}
+.btn:active,.card:active{filter:brightness(1.3)}
+.ico{font-size:24px;width:28px;text-align:center}
+.card{display:block;background:var(--card);padding:16px;margin-bottom:12px;color:inherit;text-decoration:none}
+.title{font-size:20px;font-weight:600;margin-bottom:14px}
+.back{color:var(--sub);font-size:15px;margin-bottom:14px;display:inline-block;text-decoration:none}
+.row{display:flex;justify-content:space-between;align-items:center;background:var(--card);padding:16px 14px;margin-bottom:10px}
+.name{font-size:16px;color:var(--sub)}
+.val{font-size:22px;font-weight:600}
+.age{font-size:12px;color:var(--sub);margin-top:4px}
+.stale{opacity:.45}

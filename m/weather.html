@@ -1,0 +1,27 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Weather</title><link rel="stylesheet" href="m.css"></head><body>
+<a class="back" href="index.html">‹ Back</a>
+<div class="title">Weather</div>
+<div id="list"></div>
+<script src="m.js"></script>
+<script>
+async function load(){
+ const s=await sensors(), el=document.getElementById('list');
+ el.textContent='';
+ const ids=Object.keys(s);
+ if(!ids.length){el.textContent='No sensors reporting.';return}
+ ids.forEach(id=>{
+  const x=s[id], row=document.createElement('div'); row.className='row';
+  if(ageMin(x.last_seen)>30)row.classList.add('stale');
+  const l=document.createElement('div');
+  const n=document.createElement('div'); n.className='name'; n.textContent=x.name||id;
+  const a=document.createElement('div'); a.className='age'; a.textContent=ago(x.last_seen);
+  l.append(n,a);
+  const v=document.createElement('div'); v.className='val';
+  v.textContent=(x.last_value==null?'--':Math.round(x.last_value*10)/10)+' '+(x.unit||'');
+  row.append(l,v); el.append(row);
+ });
+}
+load();setInterval(load,60000);
+</script></body></html>
