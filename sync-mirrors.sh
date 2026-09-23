@@ -24,4 +24,5 @@ cat /etc/ssh/sshd_config.d/*.conf > system/sshd-dropins.conf 2>/dev/null
 mask(){ sed -E 's/(^| |\[)2[0-9a-f]{3}:[0-9a-f:]+(\/[0-9]+)?/\1<public-ipv6>/g'; }
 ip -br addr | mask > system/ip-addr.txt
 sudo ss -tulnp | mask > system/listening.txt
+ls -1 /etc/nginx/sites-enabled/ > system/nginx/ENABLED.txt
 git status --short
