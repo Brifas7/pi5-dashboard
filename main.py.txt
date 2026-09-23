@@ -12,6 +12,13 @@ log = logging.getLogger("dashboard")
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware,allow_origins=["*"],allow_methods=["*"],allow_headers=["*"])
+@app.middleware("http")
+async def _no_stale_cache(request, call_next):
+    resp = await call_next(request)
+    p = request.url.path
+    if not p.startswith("/api/") and not p.startswith("/photos/"):
+        resp.headers["Cache-Control"] = "no-cache"
+    return resp
 
 from fastapi import Header, HTTPException, Depends, UploadFile, File, Query
 
