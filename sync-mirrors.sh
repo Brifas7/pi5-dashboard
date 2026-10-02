@@ -26,4 +26,6 @@ ip -br addr | mask > system/ip-addr.txt
 sudo ss -tulnp | mask > system/listening.txt
 ls -1 /etc/nginx/sites-enabled/ > system/nginx/ENABLED.txt
 m /etc/mosquitto/conf.d/dashboard.conf system/mosquitto-dashboard.conf
+m $H/engine-v2/sim_light.py engine-v2/sim_light.py
+m $H/engine-v2/simctl engine-v2/simctl
 git status --short
