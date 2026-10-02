@@ -25,4 +25,5 @@ mask(){ sed -E 's/(^| |\[)2[0-9a-f]{3}:[0-9a-f:]+(\/[0-9]+)?/\1<public-ipv6>/g';
 ip -br addr | mask > system/ip-addr.txt
 sudo ss -tulnp | mask > system/listening.txt
 ls -1 /etc/nginx/sites-enabled/ > system/nginx/ENABLED.txt
+m /etc/mosquitto/conf.d/dashboard.conf system/mosquitto-dashboard.conf
 git status --short
