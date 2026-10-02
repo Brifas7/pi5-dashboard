@@ -1,0 +1,15 @@
+#!/bin/bash
+# engctl start|stop|log [lines]|testrule
+case "$1" in
+  start) tmux kill-session -t engine 2>/dev/null
+         tmux new -d -s engine "python3 -u ~/engine-v2/engine.py 2>&1 | tee -a ~/engine-v2/engine.log; sleep 3600"
+         sleep 4; tail -5 ~/engine-v2/engine.log ;;
+  stop)  tmux kill-session -t engine 2>/dev/null; echo stopped ;;
+  log)   tail -"${2:-15}" ~/engine-v2/engine.log ;;
+  testrule) python3 -c "
+import json,datetime as d,os
+n=d.datetime.now(); f=lambda m:(n+d.timedelta(minutes=m)).strftime('%H:%M')
+r={'rules':[{'id':'test_window','targets':['front_door_flood'],'start':{'clock':f(2)},'end':{'clock':f(8)}}]}
+json.dump(r,open(os.path.expanduser('~/engine-v2/rules.json'),'w'),indent=1); print('window',f(2),'->',f(8))" ;;
+  *)     echo "usage: engctl start|stop|log [lines]|testrule" ;;
+esac
