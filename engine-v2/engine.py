@@ -66,7 +66,7 @@ def on_message(cl, ud, m):
             if on != d['online']:
                 log(f'{i}: ONLINE' if on else f'{i}: OFFLINE (state is now last-known only)')
             d['online'] = on
-            if not on and w: w['ok'] = False          # power blip: re-apply when it returns
+            if not on and w: w['ok'], w['sent'] = False, None          # power blip: re-apply when it returns
             if on and w and not w['ok']:
                 w['tries'], w['gave_up'] = 0, False; transmit(i)
         elif kind == 'state':
@@ -109,7 +109,7 @@ def tick():
     FIRST[0] = False
     json.dump(prev, open(STATE, 'w'))
 
-try: c = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, client_id='engine-v2')
+try: c = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id='engine-v2')
 except AttributeError: c = mqtt.Client(client_id='engine-v2')
 c.on_connect = lambda cl, ud, fl, rc, *x: (log(f'broker connected (rc={rc})'),
     cl.subscribe([('dashboard/lights/+/state', 1), ('dashboard/lights/+/availability', 1)]))
