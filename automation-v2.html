@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <title>Automation</title>
-<meta name="viewport" content="width=1920">
+<meta id="vp" name="viewport" content="width=1920">
+<script>if(Math.min(screen.width,screen.height)<900){document.getElementById("vp").content="width=device-width, initial-scale=1";document.documentElement.classList.add("phone");var l=document.createElement("link");l.rel="stylesheet";l.href="automation-v2-phone.css";document.head.appendChild(l);}</script>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 /* Submenu palette (same as the kiosk's submenu theme lock) */
@@ -235,7 +236,7 @@ function toast(msg, err) {
 let _modalCb = null;
 function ask(q, yesLabel, cb) { $('m-q').textContent = q; $('m-yes').textContent = yesLabel; _modalCb = cb; $('modal').className = 'modal on'; }
 function modalDone(yes) { $('modal').className = 'modal'; const cb = _modalCb; _modalCb = null; if (yes && cb) cb(); }
-function goHome() { location.href = '/'; }
+function goHome() { location.href = document.documentElement.classList.contains('phone') ? '/m/auto.html' : '/'; }
 
 /* ---------- data: real API, or demo data when not on the Pi ---------- */
 async function api(method, path, body) {
@@ -699,7 +700,7 @@ let lastTouch = Date.now();
 document.addEventListener('pointerdown', () => { lastTouch = Date.now(); }, true);
 setInterval(() => {
   const idle = Date.now() - lastTouch, building = $('s-build').classList.contains('on');
-  if (!DEMO && idle > (building ? 10 : 3) * 60000) goHome();     // never strand the wall on this page
+  if (!DEMO && !document.documentElement.classList.contains('phone') && idle > (building ? 10 : 3) * 60000) goHome();     // never strand the wall on this page
 }, 15000);
 setInterval(async () => { if ($('s-list').classList.contains('on')) { await loadStatus(); renderList(); } }, 5000);
 setInterval(() => { if ($('s-list').classList.contains('on')) refresh(); }, 30000);

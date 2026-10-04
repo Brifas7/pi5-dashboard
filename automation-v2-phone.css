@@ -1,0 +1,58 @@
+/* Phone layout for automation-v2.html. Loaded only on phone-sized screens. The kiosk never loads it. */
+html,body{height:100dvh;}
+.hdr{padding:10px 12px;gap:8px;flex-wrap:wrap;}
+.ttl{font-size:18px;letter-spacing:1px;}
+.btn{font-size:15px;padding:10px 14px;min-height:46px;}
+.btn.small{min-height:40px;padding:6px 12px;font-size:14px;}
+.banner{margin:10px 12px 0;padding:10px 12px;font-size:15px;}
+.body{padding:12px;gap:10px;}
+.label{font-size:12px;}
+.card{padding:12px 14px;}
+.rule{flex-wrap:wrap;gap:12px;}
+.rule .mid{flex-basis:calc(100% - 80px);}
+.sent{font-size:18px;}
+.meta{font-size:14px;}
+.chip{font-size:12px;}
+.tog{width:64px;height:36px;}
+.tog::after{width:26px;height:26px;}
+.tog.on::after{left:33px;}
+.skip{width:100%;text-align:left;}
+.light{font-size:16px;gap:10px;flex-wrap:wrap;}
+.light .n{width:auto;flex-basis:100%;}
+.preview{padding:12px;}
+.preview .sent{font-size:20px;}
+.foot{padding:10px 12px;gap:8px;flex-wrap:wrap;}
+.foot .msg{flex-basis:100%;font-size:15px;order:-1;}
+.foot2 .sent{padding:10px 12px 0;font-size:18px;}
+.sec{gap:8px;padding:10px 0;}
+.sec .q2{width:100%!important;font-size:17px;}
+.sec .sub{padding-left:0;}
+.field{font-size:17px;min-width:0;min-height:48px;padding:10px 14px;width:100%;}
+.field.wide{min-width:0;max-width:none;}
+.togrow{font-size:16px;}
+.seg{width:100%;}
+.seg .btn{font-size:16px;}
+.days{flex-wrap:wrap;gap:6px;}
+.days .btn{width:auto;flex:1 0 22%;font-size:15px;}
+.presets{flex-wrap:wrap;gap:6px;}
+.grid{grid-template-columns:repeat(2,1fr);gap:8px;}
+.pick{padding:12px;min-height:70px;}
+.pick .t{font-size:18px;}
+.pick .d{font-size:14px;}
+.spin{gap:12px;}
+.col .btn{width:80px;font-size:20px;}
+.big,.colon{font-size:44px;}
+.big{min-width:80px;}
+.hint{font-size:15px;}
+.cal{grid-template-columns:repeat(7,1fr);gap:4px;}
+.cal div{height:40px;font-size:15px;}
+.cal .h{height:24px;font-size:11px;}
+.calnav{gap:8px;}
+.calnav .m{font-size:18px;width:auto;flex:1;}
+.modal .box{width:94vw;padding:16px;}
+.modal .q{font-size:19px;margin-bottom:14px;}
+.box.lp{width:94vw;max-height:88dvh;}
+.lpi{font-size:17px;padding:12px 14px;gap:10px;}
+.lpi .ds{font-size:13px;}
+.lplist.grid .lpi{padding:12px 4px;}
+.toast{bottom:24px;font-size:15px;max-width:90vw;}

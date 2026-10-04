@@ -1,0 +1,25 @@
+function div(c,t){const e=document.createElement('div');if(c)e.className=c;if(t!=null)e.textContent=t;return e}
+function light(id,d){const r=div('row'),l=div(''),v=div('age');l.append(div('name',d.name||id),v);
+ if(!d.online){v.textContent='Not responding · last known '+(d.state==='on'?'On':'Off');r.classList.add('stale')}
+ else if(d.manual)v.textContent='Changed by hand ('+(d.state==='on'?'On':'Off')+') · schedule resumes next start';
+ else if(!d.confirmed)v.textContent='Turning '+d.want+'…';
+ else v.textContent=(d.state==='on'?'On':'Off')+(d.watts!=null?' · '+Math.round(d.watts)+' W':'')+(d.until?' · until '+when(d.until):'');
+ r.append(l);return r}
+async function load(){
+ const note=document.getElementById('note'),box=document.getElementById('active');note.textContent='';
+ try{const[a,b]=await Promise.all([fetch('/api/v2/status'),fetch('/api/v2/rules')]);
+  if(!a.ok||!b.ok)throw 0;S=await a.json();R=(await b.json()).rules||[]}
+ catch(e){box.textContent='';const c=div('card stale');c.append(div('age','Automation engine not reachable'));box.append(c);return}
+ if(S.clock_ok===false)note.append(div('card','Clock not synced yet: time rules are on hold.'));
+ box.textContent='';
+ const act=R.filter(r=>r.enabled!==false&&((S.rules||{})[r.id]||{}).active);
+ act.forEach(r=>{const c=div('card'),t=div('val',sent(r));t.style.fontSize='17px';c.append(t);
+  Object.entries(S.devices||{}).filter(([,d])=>d.by===r.id).forEach(([id,d])=>c.append(light(id,d)));box.append(c)});
+ if(!act.length){box.append(div('card','Nothing is running right now.'));
+  const nx=R.filter(r=>r.enabled!==false&&((S.rules||{})[r.id]||{}).next_start)
+   .sort((x,y)=>S.rules[x.id].next_start<S.rules[y.id].next_start?-1:1)[0];
+  if(nx){const c=div('card'),t=div('val',sent(nx));t.style.fontSize='17px';
+   c.append(div('name','Next: '+when(S.rules[nx.id].next_start)),t);box.append(c)}}
+}
+load();setInterval(load,30000);
+</script></body></html>
