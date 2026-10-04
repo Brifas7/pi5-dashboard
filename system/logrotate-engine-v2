@@ -1,0 +1,10 @@
+/home/brifas/engine-v2/engine.log {
+    weekly
+    rotate 4
+    maxsize 5M
+    compress
+    missingok
+    notifempty
+    copytruncate
+    su brifas brifas
+}

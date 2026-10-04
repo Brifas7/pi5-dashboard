@@ -1039,4 +1039,13 @@ def set_ui_state(payload:dict):
         conn.commit(); conn.close(); return {"success":True}
     except Exception as e: return {"success":False,"error":str(e)}
 
+# ── Engine v2 rules API (code in ~/engine-v2/rules_api.py). Must sit above the "/" mount. ──
+try:
+    import sys as _sys
+    if "/home/brifas/engine-v2" not in _sys.path: _sys.path.append("/home/brifas/engine-v2")
+    from rules_api import router as _rules_v2_router
+    app.include_router(_rules_v2_router)
+except Exception as _e:                      # never let this take the whole dashboard down
+    logging.getLogger("uvicorn.error").error(f"engine v2 rules API not loaded: {_e!r}")
+
 app.mount("/", StaticFiles(directory="/home/brifas/dashboard-html", html=True), name="dashboard")

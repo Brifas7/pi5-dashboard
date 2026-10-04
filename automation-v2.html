@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Automation</title>
+<meta name="viewport" content="width=1920">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Submenu palette (same as the kiosk's submenu theme lock) */
+:root{--accent:#00b8a9;--accent-rgb:0,184,169;--text:#e0f8f5;--text-sub:#6ee7d8;
+  --amber:#f59e0b;--amber-rgb:245,158,11;--red:#fca5a5;--red-rgb:220,40,40;--green:#86efac;--green-rgb:34,197,94;
+  --font:'Rajdhani',system-ui,sans-serif;--mono:'Orbitron',ui-monospace,monospace;}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100vw;height:100vh;overflow:hidden;background:#000;color:var(--text);font-family:var(--font);
+  -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;}
+body{display:flex;flex-direction:column;}
+.screen{display:none;flex-direction:column;height:100%;}
+.screen.on{display:flex;}
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;flex-shrink:0;
+  background:rgba(10,20,60,0.7);border-bottom:1px solid rgba(var(--accent-rgb),0.25);}
+.ttl{font-size:26px;font-weight:700;letter-spacing:2px;}
+.btn{background:rgba(var(--accent-rgb),0.15);border:1px solid rgba(var(--accent-rgb),0.35);color:var(--text);
+  border-radius:10px;padding:14px 26px;font-family:var(--font);font-size:20px;font-weight:700;letter-spacing:1px;
+  cursor:pointer;min-height:60px;}
+.btn:active{background:rgba(var(--accent-rgb),0.35);}
+.btn:disabled{opacity:.35;}
+.btn.close,.btn.danger{background:rgba(var(--red-rgb),0.12);border-color:rgba(var(--red-rgb),0.4);color:var(--red);}
+.btn.go{background:rgba(var(--green-rgb),0.15);border-color:rgba(var(--green-rgb),0.45);color:var(--green);}
+.btn.small{min-height:48px;padding:8px 18px;font-size:17px;}
+.banner{margin:16px 28px 0;padding:14px 20px;border-radius:10px;font-size:20px;font-weight:700;display:none;}
+.banner.on{display:block;}
+.banner.red{background:rgba(var(--red-rgb),0.15);border:1px solid rgba(var(--red-rgb),0.45);color:var(--red);}
+.banner.amber{background:rgba(var(--amber-rgb),0.12);border:1px solid rgba(var(--amber-rgb),0.45);color:var(--amber);}
+.body{flex:1;overflow-y:auto;padding:20px 28px 28px;display:flex;flex-direction:column;gap:12px;}
+.label{font-size:14px;font-weight:700;letter-spacing:2px;color:var(--text-sub);text-transform:uppercase;margin-top:10px;}
+.card{background:rgba(var(--accent-rgb),0.08);border:1px solid rgba(var(--accent-rgb),0.25);border-radius:12px;padding:16px 22px;}
+.empty{padding:40px;text-align:center;color:var(--text-sub);font-size:20px;font-weight:600;}
+/* rule list */
+.rule{display:flex;align-items:center;gap:22px;}
+.rule.off .sent{opacity:.45;}
+.rule .mid{flex:1;min-width:0;cursor:pointer;}
+.sent{font-size:24px;font-weight:600;line-height:1.25;}
+.sent b{color:#fff;font-weight:700;}
+.meta{font-size:18px;color:var(--text-sub);margin-top:6px;font-weight:600;}
+.chip{display:inline-block;font-size:15px;font-weight:700;letter-spacing:1px;border-radius:6px;padding:3px 10px;margin:0 8px 0 0;}
+.meta .chip+*,.meta *+.chip{margin-left:8px;}
+.chip.now{background:rgba(var(--accent-rgb),0.2);border:1px solid rgba(var(--accent-rgb),0.5);color:var(--text);}
+.chip.warn{background:rgba(var(--amber-rgb),0.15);border:1px solid rgba(var(--amber-rgb),0.5);color:var(--amber);}
+.chip.bad{background:rgba(var(--red-rgb),0.15);border:1px solid rgba(var(--red-rgb),0.5);color:var(--red);}
+.tog{position:relative;width:84px;height:44px;flex-shrink:0;cursor:pointer;border-radius:44px;
+  background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);transition:.25s;}
+.tog::after{content:'';position:absolute;top:5px;left:5px;width:32px;height:32px;border-radius:50%;background:#9fb5b2;transition:.25s;}
+.tog.on{background:rgba(var(--green-rgb),0.3);border-color:rgba(var(--green-rgb),0.6);}
+.tog.on::after{left:45px;background:var(--green);}
+.skip{width:320px;flex-shrink:0;text-align:right;}
+.light{display:flex;align-items:center;gap:18px;font-size:21px;font-weight:600;padding:8px 0;}
+.light .n{width:260px;}
+.light .s{flex:1;color:var(--text-sub);}
+.amber{color:var(--amber)!important;}
+/* builder */
+.preview{padding:22px 28px;background:rgba(var(--accent-rgb),0.06);border-bottom:1px solid rgba(var(--accent-rgb),0.2);flex-shrink:0;}
+.preview .sent{font-size:30px;}
+.blank{color:var(--amber);border-bottom:2px dashed var(--amber);padding:0 6px;}
+.steps{display:flex;gap:8px;padding:14px 28px 0;flex-shrink:0;}
+.step{flex:1;text-align:center;font-size:15px;font-weight:700;letter-spacing:1px;padding:10px 4px;border-radius:8px;
+  color:var(--text-sub);background:rgba(var(--accent-rgb),0.05);border:1px solid rgba(var(--accent-rgb),0.12);}
+.step.cur{color:#fff;background:rgba(var(--accent-rgb),0.25);border-color:rgba(var(--accent-rgb),0.6);}
+.step.done{color:var(--text);}
+.foot{display:flex;align-items:center;gap:16px;padding:18px 28px;flex-shrink:0;border-top:1px solid rgba(var(--accent-rgb),0.2);}
+.foot .msg{flex:1;text-align:center;font-size:19px;font-weight:700;color:var(--amber);}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+.pick{background:rgba(var(--accent-rgb),0.08);border:2px solid rgba(var(--accent-rgb),0.2);border-radius:12px;
+  padding:18px 16px;cursor:pointer;min-height:96px;}
+.pick.sel{background:rgba(var(--accent-rgb),0.28);border-color:var(--accent);}
+.pick .t{font-size:23px;font-weight:700;}
+.pick .d{font-size:17px;color:var(--text-sub);font-weight:600;margin-top:4px;}
+.seg{display:flex;gap:0;width:520px;}
+.seg .btn{flex:1;border-radius:0;font-size:22px;}
+.seg .btn:first-child{border-radius:10px 0 0 10px;}
+.seg .btn:last-child{border-radius:0 10px 10px 0;}
+.seg .btn.sel{background:rgba(var(--accent-rgb),0.4);border-color:var(--accent);color:#fff;}
+.spin{display:flex;align-items:center;gap:30px;margin-top:10px;}
+.col{display:flex;flex-direction:column;align-items:center;gap:10px;}
+.col .btn{width:150px;font-size:26px;}
+.big{font-family:var(--mono);font-size:72px;font-weight:700;min-width:150px;text-align:center;}
+.colon{font-family:var(--mono);font-size:72px;font-weight:700;}
+.hint{font-size:20px;color:var(--text-sub);font-weight:600;margin-top:12px;}
+.days{display:flex;gap:12px;}
+.days .btn{width:130px;font-size:22px;}
+.btn.sel{background:rgba(var(--accent-rgb),0.4);border-color:var(--accent);color:#fff;}
+.presets{display:flex;gap:12px;margin-bottom:8px;}
+.cal{display:grid;grid-template-columns:repeat(7,150px);gap:10px;}
+.cal div{height:76px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:22px;font-weight:700;}
+.cal .h{height:36px;font-size:15px;color:var(--text-sub);letter-spacing:1px;}
+.cal .d{border:1px dashed rgba(var(--accent-rgb),0.2);color:var(--text-sub);cursor:pointer;}
+.cal .d.run{background:rgba(var(--accent-rgb),0.14);border:2px solid rgba(var(--accent-rgb),0.7);color:#fff;}
+.cal .d.skp{background:rgba(var(--amber-rgb),0.25);border-color:var(--amber);color:#fff;text-decoration:line-through;}
+.cal .d.past{opacity:.25;cursor:default;}
+.calnav{display:flex;align-items:center;gap:20px;margin-bottom:10px;}
+.calnav .m{font-size:26px;font-weight:700;width:300px;text-align:center;}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:10;}
+.modal.on{display:flex;}
+.modal .box{background:#04161a;border:1px solid rgba(var(--accent-rgb),0.5);border-radius:14px;padding:30px 36px;width:720px;}
+.modal .q{font-size:26px;font-weight:700;margin-bottom:24px;line-height:1.3;}
+.modal .row{display:flex;gap:14px;justify-content:flex-end;}
+.toast{position:fixed;bottom:110px;left:50%;transform:translateX(-50%);background:#04161a;border:1px solid var(--accent);
+  border-radius:10px;padding:14px 26px;font-size:20px;font-weight:700;display:none;z-index:11;}
+.toast.on{display:block;}
+.toast.err{border-color:var(--red);color:var(--red);}
+.form{gap:6px;}
+.sec{display:flex;align-items:center;gap:18px;padding:12px 0;border-bottom:1px solid rgba(var(--accent-rgb),0.12);flex-wrap:wrap;}
+.sec .q2{width:330px;font-size:22px;font-weight:700;flex-shrink:0;}
+.sec .sub{flex-basis:100%;padding-left:348px;display:flex;flex-direction:column;gap:12px;}
+.field{background:rgba(var(--accent-rgb),0.1);border:1px solid rgba(var(--accent-rgb),0.4);border-radius:10px;color:var(--text);
+  font-family:var(--font);font-size:22px;font-weight:700;padding:12px 20px;min-height:60px;min-width:240px;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:space-between;gap:16px;text-align:left;}
+.field::after{content:'\25BE';color:var(--text-sub);}
+.field.empty{color:var(--amber);border-color:rgba(var(--amber-rgb),0.5);}
+.field.fixed{cursor:default;opacity:.8;}
+.field.fixed::after{content:'';}
+.field.wide{min-width:620px;max-width:1100px;}
+.fieldrow{display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
+.togrow{display:flex;align-items:center;gap:16px;font-size:20px;font-weight:600;color:var(--text-sub);}
+.foot2{flex-shrink:0;border-top:1px solid rgba(var(--accent-rgb),0.25);background:rgba(var(--accent-rgb),0.06);}
+.foot2 .sent{padding:16px 28px 0;font-size:26px;}
+.foot2 .foot{border-top:none;}
+.box.lp{width:860px;max-height:960px;display:flex;flex-direction:column;}
+.lplist{overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:18px;}
+.lpi{display:flex;align-items:center;gap:16px;padding:16px 20px;border-radius:10px;cursor:pointer;font-size:23px;font-weight:700;
+  background:rgba(var(--accent-rgb),0.07);border:1px solid rgba(var(--accent-rgb),0.2);}
+.lpi.sel{background:rgba(var(--accent-rgb),0.3);border-color:var(--accent);}
+.lpi.dis{opacity:.4;cursor:default;}
+.lpi .ck{width:30px;color:var(--green);}
+.lpi .ds{font-size:17px;color:var(--text-sub);font-weight:600;margin-left:auto;}
+.lplist.grid{display:grid;gap:10px;}
+.lplist.grid .lpi{justify-content:center;padding:20px 8px;}
+.lplist.grid .ck{display:none;}
+.lph{font-size:14px;font-weight:700;letter-spacing:2px;color:var(--text-sub);margin:8px 0 2px;}
+</style>
+</head>
+<body>
+<!-- RULE LIST -->
+<div id="s-list" class="screen on">
+  <div class="hdr">
+    <span class="ttl">&#9889; AUTOMATION</span>
+    <div style="display:flex;gap:12px;">
+      <button class="btn go" onclick="openBuilder(null)">+ NEW AUTOMATION</button>
+      <button class="btn close" onclick="goHome()">&#10005; CLOSE</button>
+    </div>
+  </div>
+  <div id="b-demo" class="banner amber">DEMO DATA &mdash; not connected to the Pi. Changes here are not saved.</div>
+  <div id="b-engine" class="banner red"></div>
+  <div id="b-file" class="banner red"></div>
+  <div id="b-clock" class="banner amber">Clock not synced yet &mdash; time rules are on hold until it is.</div>
+  <div class="body">
+    <div class="label">Active now</div>
+    <div id="active"></div>
+    <div class="label">Rules</div>
+    <div id="rules" style="display:flex;flex-direction:column;gap:12px;"></div>
+  </div>
+</div>
+
+<!-- RULE BUILDER: one form, sections open as you go -->
+<div id="s-build" class="screen">
+  <div class="hdr">
+    <span id="b-title" class="ttl">&#9889; NEW AUTOMATION</span>
+    <button class="btn close" onclick="cancelBuilder()">&#10005; CANCEL</button>
+  </div>
+  <div id="b-body" class="body form"></div>
+  <div class="foot2">
+    <div id="b-sent" class="sent"></div>
+    <div class="foot">
+      <div id="b-msg" class="msg"></div>
+      <button id="b-del" class="btn danger" onclick="deleteRule()">DELETE</button>
+      <button id="b-save" class="btn go" onclick="saveRule()">SAVE &#10003;</button>
+    </div>
+  </div>
+</div>
+
+<!-- dropdown list panel -->
+<div id="lp" class="modal"><div class="box lp">
+  <div id="lp-t" class="q"></div><div id="lp-list" class="lplist"></div>
+  <div class="row"><button id="lp-done" class="btn go" onclick="listDone()">DONE</button></div></div></div>
+
+<div id="modal" class="modal"><div class="box"><div id="m-q" class="q"></div>
+  <div class="row"><button class="btn" onclick="modalDone(false)">NO</button>
+  <button id="m-yes" class="btn danger" onclick="modalDone(true)">YES</button></div></div></div>
+<div id="toast" class="toast"></div>
+<script>
+'use strict';
+/* ---------- basics ---------- */
+const DEMO = new URLSearchParams(location.search).has('demo') ||
+  !/^(localhost|127\.|192\.168\.|100\.)/.test(location.hostname);
+const TF = (localStorage.getItem('dashTimeFormat') || '24') === '12';
+const DAYS = ['mon','tue','wed','thu','fri','sat','sun'];
+const DAYNAME = {mon:'Mon',tue:'Tue',wed:'Wed',thu:'Thu',fri:'Fri',sat:'Sat',sun:'Sun'};
+const SUNEV = ['dawn','sunrise','sunset','dusk'];
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const $ = id => document.getElementById(id);
+let RULES = [], STATUS = null, STATUS_ERR = null;
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+function add(parent, ...kids) { kids.forEach(k => k && parent.appendChild(typeof k === 'string' ? document.createTextNode(k) : k)); return parent; }
+function pad(n) { return String(n).padStart(2, '0'); }
+function ymd(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+function parseISO(s) {            // "2026-10-05T06:45" (local) -> Date
+  const [d, t = '00:00'] = s.split('T'); const [y, m, dd] = d.split('-').map(Number); const [h, mi] = t.split(':').map(Number);
+  return new Date(y, m - 1, dd, h, mi);
+}
+function fmtHM(h, m) {
+  if (!TF) return pad(h) + ':' + pad(m);
+  return ((h % 12) || 12) + ':' + pad(m) + (h < 12 ? ' AM' : ' PM');
+}
+function fmtTime(d) { return fmtHM(d.getHours(), d.getMinutes()); }
+function fmtDay(d) {
+  const t = new Date(); t.setHours(0, 0, 0, 0); const x = new Date(d); x.setHours(0, 0, 0, 0);
+  const diff = Math.round((x - t) / 86400000);
+  if (diff === 0) return 'Today'; if (diff === 1) return 'Tomorrow';
+  return DAYNAME[DAYS[(d.getDay() + 6) % 7]] + ' ' + MON[d.getMonth()] + ' ' + d.getDate();
+}
+function dur(min) {
+  min = Math.abs(min); const h = Math.floor(min / 60), m = min % 60;
+  return (h ? h + ' h' : '') + (h && m ? ' ' : '') + (m || !h ? m + ' min' : '');
+}
+function toast(msg, err) {
+  const t = $('toast'); t.textContent = msg; t.className = 'toast on' + (err ? ' err' : '');
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.className = 'toast', err ? 6000 : 2500);
+}
+let _modalCb = null;
+function ask(q, yesLabel, cb) { $('m-q').textContent = q; $('m-yes').textContent = yesLabel; _modalCb = cb; $('modal').className = 'modal on'; }
+function modalDone(yes) { $('modal').className = 'modal'; const cb = _modalCb; _modalCb = null; if (yes && cb) cb(); }
+function goHome() { location.href = '/'; }
+
+/* ---------- data: real API, or demo data when not on the Pi ---------- */
+async function api(method, path, body) {
+  if (DEMO) return demoApi(method, path, body);
+  const r = await fetch('/api/v2' + path, {method, headers: {'Content-Type': 'application/json'},
+                                          body: body === undefined ? undefined : JSON.stringify(body)});
+  let j = null; try { j = await r.json(); } catch (e) {}
+  if (!r.ok) throw new Error((j && (j.detail || j.error)) || ('HTTP ' + r.status));
+  return j;
+}
+async function loadRules() {
+  try { RULES = (await api('GET', '/rules')).rules || []; }
+  catch (e) { toast('Could not load rules: ' + e.message, true); }
+}
+async function loadStatus() {
+  try { STATUS = await api('GET', '/status'); STATUS_ERR = null; }
+  catch (e) { STATUS_ERR = e.message; }
+}
+
+const D = (function () {           // demo store
+  const now = new Date(), iso = (d, h, m) => ymd(d) + 'T' + pad(h) + ':' + pad(m);
+  const nextWd = () => { const d = new Date(now); do { d.setDate(d.getDate() + 1); } while ([0, 6].includes(d.getDay())); return d; };
+  const later = new Date(now.getTime() + 95 * 60000);
+  return {
+    rules: [
+      {id: 'bus_light', enabled: true, targets: ['group:outdoor_flood_lights'], state: 'on',
+       start: {clock: '06:45'}, end: {clock: '07:10'}, days: ['mon','tue','wed','thu','fri'], skip_dates: [],
+       dates: {from: '08-20', until: '06-05', yearly: true}},
+      {id: 'porch_evening', enabled: true, targets: ['front_door_flood'], state: 'on',
+       start: {sun: 'sunset', offset_min: -15}, end: {clock: '23:00'}, skip_dates: []},
+      {id: 'dawn_deck', enabled: false, targets: ['side_deck_flood'], state: 'on',
+       start: {sun: 'dawn', offset_min: -20}, end: {sun: 'sunrise', offset_min: 0}, skip_dates: []},
+      {id: 'garage_test', enabled: true, targets: ['garage_flood'], state: 'on',
+       start: {clock: '21:00'}, end: {clock: '21:30'}, skip_dates: []}],
+    status: {v: 1, ts: Math.floor(now / 1000), clock_ok: true, engine: '0.2',
+      sun: {date: ymd(now), dawn: '06:53', sunrise: '07:20', sunset: '18:58', dusk: '19:25'},
+      rules: {
+        bus_light: {active: false, next_start: iso(nextWd(), 6, 45), next_end: iso(nextWd(), 7, 10), broken: []},
+        porch_evening: {active: true, next_start: iso(now, 18, 43), next_end: iso(now, 23, 0), broken: []},
+        dawn_deck: {active: false, next_start: null, next_end: null, broken: []},
+        garage_test: {active: false, next_start: iso(now, 21, 0), next_end: iso(now, 21, 30), broken: ['garage_flood']}},
+      problems: {},
+      devices: {
+        front_door_flood: {name: 'Front Door', group: 'Outdoor Flood Lights', group_id: 'outdoor_flood_lights', online: true,
+          in_inventory: true, state: 'on', watts: 78.0, want: 'on', confirmed: true, manual: false, by: 'porch_evening', until: iso(now, 23, 0)},
+        side_deck_flood: {name: 'Side Deck', group: 'Outdoor Flood Lights', group_id: 'outdoor_flood_lights', online: false,
+          in_inventory: true, state: 'off', watts: 0, want: null, confirmed: false, manual: false, by: null, until: null}},
+      groups: {outdoor_flood_lights: {name: 'Outdoor Flood Lights', members: ['front_door_flood', 'side_deck_flood'], rename_safe: true}}}
+  };
+})();
+function demoApi(method, path, body) {
+  const clone = x => JSON.parse(JSON.stringify(x)), find = id => D.rules.find(r => r.id === id);
+  D.status.ts = Math.floor(Date.now() / 1000);
+  if (path === '/status') return Promise.resolve(clone(D.status));
+  if (path === '/rules' && method === 'GET') return Promise.resolve({v: 1, rules: clone(D.rules)});
+  if (path === '/rules' && method === 'POST') { D.rules.push(clone(body)); return Promise.resolve(clone(body)); }
+  const m = path.match(/^\/rules\/([a-z0-9_]+)(?:\/(enabled|skip-next))?$/), r = m && find(m[1]);
+  if (!r) return Promise.reject(new Error('no such rule'));
+  if (method === 'PUT') { Object.keys(r).forEach(k => delete r[k]); Object.assign(r, clone(body)); return Promise.resolve(clone(r)); }
+  if (method === 'DELETE') { D.rules.splice(D.rules.indexOf(r), 1); return Promise.resolve({ok: true}); }
+  if (m[2] === 'enabled') { r.enabled = body.enabled; return Promise.resolve(clone(r)); }
+  if (m[2] === 'skip-next') {
+    const s = D.status.rules[r.id];
+    if (!s || !s.next_start) return Promise.reject(new Error('no upcoming run to skip'));
+    r.skip_dates.push(s.next_start.slice(0, 10));
+    if (s.active) { s.active = false; } return Promise.resolve(clone(r));
+  }
+  return Promise.reject(new Error('demo: not handled'));
+}
+
+/* ---------- sentences ---------- */
+function targetName(t) {
+  const S = STATUS || {groups: {}, devices: {}};
+  if (t.startsWith('group:')) { const g = (S.groups || {})[t.slice(6)]; return g ? g.name : t.slice(6) + ' (missing)'; }
+  const d = (S.devices || {})[t]; return d ? d.name : t + ' (missing)';
+}
+function joinAnd(a) { return a.length < 2 ? (a[0] || '') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]; }
+function edgeText(e) {
+  if (!e) return null;
+  if (e.clock) { const [h, m] = e.clock.split(':').map(Number); return fmtHM(h, m); }
+  const o = e.offset_min || 0;
+  return o === 0 ? e.sun : dur(o) + (o < 0 ? ' before ' : ' after ') + e.sun;
+}
+function daysText(days) {
+  const d = days || DAYS;
+  if (!d.length) return null;
+  if (d.length === 7) return 'every day';
+  const k = DAYS.filter(x => d.includes(x)).join(',');
+  if (k === 'mon,tue,wed,thu,fri') return 'on weekdays';
+  if (k === 'sat,sun') return 'on weekends';
+  return 'on ' + joinAnd(DAYS.filter(x => d.includes(x)).map(x => DAYNAME[x]));
+}
+function sentence(r) {             // DOM: "Turn on X from A to B on weekdays."  Blanks shown in amber.
+  const s = el('div', 'sent'), part = txt => txt ? el('b', null, txt) : el('span', 'blank', '?');
+  add(s, 'Turn on ', part(r.targets && r.targets.length ? joinAnd(r.targets.map(targetName)) : null),
+      ' from ', part(edgeText(r.start)), ' to ', part(edgeText(r.end)), ' ', part(daysText(r.days)),
+      r.dates ? ', ' + datesText(r.dates) : '', '.');
+  return s;
+}
+function mdText(s) { const p = s.split('-').map(Number), m = p.length === 3 ? p[1] : p[0], d = p.length === 3 ? p[2] : p[1]; return MON[m - 1] + ' ' + d; }
+function datesText(g) {
+  if (g.yearly) return 'between ' + mdText(g.from) + ' and ' + mdText(g.until) + ' every year';
+  const fy = g.from.slice(0, 4), uy = g.until.slice(0, 4);
+  return fy === uy ? 'between ' + mdText(g.from) + ' and ' + mdText(g.until) + ', ' + uy
+                   : 'between ' + mdText(g.from) + ', ' + fy + ' and ' + mdText(g.until) + ', ' + uy;
+}
+function futureSkips(r) { const t = ymd(new Date()); return (r.skip_dates || []).filter(d => d >= t).sort(); }
+function windowText(a, b) {
+  const s = parseISO(a), e = parseISO(b);
+  return fmtDay(s) + ', ' + fmtTime(s) + ' \u2013 ' + (ymd(s) === ymd(e) ? '' : fmtDay(e) + ' ') + fmtTime(e);
+}
+
+/* ---------- rule list ---------- */
+function renderBanners() {
+  $('b-demo').classList.toggle('on', DEMO);
+  const b = $('b-engine');
+  if (STATUS_ERR) { b.textContent = 'Can\u2019t reach the engine status (' + STATUS_ERR + '). What you see may be out of date.'; b.classList.add('on'); }
+  else if (STATUS && Date.now() / 1000 - STATUS.ts > 30) {
+    b.textContent = 'The engine is not running \u2014 rules are NOT being applied. Last seen ' +
+      dur(Math.round((Date.now() / 1000 - STATUS.ts) / 60)) + ' ago.';
+    b.classList.add('on');
+  } else b.classList.remove('on');
+  $('b-clock').classList.toggle('on', !!STATUS && STATUS.clock_ok === false);
+  const fp = STATUS && STATUS.problems && STATUS.problems._file, bf = $('b-file');
+  bf.textContent = fp ? 'rules.json can\u2019t be read (' + fp + '). The engine is running on the last good copy.' : '';
+  bf.classList.toggle('on', !!fp);
+}
+function lightLine(id, d) {
+  const row = el('div', 'light'), s = el('div', 's');
+  add(row, el('div', 'n', d.name || id), s);
+  if (!d.online) { s.textContent = 'Not responding \u2014 last known: ' + (d.state === 'on' ? 'On' : 'Off'); s.classList.add('amber'); }
+  else if (d.manual) { s.textContent = 'Changed by hand (' + (d.state === 'on' ? 'On' : 'Off') + ') \u2014 schedule resumes at the next start'; s.classList.add('amber'); }
+  else if (!d.confirmed) s.textContent = 'Turning ' + d.want + '\u2026';
+  else if (d.state === 'on' && (d.watts || 0) < 5) { s.textContent = 'On \u00b7 0 W \u2014 bulb may be dead'; s.classList.add('amber'); }
+  else s.textContent = (d.state === 'on' ? 'On' : 'Off') + (d.watts != null ? ' \u00b7 ' + Math.round(d.watts) + ' W' : '');
+  if (d.until && d.online && !d.manual) add(row, el('div', 'meta', 'until ' + fmtTime(parseISO(d.until))));
+  return row;
+}
+function renderActive() {
+  const box = $('active'); box.textContent = '';
+  const S = STATUS || {rules: {}, devices: {}}, act = RULES.filter(r => r.enabled !== false && (S.rules[r.id] || {}).active);
+  if (!act.length) { add(box, el('div', 'card meta', 'Nothing is running on a schedule right now.')); return; }
+  act.forEach(r => {
+    const c = el('div', 'card'); c.style.marginBottom = '12px';
+    add(c, sentence(r));
+    Object.entries(S.devices || {}).filter(([, d]) => d.by === r.id).forEach(([id, d]) => add(c, lightLine(id, d)));
+    box.appendChild(c);
+  });
+}
+function ruleRow(r) {
+  const S = STATUS || {rules: {}, problems: {}}, st = (S.rules || {})[r.id], prob = (S.problems || {})[r.id];
+  const on = r.enabled !== false, row = el('div', 'card rule' + (on ? '' : ' off'));
+  const tog = el('div', 'tog' + (on ? ' on' : '')); tog.onclick = () => setEnabled(r, !on);
+  const mid = el('div', 'mid'); mid.onclick = () => openBuilder(r);
+  const meta = el('div', 'meta');
+  add(mid, sentence(r), meta);
+  if (prob) add(meta, el('span', 'chip bad', 'NOT RUNNING: ' + prob));
+  else if (st && st.broken && st.broken.length) add(meta, el('span', 'chip bad', 'MISSING: ' + st.broken.join(', ')));
+  if (!on) add(meta, 'Off \u2014 will not run');
+  else if (st && st.active) add(meta, el('span', 'chip now', 'ON NOW'), 'until ' + fmtTime(parseISO(st.next_end)));
+  else if (st && st.next_start) add(meta, 'Next: ' + windowText(st.next_start, st.next_end));
+  else if (st) add(meta, 'No upcoming run in the next year');
+  else if (!prob) add(meta, 'Waiting for the engine to pick this up\u2026');
+  const sk = futureSkips(r);
+  if (sk.length) add(meta, el('span', 'chip warn', 'SKIPPING ' + sk.length + (sk.length > 1 ? ' DATES' : ' DATE')));
+  const right = el('div', 'skip');
+  if (on && st && st.next_start) {
+    const b = el('button', 'btn small', st.active ? 'STOP & SKIP TODAY' : 'SKIP NEXT');
+    b.onclick = () => skipNext(r, st); right.appendChild(b);
+  }
+  if (sk.length) {
+    const u = el('button', 'btn small', 'UNDO SKIP ' + fmtDay(parseISO(sk[0])).toUpperCase());
+    u.style.marginTop = '8px'; u.onclick = () => undoSkip(r, sk[0]); add(right, u);
+  }
+  add(row, tog, mid, right);
+  return row;
+}
+function renderList() {
+  renderBanners(); renderActive();
+  const box = $('rules'); box.textContent = '';
+  if (!RULES.length) { add(box, el('div', 'empty', 'No automations yet. Tap + NEW AUTOMATION to make one.')); return; }
+  const S = (STATUS && STATUS.rules) || {}, key = r => r.enabled === false ? 'z' : ((S[r.id] || {}).active ? '0' : ((S[r.id] || {}).next_start || 'y'));
+  RULES.slice().sort((a, b) => key(a) < key(b) ? -1 : 1).forEach(r => box.appendChild(ruleRow(r)));
+}
+async function refresh() { await Promise.all([loadRules(), loadStatus()]); if ($('s-list').classList.contains('on')) renderList(); }
+
+async function setEnabled(r, val) {
+  r.enabled = val; renderList();
+  try { await api('POST', '/rules/' + r.id + '/enabled', {enabled: val}); toast(val ? 'Rule turned on' : 'Rule turned off'); }
+  catch (e) { r.enabled = !val; renderList(); toast('Not changed: ' + e.message, true); }
+  refresh();
+}
+function skipNext(r, st) {
+  const when = fmtDay(parseISO(st.next_start));
+  const q = st.active ? 'Stop this rule now and skip the rest of today\u2019s run?' : 'Skip the next run (' + when + ', ' + fmtTime(parseISO(st.next_start)) + ')?';
+  ask(q, 'SKIP', async () => {
+    try { await api('POST', '/rules/' + r.id + '/skip-next'); toast('Skipped ' + when); }
+    catch (e) { toast('Not skipped: ' + e.message, true); }
+    refresh();
+  });
+}
+async function undoSkip(r, date) {
+  const body = Object.assign({}, r, {skip_dates: (r.skip_dates || []).filter(d => d !== date)});
+  try { await api('PUT', '/rules/' + r.id, body); toast('Skip removed'); }
+  catch (e) { toast('Not changed: ' + e.message, true); }
+  refresh();
+}
+
+/* ---------- rule builder: one form, each answer opens the next question ---------- */
+const B = {draft: null, orig: '', isNew: true, cat: null, trig: null, daysOn: false, datesOn: false, skipsOn: false, cal: null};
+const NOT_YET = 'not available yet';
+function clone(x) { return JSON.parse(JSON.stringify(x)); }
+function show(id) { document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id)); }
+function btn(label, cls, fn) { const b = el('button', 'btn' + (cls ? ' ' + cls : ''), label); b.onclick = fn; return b; }
+function edgeKey(e) { return e.clock ? 'c' + e.clock : 's' + e.sun + (e.offset_min || 0); }
+function sunMin(ev) { const s = STATUS && STATUS.sun && STATUS.sun[ev]; if (!s) return null; const [h, m] = s.split(':').map(Number); return h * 60 + m; }
+function edgeMin(e) { if (!e) return null; if (e.clock) { const [h, m] = e.clock.split(':').map(Number); return h * 60 + m; }
+  const s = sunMin(e.sun); return s === null ? null : s + (e.offset_min || 0); }
+function minText(n) { n = ((n % 1440) + 1440) % 1440; return fmtHM(Math.floor(n / 60), n % 60); }
+
+/* dropdown list panel: items [{v, label, desc, dis, head}] */
+const LP = {items: [], multi: false, sel: [], cb: null};
+function openList(title, items, sel, multi, cb, cols) {
+  Object.assign(LP, {items, multi, sel: multi ? sel.slice() : [sel], cb});
+  const L = $('lp-list'); L.className = 'lplist' + (cols ? ' grid' : ''); L.style.gridTemplateColumns = cols ? 'repeat(' + cols + ',1fr)' : '';
+  $('lp-t').textContent = title; $('lp-done').textContent = multi ? 'DONE' : 'CANCEL'; drawList(); $('lp').className = 'modal on';
+}
+function drawList() {
+  const box = $('lp-list'); box.textContent = '';
+  LP.items.forEach(it => {
+    if (it.head) { box.appendChild(el('div', 'lph', it.head)); return; }
+    const on = LP.sel.includes(it.v), row = el('div', 'lpi' + (on ? ' sel' : '') + (it.dis ? ' dis' : ''));
+    add(row, el('span', 'ck', on ? '\u2713' : ''), el('span', null, it.label), it.desc ? el('span', 'ds', it.desc) : null);
+    if (!it.dis) row.onclick = () => {
+      if (!LP.multi) { $('lp').className = 'modal'; LP.cb(it.v); return; }
+      LP.sel = on ? LP.sel.filter(x => x !== it.v) : LP.sel.concat(it.v); drawList();
+    };
+    box.appendChild(row);
+  });
+  setTimeout(() => { const s = box.querySelector('.sel'); if (s && !LP.multi) s.scrollIntoView({block: 'center'}); }, 0);
+}
+function listDone() { $('lp').className = 'modal'; if (LP.multi) LP.cb(LP.sel); }
+
+function field(label, onTap, cls) {
+  const f = el('button', 'field' + (cls ? ' ' + cls : ''), label || 'Choose\u2026');
+  if (!label) f.classList.add('empty');
+  if (onTap) f.onclick = onTap; else f.classList.add('fixed');
+  return f;
+}
+function sec(q, ...kids) { const r = el('div', 'sec'); add(r, el('div', 'q2', q), ...kids); return r; }
+function togRow(label, on, fn) {
+  const r = el('div', 'togrow'), t = el('div', 'tog' + (on ? ' on' : '')); t.onclick = fn; add(r, t, el('span', null, label)); return r;
+}
+function openBuilder(r) {
+  B.isNew = !r;
+  B.draft = r ? Object.assign({days: DAYS.slice(), skip_dates: []}, clone(r))
+              : {id: 'rule_' + Date.now().toString(36), enabled: true, targets: [], state: 'on',
+                 start: null, end: null, days: DAYS.slice(), skip_dates: []};
+  B.orig = JSON.stringify(B.draft);
+  B.cat = r ? 'lights' : null; B.trig = r ? 'time' : null;
+  B.daysOn = B.draft.days.length < 7; B.datesOn = !!B.draft.dates; B.skipsOn = futureSkips(B.draft).length > 0;
+  const t = new Date(); B.cal = new Date(t.getFullYear(), t.getMonth(), 1);
+  $('b-title').textContent = r ? '\u26A1 EDIT AUTOMATION' : '\u26A1 NEW AUTOMATION';
+  show('s-build'); renderBuilder(); $('b-body').scrollTop = 0;
+}
+function cancelBuilder() {
+  const leave = () => { show('s-list'); refresh(); };
+  if (JSON.stringify(B.draft) === B.orig) leave(); else ask('Discard your changes?', 'DISCARD', leave);
+}
+function problem(d) {
+  if (!B.cat) return 'Choose what to automate';
+  if (!d.targets.length) return 'Choose at least one light';
+  if (!d.start) return 'Choose when it turns on';
+  if (!d.end) return 'Choose when it turns off';
+  if (edgeKey(d.start) === edgeKey(d.end)) return 'On and off can\u2019t be the same time';
+  if (!d.days.length) return 'Pick at least one day';
+  if (d.dates && !d.dates.yearly) {
+    if (d.dates.from > d.dates.until) return 'The start date is after the stop date';
+    if (d.dates.until < ymd(new Date())) return 'That date range has already ended';
+  }
+  return '';
+}
+function renderBuilder() {
+  const d = B.draft, body = $('b-body'), keep = body.scrollTop; body.textContent = '';
+  const redo = () => renderBuilder();
+  // 1. what
+  add(body, sec('What do you want to automate?', field(B.cat ? 'Lights' : null, () => openList('What do you want to automate?',
+    [{v: 'lights', label: 'Lights'}, {v: 'coop', label: 'Coop door', desc: NOT_YET, dis: true}, {v: 'pumps', label: 'Pumps', desc: NOT_YET, dis: true}],
+    B.cat, false, v => { B.cat = v; redo(); }))));
+  if (B.cat) {
+    // 2. which lights
+    add(body, sec('Which lights?', field(d.targets.length ? joinAnd(d.targets.map(targetName)) : null, pickLights, 'wide')));
+    if (d.targets.length) {
+      if (!B.trig) B.trig = 'time';                 // the only trigger that exists today
+      // 3. when
+      add(body, sec('When?', field('Time schedule', () => openList('When should it run?',
+        [{v: 'time', label: 'Time schedule'}, {v: 'motion', label: 'Motion', desc: NOT_YET, dis: true},
+         {v: 'sensor', label: 'Sensor reading', desc: NOT_YET, dis: true}], B.trig, false, v => { B.trig = v; redo(); }))));
+      // 4/5. from, to
+      add(body, sec('Turns on at', ...edgeFields('start')));
+      if (d.start) add(body, sec('Turns off at', ...edgeFields('end')));
+      if (d.start && d.end) {
+        const h = timeHint(); if (h) { const r = sec(''); add(r, el('div', 'hint', h)); r.querySelector('.hint').style.margin = '0'; add(body, r); }
+        add(body, daysSec(), datesSec(), skipsSec());
+        // 6. outcome
+        add(body, sec('Then', field('Turn on, then off when the time ends', () => openList('What should the lights do?',
+          [{v: 'window', label: 'Turn on, then off when the time ends'}, {v: 'on', label: 'Turn on and leave on', desc: NOT_YET, dis: true},
+           {v: 'dim', label: 'Set a brightness', desc: NOT_YET, dis: true}], 'window', false, () => {}), 'wide')));
+        add(body, sec('Automation is', togRow(d.enabled !== false ? 'ON \u2014 runs on schedule' : 'OFF \u2014 saved but will not run',
+          d.enabled !== false, () => { d.enabled = d.enabled === false; redo(); })));
+      }
+    }
+  }
+  body.scrollTop = keep;
+  $('b-sent').replaceWith(Object.assign(sentence(d), {id: 'b-sent'}));
+  const msg = problem(d); $('b-save').disabled = !!msg; $('b-msg').textContent = msg;
+  $('b-del').style.display = B.isNew ? 'none' : '';
+}
+function pickLights() {
+  const S = STATUS || {groups: {}, devices: {}}, items = [];
+  const g = Object.entries(S.groups || {}), l = Object.entries(S.devices || {}).filter(([, x]) => x.in_inventory !== false);
+  if (g.length) items.push({head: 'GROUPS'});
+  g.forEach(([id, x]) => items.push({v: 'group:' + id, label: x.name, desc: x.members.length + ' lights'}));
+  if (l.length) items.push({head: 'SINGLE LIGHTS'});
+  l.forEach(([id, x]) => items.push({v: id, label: x.name, desc: (x.online ? 'online' : 'OFFLINE') + ' \u00b7 ' + (x.group || 'no group')}));
+  const miss = B.draft.targets.filter(t => targetName(t).endsWith('(missing)'));
+  if (miss.length) { items.push({head: 'MISSING \u2014 TAP TO REMOVE'}); miss.forEach(t => items.push({v: t, label: t, desc: 'not in the inventory'})); }
+  if (!items.length) items.push({v: '', label: 'No lights reported yet', dis: true});
+  openList('Which lights?', items, B.draft.targets, true, sel => { B.draft.targets = sel; renderBuilder(); });
+}
+const OFFSETS = [-120, -90, -60, -45, -30, -15, -10, -5, 0, 5, 10, 15, 30, 45, 60, 90, 120];
+function cap(s) { return s[0].toUpperCase() + s.slice(1); }
+function offText(o, ev) { return o === 0 ? 'at ' + ev : dur(o) + (o < 0 ? ' before' : ' after'); }
+function edgeFields(key) {
+  const d = B.draft, e = d[key], set = v => { d[key] = v; renderBuilder(); };
+  const typeItems = [{v: 'clock', label: 'Clock time'}].concat(SUNEV.map(ev => ({v: ev, label: cap(ev),
+                      desc: sunMin(ev) !== null ? 'today ' + minText(sunMin(ev)) : ''})));
+  const cur = !e ? null : (e.clock ? 'clock' : e.sun);
+  const out = [field(cur ? (cur === 'clock' ? 'Clock time' : cap(cur)) : null, () => openList(key === 'start' ? 'Turns on at' : 'Turns off at',
+    typeItems, cur, false, v => {
+      if (v === cur) return;
+      if (v === 'clock') { const m = edgeMin(e); set({clock: m === null ? (key === 'start' ? '18:00' : '22:00') : pad(Math.floor(((m % 1440) + 1440) % 1440 / 60)) + ':' + pad(((m % 60) + 60) % 60)}); }
+      else set({sun: v, offset_min: e && e.sun ? (e.offset_min || 0) : 0});
+    }))];
+  if (!e) return out;
+  if (e.clock) {
+    const [h, m] = e.clock.split(':').map(Number);
+    const hours = [...Array(24).keys()].map(x => ({v: x, label: TF ? ((x % 12) || 12) + (x < 12 ? ' AM' : ' PM') : pad(x)}));
+    const mins = [...new Set([...Array(12).keys()].map(x => x * 5).concat(m))].sort((a, b) => a - b).map(x => ({v: x, label: ':' + pad(x)}));
+    out.push(field(hours[h].label, () => openList('Hour', hours, h, false, v => set({clock: pad(v) + ':' + pad(m)}), TF ? 4 : 6)),
+             field(':' + pad(m), () => openList('Minute', mins, m, false, v => set({clock: pad(h) + ':' + pad(v)}), 4)));
+  } else {
+    const o = e.offset_min || 0, offs = [...new Set(OFFSETS.concat(o))].sort((a, b) => a - b)
+      .map(x => ({v: x, label: offText(x, e.sun), desc: sunMin(e.sun) !== null ? 'today ' + minText(sunMin(e.sun) + x) : ''}));
+    out.push(field(offText(o, e.sun), () => openList(cap(e.sun) + ' offset', offs, o, false, v => set({sun: e.sun, offset_min: v}))));
+  }
+  return out;
+}
+function timeHint() {
+  const d = B.draft, s = edgeMin(d.start), e = edgeMin(d.end), bits = [];
+  if ((d.start.sun || d.end.sun) && s !== null && e !== null) bits.push('Today: ' + minText(s) + ' to ' + minText(e) + '. Sun times shift through the year; the engine recalculates daily.');
+  if (s !== null && e !== null && e <= s) bits.push('This runs past midnight. It counts as the day it starts.');
+  return bits.join(' ');
+}
+function daysSec() {
+  const d = B.draft, r = sec('Days', togRow('Only on certain days', B.daysOn, () => {
+    B.daysOn = !B.daysOn; d.days = B.daysOn ? DAYS.slice(0, 5) : DAYS.slice(); renderBuilder(); }));
+  if (B.daysOn) {
+    const sub = el('div', 'sub'), setD = a => { d.days = DAYS.filter(x => a.includes(x)); renderBuilder(); }, k = d.days.join(',');
+    const pr = el('div', 'presets'), row = el('div', 'days');
+    add(pr, btn('WEEKDAYS', k === 'mon,tue,wed,thu,fri' ? 'sel' : '', () => setD(DAYS.slice(0, 5))),
+            btn('WEEKENDS', k === 'sat,sun' ? 'sel' : '', () => setD(['sat', 'sun'])));
+    DAYS.forEach(x => add(row, btn(DAYNAME[x].toUpperCase(), d.days.includes(x) ? 'sel' : '',
+      () => setD(d.days.includes(x) ? d.days.filter(y => y !== x) : d.days.concat(x)))));
+    add(sub, pr, row); r.appendChild(sub);
+  }
+  return r;
+}
+function dparts(s) { const p = s.split('-').map(Number); return p.length === 3 ? {y: p[0], m: p[1], d: p[2]} : {y: null, m: p[0], d: p[1]}; }
+function dbuild(p, yearly) {
+  const n = new Date(yearly ? 2024 : p.y, p.m, 0).getDate(), d = Math.min(p.d, n);   // clamp to month length
+  return (yearly ? '' : p.y + '-') + pad(p.m) + '-' + pad(d);
+}
+function datesSec() {
+  const d = B.draft, r = sec('Dates', togRow('Only between dates', B.datesOn, () => {
+    B.datesOn = !B.datesOn;
+    if (B.datesOn) { const a = new Date(), b = new Date(); b.setDate(b.getDate() + 30); d.dates = {from: ymd(a), until: ymd(b), yearly: false}; }
+    else delete d.dates;
+    renderBuilder(); }));
+  if (!B.datesOn || !d.dates) return r;
+  const g = d.dates, sub = el('div', 'sub'), yr = new Date().getFullYear();
+  const row = (label, key) => {
+    const p = dparts(g[key]), put = q => { g[key] = dbuild(Object.assign(p, q), g.yearly); renderBuilder(); };
+    const n = new Date(g.yearly ? 2024 : p.y, p.m, 0).getDate(), fr = el('div', 'fieldrow');
+    add(fr, el('div', 'q2', label),
+      field(MON[p.m - 1], () => openList('Month', MON.map((x, i) => ({v: i + 1, label: x})), p.m, false, v => put({m: v}), 4)),
+      field(String(p.d), () => openList('Day', [...Array(n).keys()].map(i => ({v: i + 1, label: String(i + 1)})), p.d, false, v => put({d: v}), 7)));
+    if (!g.yearly) {
+      const years = [...new Set([yr, yr + 1, yr + 2, p.y])].sort().map(x => ({v: x, label: String(x)}));
+      fr.appendChild(field(String(p.y), () => openList('Year', years, p.y, false, v => put({y: v}), 3)));
+    }
+    fr.querySelector('.q2').style.width = '120px'; return fr;
+  };
+  add(sub, row('Start', 'from'), row('Stop', 'until'), togRow('Repeat every year', g.yearly, () => {
+    const f = dparts(g.from), u = dparts(g.until);
+    if (g.yearly) {                                  // to one-time: this year, stop rolls into next year if needed
+      f.y = yr; u.y = (u.m * 100 + u.d < f.m * 100 + f.d) ? yr + 1 : yr;
+      d.dates = {from: dbuild(f, false), until: dbuild(u, false), yearly: false};
+    } else d.dates = {from: dbuild(f, true), until: dbuild(u, true), yearly: true};
+    renderBuilder(); }));
+  if (g.yearly && g.from > g.until) add(sub, el('div', 'hint', 'Wraps over the new year: runs ' + mdText(g.from) + ' through ' + mdText(g.until) + ' of the next year.'));
+  r.appendChild(sub); return r;
+}
+function skipsSec() {
+  const d = B.draft, today = ymd(new Date());
+  const r = sec('Skip', togRow('Skip specific dates', B.skipsOn, () => {
+    B.skipsOn = !B.skipsOn; if (!B.skipsOn) d.skip_dates = d.skip_dates.filter(x => x < today); renderBuilder(); }));
+  if (!B.skipsOn) return r;
+  const sub = el('div', 'sub'), first = new Date(), c = B.cal;
+  first.setDate(1); first.setHours(0, 0, 0, 0);
+  const months = (c.getFullYear() - first.getFullYear()) * 12 + c.getMonth() - first.getMonth();
+  const nav = el('div', 'calnav');
+  const prev = btn('\u25C0', '', () => { B.cal = new Date(c.getFullYear(), c.getMonth() - 1, 1); renderBuilder(); }); prev.disabled = months <= 0;
+  const next = btn('\u25B6', '', () => { B.cal = new Date(c.getFullYear(), c.getMonth() + 1, 1); renderBuilder(); }); next.disabled = months >= 11;
+  add(nav, prev, el('div', 'm', MON[c.getMonth()] + ' ' + c.getFullYear()), next, el('div', 'meta', 'Tap a day to skip it. Solid days are days it runs.'));
+  const cal = el('div', 'cal'); DAYS.forEach(x => add(cal, el('div', 'h', DAYNAME[x].toUpperCase())));
+  for (let i = 0; i < (c.getDay() + 6) % 7; i++) cal.appendChild(el('div'));
+  for (let day = new Date(c); day.getMonth() === c.getMonth(); day.setDate(day.getDate() + 1)) {
+    const s = ymd(day), md = s.slice(5), g = d.dates;
+    const inR = !g || (g.yearly ? (g.from <= g.until ? md >= g.from && md <= g.until : md >= g.from || md <= g.until) : s >= g.from && s <= g.until);
+    const runs = inR && d.days.includes(DAYS[(day.getDay() + 6) % 7]), skp = d.skip_dates.includes(s), past = s < today;
+    const cell = el('div', 'd' + (runs ? ' run' : '') + (skp ? ' skp' : '') + (past ? ' past' : ''), String(day.getDate()));
+    if (!past) cell.onclick = () => { d.skip_dates = skp ? d.skip_dates.filter(x => x !== s) : d.skip_dates.concat(s).sort(); renderBuilder(); };
+    cal.appendChild(cell);
+  }
+  add(sub, nav, cal); r.appendChild(sub); return r;
+}
+
+async function saveRule() {
+  const d = B.draft, y = new Date(); y.setDate(y.getDate() - 1);
+  const rule = {id: d.id, enabled: d.enabled !== false, targets: d.targets.slice(), state: 'on', start: d.start, end: d.end,
+                days: DAYS.filter(x => d.days.includes(x)),
+                skip_dates: [...new Set(d.skip_dates)].filter(x => x >= ymd(y)).sort()};   // keep yesterday: a run may still be going
+  if (d.dates) rule.dates = clone(d.dates);
+  if (problem(d)) return;
+  $('b-save').disabled = true;
+  try {
+    if (B.isNew) await api('POST', '/rules', rule); else await api('PUT', '/rules/' + rule.id, rule);
+    toast(B.isNew ? 'Rule saved' : 'Changes saved'); show('s-list'); refresh();
+  } catch (e) { toast('Not saved: ' + e.message, true); $('b-save').disabled = false; }
+}
+function deleteRule() {
+  ask('Delete this automation? If it is running now, its lights turn off unless another rule wants them on.', 'DELETE', async () => {
+    try { await api('DELETE', '/rules/' + B.draft.id); toast('Rule deleted'); show('s-list'); refresh(); }
+    catch (e) { toast('Not deleted: ' + e.message, true); }
+  });
+}
+
+/* ---------- idle return, polling, start ---------- */
+let lastTouch = Date.now();
+document.addEventListener('pointerdown', () => { lastTouch = Date.now(); }, true);
+setInterval(() => {
+  const idle = Date.now() - lastTouch, building = $('s-build').classList.contains('on');
+  if (!DEMO && idle > (building ? 10 : 3) * 60000) goHome();     // never strand the wall on this page
+}, 15000);
+setInterval(async () => { if ($('s-list').classList.contains('on')) { await loadStatus(); renderList(); } }, 5000);
+setInterval(() => { if ($('s-list').classList.contains('on')) refresh(); }, 30000);
+refresh();
+</script>
+</body>
+</html>

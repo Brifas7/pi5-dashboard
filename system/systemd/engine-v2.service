@@ -1,0 +1,15 @@
+[Unit]
+Description=Automation engine v2 (lights)
+After=network-online.target mosquitto.service
+Wants=mosquitto.service
+
+[Service]
+User=brifas
+ExecStart=/usr/bin/python3 -u /home/brifas/engine-v2/engine.py
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:/home/brifas/engine-v2/engine.log
+StandardError=append:/home/brifas/engine-v2/engine.log
+
+[Install]
+WantedBy=multi-user.target

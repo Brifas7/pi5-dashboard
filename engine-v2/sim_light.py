@@ -7,6 +7,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument('--id', default='front_door_flood')
 ap.add_argument('--name', default='Front Door')
 ap.add_argument('--group', default='Outdoor Flood Lights')
+ap.add_argument('--group-id', default='')
 ap.add_argument('--host', default='127.0.0.1')
 ap.add_argument('--port', type=int, default=1884)
 a = ap.parse_args()
@@ -32,8 +33,9 @@ def on_connect(cl, ud, flags, rc, *x):
     if rc != 0:
         print('connect failed, rc', rc); return
     cl.publish(T + 'availability', 'online', qos=1, retain=True)
-    cl.publish(T + 'config', json.dumps({'v': 1, 'id': a.id, 'name': a.name, 'group': a.group,
-               'capabilities': ['onoff', 'power']}), qos=1, retain=True)
+    cfg = {'v': 1, 'id': a.id, 'name': a.name, 'group': a.group, 'capabilities': ['onoff', 'power']}
+    if a.group_id: cfg['group_id'] = a.group_id
+    cl.publish(T + 'config', json.dumps(cfg), qos=1, retain=True)
     pub_state('boot'); cl.subscribe(T + 'set', qos=1); print(f'{a.id} online')
 
 def on_message(cl, ud, m):

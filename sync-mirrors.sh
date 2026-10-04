@@ -30,4 +30,10 @@ m $H/engine-v2/sim_light.py engine-v2/sim_light.py
 m $H/engine-v2/simctl engine-v2/simctl
 m $H/engine-v2/engine.py engine-v2/engine.py
 m $H/engine-v2/engctl engine-v2/engctl
+m $H/engine-v2/ruleslib.py engine-v2/ruleslib.py
+m $H/engine-v2/mkrule.py engine-v2/mkrule.py
+m $H/engine-v2/rules_api.py engine-v2/rules_api.py
+m $H/engine-v2/t02.sh engine-v2/t02.sh
+m /etc/systemd/system/engine-v2.service system/systemd/engine-v2.service
+m /etc/logrotate.d/engine-v2 system/logrotate-engine-v2
 git status --short

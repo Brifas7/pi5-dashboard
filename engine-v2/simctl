@@ -1,17 +1,22 @@
 #!/bin/bash
-# simctl start|stop|on|off|send <cmd>|watch [secs]|log
+# simctl [front|side] start|stop|on|off|send <cmd>|watch [secs]|log
+#   front = front_door_flood (default), side = side_deck_flood; both in group outdoor_flood_lights.
+#   NOGID=1 simctl side start  -> config without group_id (tests the rename-unsafe fallback)
 P=~/.config/dashboard/devices.pass
-T=dashboard/lights/front_door_flood
+case "$1" in front|side) W=$1; shift ;; *) W=front ;; esac
+if [ "$W" = front ]; then ID=front_door_flood; NM="Front Door"; S=sim; else ID=side_deck_flood; NM="Side Deck"; S=sim-side; fi
+T=dashboard/lights/$ID
+GID="--group-id outdoor_flood_lights"; [ -n "$NOGID" ] && GID=""
 case "$1" in
-  start) tmux kill-session -t sim 2>/dev/null
-         tmux new -d -s sim "SIM_PASS=\$(cat $P) python3 ~/engine-v2/sim_light.py; echo '[sim exited]'; sleep 3600"
-         sleep 2; tmux capture-pane -pt sim | grep -v '^$' | tail -3 ;;
-  stop)  tmux send-keys -t sim quit Enter; sleep 1; echo stopped ;;
-  send)  tmux send-keys -t sim "$2" Enter; sleep 1
-         tmux capture-pane -pt sim | grep -v '^$' | tail -3 ;;
+  start) tmux kill-session -t $S 2>/dev/null
+         tmux new -d -s $S "SIM_PASS=\$(cat $P) python3 ~/engine-v2/sim_light.py --id $ID --name '$NM' --group 'Outdoor Flood Lights' $GID; echo '[sim exited]'; sleep 3600"
+         sleep 2; tmux capture-pane -pt $S | grep -v '^$' | tail -3 ;;
+  stop)  tmux send-keys -t $S quit Enter; sleep 1; echo stopped ;;
+  send)  tmux send-keys -t $S "$2" Enter; sleep 1
+         tmux capture-pane -pt $S | grep -v '^$' | tail -3 ;;
   on|off) mosquitto_sub -h localhost -t "$T/#" -v -W 4 & sleep 1
          mosquitto_pub -h localhost -q 1 -t "$T/set" -m "{\"v\":1,\"state\":\"$1\",\"source\":\"test\"}"; wait ;;
   watch) mosquitto_sub -h localhost -t 'dashboard/lights/#' -v -W "${2:-5}" ;;
-  log)   tmux capture-pane -pt sim | grep -v '^$' | tail -"${2:-10}" ;;
-  *)     echo "usage: simctl start|stop|on|off|send <silent|deadbulb|normal|switch|drop>|watch [secs]|log" ;;
+  log)   tmux capture-pane -pt $S | grep -v '^$' | tail -"${2:-10}" ;;
+  *)     echo "usage: simctl [front|side] start|stop|on|off|send <silent|deadbulb|normal|switch|drop>|watch [secs]|log" ;;
 esac
