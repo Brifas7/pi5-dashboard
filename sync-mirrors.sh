@@ -36,4 +36,5 @@ m $H/engine-v2/rules_api.py engine-v2/rules_api.py
 m $H/engine-v2/t02.sh engine-v2/t02.sh
 m /etc/systemd/system/engine-v2.service system/systemd/engine-v2.service
 m /etc/logrotate.d/engine-v2 system/logrotate-engine-v2
+m $H/make-dump.py make-dump.py
 git status --short

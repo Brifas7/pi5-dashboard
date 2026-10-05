@@ -1,7 +1,7 @@
 lo               UNKNOWN        127.0.0.1/8 ::1/128 
 eth0             UP             192.168.2.1/24 fe80::cfdc:716f:afd8:b400/64 
-wlan0            UP             192.168.1.234/24 <public-ipv6> fd77:bc45:223a:8:6325:9b79:6612:aff/64 fe80::fba9:3e12:b9b:d66f/64 
-tailscale0       UNKNOWN        100.76.61.67/32 fd7a:115c:a1e0::2a33:3d43/128 fe80::d091:3e4f:6e68:4716/64 
+wlan0            UP             192.168.1.234/24 fd77:bc45:223a:8:6325:9b79:6612:aff/64 <public-ipv6> fe80::fba9:3e12:b9b:d66f/64 
+tailscale0       UNKNOWN        100.76.61.67/32 fd7a:115c:a1e0::2a33:3d43/128 fe80::39e5:fe4d:94d3:9873/64 
 docker0          DOWN           172.17.0.1/16 
-br-d930f66eed8e  UP             172.18.0.1/16 fe80::a4f9:bbff:fefc:2c56/64 
-veth5337cad@if2  UP             fe80::647d:fcff:fe49:9b67/64 
+br-d930f66eed8e  UP             172.18.0.1/16 fe80::1c26:9dff:fecb:cd7c/64 
+veth20fbd31@if2  UP             fe80::50f5:3bff:feef:a496/64 
