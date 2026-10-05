@@ -56,3 +56,7 @@ html,body{height:100dvh;}
 .lpi .ds{font-size:13px;}
 .lplist.grid .lpi{padding:12px 4px;}
 .toast{bottom:24px;font-size:15px;max-width:90vw;}
+html,body{height:auto;min-height:100%;overflow:visible;}
+.screen{height:auto;min-height:100%;}
+.body{flex:none;overflow:visible;}
+.foot2{position:sticky;bottom:0;background:#04161a;z-index:5;}

@@ -1,3 +1,29 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Automation</title><link rel="stylesheet" href="m.css?v=3"></head><body>
+<a class="back" href="index.html">‹ Back</a>
+<div class="title">Automation</div>
+<div id="note"></div>
+<div class="name" style="margin:4px 0 8px">Running now</div>
+<div id="active"></div>
+<a class="btn" href="/automation-v2.html" style="border-left-color:var(--purple);margin-top:18px"><span class="ico">⚡</span>All automations ›</a>
+<script>
+const TF=(localStorage.getItem('dashTimeFormat')||'24')==='12';
+const DAYS=['mon','tue','wed','thu','fri','sat','sun'],DN={mon:'Mon',tue:'Tue',wed:'Wed',thu:'Thu',fri:'Fri',sat:'Sat',sun:'Sun'};
+let S={},R=[];
+function hm(h,m){const mm=String(m).padStart(2,'0');return TF?((h%12)||12)+':'+mm+(h<12?' AM':' PM'):String(h).padStart(2,'0')+':'+mm}
+function iso(s){const[d,t]=s.split('T'),[y,mo,da]=d.split('-').map(Number),[h,mi]=t.split(':').map(Number);return new Date(y,mo-1,da,h,mi)}
+function when(s){const d=iso(s),t=new Date(),tm=new Date(t);tm.setDate(t.getDate()+1);
+ const day=d.toDateString()===t.toDateString()?'today':d.toDateString()===tm.toDateString()?'tomorrow':DN[DAYS[(d.getDay()+6)%7]];
+ return day+' '+hm(d.getHours(),d.getMinutes())}
+function edge(e){if(!e)return'?';if(e.clock){const[h,m]=e.clock.split(':').map(Number);return hm(h,m)}
+ const o=e.offset_min||0;return o===0?e.sun:Math.abs(o)+' min '+(o<0?'before ':'after ')+e.sun}
+function days(d){d=d||DAYS;if(d.length===7)return'every day';const k=DAYS.filter(x=>d.includes(x)).join(',');
+ if(k==='mon,tue,wed,thu,fri')return'on weekdays';if(k==='sat,sun')return'on weekends';
+ return'on '+DAYS.filter(x=>d.includes(x)).map(x=>DN[x]).join(', ')}
+function tname(t){if(t.startsWith('group:')){const g=(S.groups||{})[t.slice(6)];return g?g.name:t.slice(6)+' (missing)'}
+ const d=(S.devices||{})[t];return d?d.name:t+' (missing)'}
+function sent(r){return'Turn on '+(r.targets||[]).map(tname).join(' and ')+' from '+edge(r.start)+' to '+edge(r.end)+' '+days(r.days)}
 function div(c,t){const e=document.createElement('div');if(c)e.className=c;if(t!=null)e.textContent=t;return e}
 function light(id,d){const r=div('row'),l=div(''),v=div('age');l.append(div('name',d.name||id),v);
  if(!d.online){v.textContent='Not responding · last known '+(d.state==='on'?'On':'Off');r.classList.add('stale')}
