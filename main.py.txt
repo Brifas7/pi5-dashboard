@@ -511,11 +511,10 @@ def _mqtt_subscriber():
     except: pass
 
 CPU_TEMP_KEEP_S=8*86400        # the temperature chart shows at most 7 days
-SENSOR_KEEP_S=365*86400        # the weather history chart shows at most 1 year
+# Weather history (sensor_readings) is kept forever on purpose: searchable history by year is planned.
 def _trim_history():
     now=int(_time.time()); conn=_db()
     conn.execute("DELETE FROM system_readings WHERE timestamp<?",(now-CPU_TEMP_KEEP_S,))
-    conn.execute("DELETE FROM sensor_readings WHERE timestamp<?",(now-SENSOR_KEEP_S,))
     conn.commit(); conn.close()
 
 def _cpu_temp_logger():

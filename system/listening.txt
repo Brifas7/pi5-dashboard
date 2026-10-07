@@ -15,7 +15,7 @@ tcp   LISTEN 0      128                        0.0.0.0:22         0.0.0.0:*    u
 tcp   LISTEN 0      100                        0.0.0.0:1884       0.0.0.0:*    users:(("mosquitto",pid=777,fd=6))                                                                                             
 tcp   LISTEN 0      4096                       0.0.0.0:1984       0.0.0.0:*    users:(("docker-proxy",pid=2441,fd=8))                                                                                         
 tcp   LISTEN 0      100                      127.0.0.1:1883       0.0.0.0:*    users:(("mosquitto",pid=777,fd=5))                                                                                             
-tcp   LISTEN 0      2048                       0.0.0.0:8000       0.0.0.0:*    users:(("python3",pid=1525814,fd=3),("python3",pid=1525813,fd=3),("uvicorn",pid=1525810,fd=3))                                 
+tcp   LISTEN 0      2048                       0.0.0.0:8000       0.0.0.0:*    users:(("python3",pid=1546318,fd=3),("python3",pid=1546317,fd=3),("uvicorn",pid=1546314,fd=3))                                 
 tcp   LISTEN 0      511                        0.0.0.0:8086       0.0.0.0:*    users:(("nginx",pid=1670,fd=6),("nginx",pid=1669,fd=6),("nginx",pid=1668,fd=6),("nginx",pid=1667,fd=6),("nginx",pid=1666,fd=6))
 tcp   LISTEN 0      511                        0.0.0.0:8085       0.0.0.0:*    users:(("nginx",pid=1670,fd=5),("nginx",pid=1669,fd=5),("nginx",pid=1668,fd=5),("nginx",pid=1667,fd=5),("nginx",pid=1666,fd=5))
 tcp   LISTEN 0      511                        0.0.0.0:8082       0.0.0.0:*    users:(("nginx",pid=1670,fd=8),("nginx",pid=1669,fd=8),("nginx",pid=1668,fd=8),("nginx",pid=1667,fd=8),("nginx",pid=1666,fd=8))

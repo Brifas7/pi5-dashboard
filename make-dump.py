@@ -342,7 +342,7 @@ def omitted_block(path):
 # manifest
 rows = []
 for n in sorted(parts):
-    if n in (2, 3) and split_line is not None:
+    if n == 2 and split_line is not None:   # Part 2 holds only half of index.html, listed below
         continue
     for p in parts[n]:
         tag = f"Part {n}"
