@@ -1,35 +1,83 @@
 <!DOCTYPE html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Lights</title><link rel="stylesheet" href="m.css?v=3"></head><body>
-<a class="back" href="index.html">‹ Back</a>
-<div class="title">Lights</div>
+<title>Lights</title><link rel="stylesheet" href="m.css?v=3">
+<style>
+.sub{font-size:13px;color:var(--sub);margin-top:4px}
+.row.pending .sub{color:var(--amber)}
+.row.warn .sub{color:var(--coral);font-weight:600}
+.row.offline{opacity:.55}
+.row.offline .sub{color:var(--amber);font-weight:600}
+.row.pending .sw{opacity:.6}
+.chev{color:var(--sub);font-size:22px}
+.pair{display:flex;gap:10px;margin-bottom:14px}
+.pair button{flex:1;background:var(--card);color:var(--text);border:0;border-left:4px solid var(--teal);padding:16px 10px;font-size:17px;font-weight:600}
+.pair button.off{border-left-color:#2a3542}
+.pair button:active{filter:brightness(1.3)}
+.msg{font-size:14px;color:var(--amber);min-height:20px;margin-bottom:8px}
+</style></head><body>
+<a class="back" id="back" href="index.html">‹ Back</a>
+<div class="title" id="title">Lights</div>
+<div class="msg" id="msg"></div>
+<div id="all" class="pair" style="display:none">
+ <button id="allon">All On</button><button id="alloff" class="off">All Off</button></div>
 <div id="list"></div>
+<script src="/lights-core.js"></script>
 <script>
-let devs=[];
-async function load(){
- try{devs=(await (await fetch('/api/lights')).json()).devices||[]}catch(e){devs=null}
- render();
+const $ = id => document.getElementById(id);
+let msgTimer = null, inPage = false;            // inPage: we opened a group from the list, so Back = history.back()
+function say(t) { $('msg').textContent = t || ''; clearTimeout(msgTimer); if (t) msgTimer = setTimeout(() => $('msg').textContent = '', 6000); }
+function gid() { return decodeURIComponent(location.hash.slice(1)); }
+
+function row(name, sub, kind, right, onclick) {
+  const r = document.createElement('div'); r.className = 'row ' + (kind || '');
+  const l = document.createElement('div');
+  const n = document.createElement('div'); n.className = 'val'; n.style.fontSize = '18px'; n.textContent = name;
+  const s = document.createElement('div'); s.className = 'sub'; s.textContent = sub;
+  l.append(n, s); r.append(l, right);
+  if (onclick) r.onclick = onclick;
+  return r;
 }
-function render(){
- const el=document.getElementById('list'); el.textContent='';
- if(devs===null){el.textContent='Offline';return}
- if(!devs.length){el.textContent='No lights yet.';return}
- devs.forEach((d,i)=>{
-  const r=document.createElement('div'); r.className='row'; r.onclick=()=>flip(i);
-  const n=document.createElement('div'); n.className='val'; n.style.fontSize='18px';
-  n.textContent=(d.name||d.id).replace(/[-_]/g,' ');
-  const s=document.createElement('div'); s.className='sw'+(d.state==='on'?' on':'');
-  r.append(n,s); el.append(r);
- });
+
+function render() {
+  const el = $('list'); el.textContent = '';
+  const err = LightsCore.error(), g = gid();
+  $('all').style.display = 'none';
+  if (err) { $('title').textContent = 'Lights'; $('back').href = 'index.html'; el.textContent = err; return; }
+  if (!g) {                                   // list of groups
+    $('title').textContent = 'Lights'; $('back').href = 'index.html';
+    const gs = LightsCore.groups();
+    if (!gs.length) { el.textContent = 'No lights yet. A light appears here once it connects and sends its config.'; return; }
+    for (const x of gs) {
+      const c = document.createElement('div'); c.className = 'chev'; c.textContent = '›';
+      el.append(row(x.name, x.line, '', c, () => { inPage = true; location.hash = encodeURIComponent(x.gid); }));
+    }
+    return;
+  }
+  const grp = LightsCore.group(g);             // one group
+  $('back').href = '#';
+  if (!grp) { $('title').textContent = 'Lights'; el.textContent = 'That group is gone.'; return; }
+  $('title').textContent = grp.name;
+  if (grp.all) $('all').style.display = '';
+  for (const id of grp.members) {
+    const v = LightsCore.light(id);
+    const sw = document.createElement('div'); sw.className = 'sw' + (v.on ? ' on' : '');
+    el.append(row(v.name, v.line, v.kind === 'ok' ? '' : v.kind, sw, async () => {
+      const r = await LightsCore.tap(id); if (r.msg) say(r.msg); render();
+    }));
+  }
 }
-async function flip(i){
- const d=devs[i], next=d.state==='on'?'off':'on';
- d.state=next; render();
- try{
-  const r=await fetch('/api/lights/'+encodeURIComponent(d.id)+'/control',{method:'POST',
-   headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'state',value:next})});
-  if(!(await r.json()).success)throw 0;
- }catch(e){d.state=next==='on'?'off':'on'; render()}
+
+async function all(state) {
+  const r = await LightsCore.all(gid(), state); say(r.msg); render();
 }
-load(); setInterval(load,30000);
+$('allon').onclick = () => all('on');
+$('alloff').onclick = () => all('off');
+$('back').onclick = e => { if (gid()) { e.preventDefault(); inPage ? history.back() : location.replace('#'); } };
+window.onhashchange = () => { if (!gid()) inPage = false; say(''); render(); };
+
+async function loop() {
+  await LightsCore.refresh(); render();
+  setTimeout(loop, LightsCore.anyPending() ? 1000 : 3000);
+}
+loop();
 </script></body></html>

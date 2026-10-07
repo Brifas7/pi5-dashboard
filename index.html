@@ -224,11 +224,11 @@ async function fetchSensors() {
     const d = await r.json();
     if(d.sensors){
       d.sensors.forEach(s => {
-        if(s.id==='rak_temp') document.getElementById('w-temp').textContent=s.last_value+'°F';
-        if(s.id==='rak_humidity') document.getElementById('w-humid').textContent=s.last_value+'%';
-        if(s.id==='rak_pressure') document.getElementById('w-pres').textContent=s.last_value+' hPa';
-        if(s.id==='rak_airquality') document.getElementById('w-aqi').textContent=Math.round(s.last_value);
-        if(s.id==='rak_dewpoint') document.getElementById('w-dewpoint').textContent=s.last_value+'°F';
+        if(s.id==='wx_temp') document.getElementById('w-temp').textContent=s.last_value+'°F';
+        if(s.id==='wx_humidity') document.getElementById('w-humid').textContent=s.last_value+'%';
+        if(s.id==='wx_pressure') document.getElementById('w-pres').textContent=s.last_value+' hPa';
+        if(s.id==='wx_airquality') document.getElementById('w-aqi').textContent=Math.round(s.last_value);
+        if(s.id==='wx_dewpoint') document.getElementById('w-dewpoint').textContent=s.last_value+'°F';
       });
     }
   } catch(e) {}
@@ -838,7 +838,7 @@ async function camSaveRetention() {
 
 
 
-<!-- LIGHTING SUBMENU -->
+<!-- LIGHTING SUBMENU (lights v2: reads the engine's status, commands per Lights-MQTT-Contract; logic in /lights-core.js) -->
 <style>
   #light-overlay { font-family: 'Rajdhani', sans-serif; color: var(--text); }
   .light-header { display:flex; align-items:center; justify-content:space-between; padding:16px 24px; flex-shrink:0; background:rgba(10,20,60,0.7); border-bottom:1px solid rgba(var(--accent-rgb),0.25); }
@@ -849,39 +849,30 @@ async function camSaveRetention() {
   .light-btn-close:hover { background:rgba(220,40,40,0.28); }
   .light-screen { display:none; flex-direction:column; height:100%; }
   .light-screen.active { display:flex; }
+  .light-body { flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:12px; }
   .light-empty { padding:60px 40px; text-align:center; color:var(--text-sub); font-size:16px; font-weight:600; letter-spacing:1px; line-height:2; }
-  .light-empty-icon { font-size:48px; display:block; margin-bottom:16px; opacity:0.4; }
+  .light-msg { min-height:22px; font-size:15px; font-weight:700; letter-spacing:1px; color:#fbbf24; }
   .light-device-item { display:flex; align-items:center; gap:16px; background:rgba(var(--accent-rgb),0.1); border:1px solid rgba(var(--accent-rgb),0.25); border-radius:10px; padding:16px 20px; cursor:pointer; transition:background 0.2s; }
   .light-device-item:hover { background:rgba(var(--accent-rgb),0.2); }
-  .light-device-name { font-size:18px; font-weight:700; flex:1; }
-  .light-device-state { font-size:13px; font-weight:700; letter-spacing:1px; }
+  .light-device-text { flex:1; display:flex; flex-direction:column; gap:2px; }
+  .light-device-name { font-size:20px; font-weight:700; }
+  .light-device-line { font-size:14px; font-weight:600; letter-spacing:0.5px; color:var(--text-sub); }
+  .light-device-item.pending .light-device-line { color:#fbbf24; }
+  .light-device-item.warn .light-device-line { color:#f87171; }
+  .light-device-item.offline { opacity:0.5; cursor:default; }
+  .light-device-item.offline .light-device-line { color:#fbbf24; }
+  .light-device-state { font-size:15px; font-weight:700; letter-spacing:1px; min-width:40px; text-align:right; }
   .light-device-state.on { color:#22c55e; }
   .light-device-state.off { color:var(--text-sub); }
-  .light-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .light-chev { font-size:26px; color:var(--text-sub); }
+  .light-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
   .light-dot.on { background:#22c55e; box-shadow:0 0 6px rgba(34,197,94,0.7); }
   .light-dot.off { background:#475569; }
-  .light-brightness-bar { height:6px; border-radius:3px; background:rgba(var(--accent-rgb),0.2); flex:1; max-width:120px; overflow:hidden; }
-  .light-brightness-fill { height:100%; border-radius:3px; background:#1e5aff; box-shadow:0 0 6px rgba(var(--accent-rgb),0.5); transition:width 0.3s; }
-  .light-control-body { flex:1; padding:28px; display:flex; flex-direction:column; gap:28px; overflow-y:auto; }
-  .light-control-section { background:rgba(var(--accent-rgb),0.08); border:1px solid rgba(var(--accent-rgb),0.2); border-radius:12px; padding:20px 24px; display:flex; flex-direction:column; gap:16px; }
-  .light-section-label { font-size:11px; font-weight:700; letter-spacing:2px; color:var(--text-sub); text-transform:uppercase; }
-  .light-toggle-row { display:flex; align-items:center; justify-content:space-between; }
-  .light-toggle-label { font-size:18px; font-weight:700; }
-  .light-toggle { position:relative; width:56px; height:28px; cursor:pointer; }
-  .light-toggle input { opacity:0; width:0; height:0; }
-  .light-toggle-slider { position:absolute; inset:0; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); border-radius:28px; transition:0.3s; }
-  .light-toggle-slider:before { content:''; position:absolute; height:20px; width:20px; left:3px; bottom:3px; background:var(--text-sub); border-radius:50%; transition:0.3s; }
-  .light-toggle input:checked + .light-toggle-slider { background:rgba(34,197,94,0.3); border-color:rgba(34,197,94,0.5); }
-  .light-toggle input:checked + .light-toggle-slider:before { transform:translateX(28px); background:#22c55e; box-shadow:0 0 8px rgba(34,197,94,0.7); }
-  .light-slider-row { display:flex; flex-direction:column; gap:10px; }
-  .light-slider-label-row { display:flex; justify-content:space-between; align-items:center; }
-  .light-slider { -webkit-appearance:none; width:100%; height:6px; border-radius:3px; background:rgba(var(--accent-rgb),0.2); outline:none; cursor:pointer; }
-  .light-slider::-webkit-slider-thumb { -webkit-appearance:none; width:22px; height:22px; border-radius:50%; background:#1e5aff; box-shadow:0 0 8px rgba(var(--accent-rgb),0.6); cursor:pointer; }
-  .light-color-row { display:flex; flex-direction:column; gap:12px; }
-  .light-color-swatches { display:flex; gap:10px; flex-wrap:wrap; }
-  .light-swatch { width:36px; height:36px; border-radius:50%; cursor:pointer; border:2px solid transparent; transition:all 0.2s; }
-  .light-swatch:hover, .light-swatch.active { border-color:#fff; transform:scale(1.15); }
-  .light-color-input { width:48px; height:36px; border-radius:8px; border:1px solid rgba(var(--accent-rgb),0.3); cursor:pointer; background:none; padding:2px; }
+  .light-dot.group { background:rgba(var(--accent-rgb),0.6); }
+  .light-all-row { display:flex; gap:12px; }
+  .light-all-row .light-btn { flex:1; padding:16px; font-size:18px; }
+  .light-btn-on { background:rgba(34,197,94,0.15); border-color:rgba(34,197,94,0.45); color:#86efac; }
+  .light-btn-on:hover { background:rgba(34,197,94,0.3); }
 </style>
 
 <div id="light-overlay" style="display:none; position:fixed; inset:0; background:var(--overlay-bg); z-index:1000; flex-direction:column;">
@@ -890,153 +881,92 @@ async function camSaveRetention() {
       <span class="light-title">💡 LIGHTING</span>
       <button class="light-btn light-btn-close" onclick="lightClose()">✕ CLOSE</button>
     </div>
-    <div style="flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:12px;" id="light-device-list"></div>
+    <div class="light-body" id="light-group-list"></div>
   </div>
-  <div id="light-screen-control" class="light-screen">
+  <div id="light-screen-group" class="light-screen">
     <div class="light-header">
-      <span id="light-control-title" class="light-title"></span>
+      <span id="light-group-title" class="light-title"></span>
       <div style="display:flex; gap:10px;">
         <button class="light-btn" onclick="lightBackToList()">◀ BACK</button>
         <button class="light-btn light-btn-close" onclick="lightClose()">✕ CLOSE</button>
       </div>
     </div>
-    <div class="light-control-body">
-      <div class="light-control-section">
-        <div class="light-section-label">POWER</div>
-        <div class="light-toggle-row">
-          <span class="light-toggle-label" id="light-power-label">OFF</span>
-          <label class="light-toggle">
-            <input type="checkbox" id="light-power-toggle" onchange="lightTogglePower(this)">
-            <span class="light-toggle-slider"></span>
-          </label>
-        </div>
+    <div class="light-body">
+      <div class="light-all-row" id="light-all-row">
+        <button class="light-btn light-btn-on" onclick="lightAll('on')">ALL ON</button>
+        <button class="light-btn" onclick="lightAll('off')">ALL OFF</button>
       </div>
-      <div class="light-control-section" id="light-dimmer-section">
-        <div class="light-section-label">BRIGHTNESS</div>
-        <div class="light-slider-row">
-          <div class="light-slider-label-row">
-            <span style="font-size:14px; color:var(--text-sub);">0%</span>
-            <span id="light-brightness-val" style="font-family:'Orbitron',monospace; font-size:18px; font-weight:700;">100%</span>
-            <span style="font-size:14px; color:var(--text-sub);">100%</span>
-          </div>
-          <input type="range" min="0" max="100" value="100" class="light-slider" id="light-brightness-slider" oninput="lightBrightnessChange(this.value)">
-        </div>
-      </div>
-      <div class="light-control-section" id="light-color-section">
-        <div class="light-section-label">COLOR</div>
-        <div class="light-color-row">
-          <div class="light-color-swatches">
-            <div class="light-swatch" style="background:#ffffff;" onclick="lightSetColor('#ffffff')"></div>
-            <div class="light-swatch" style="background:#ffd580;" onclick="lightSetColor('#ffd580')"></div>
-            <div class="light-swatch" style="background:#ff6b35;" onclick="lightSetColor('#ff6b35')"></div>
-            <div class="light-swatch" style="background:#ef4444;" onclick="lightSetColor('#ef4444')"></div>
-            <div class="light-swatch" style="background:#22c55e;" onclick="lightSetColor('#22c55e')"></div>
-            <div class="light-swatch" style="background:#3b82f6;" onclick="lightSetColor('#3b82f6')"></div>
-            <div class="light-swatch" style="background:#a855f7;" onclick="lightSetColor('#a855f7')"></div>
-            <div class="light-swatch" style="background:#06b6d4;" onclick="lightSetColor('#06b6d4')"></div>
-            <input type="color" class="light-color-input" id="light-color-picker" value="#ffffff" onchange="lightSetColor(this.value)">
-          </div>
-        </div>
-      </div>
+      <div class="light-msg" id="light-msg"></div>
+      <div id="light-device-list" style="display:flex; flex-direction:column; gap:12px;"></div>
     </div>
   </div>
 </div>
 
+<script src="/lights-core.js"></script>
 <script>
-const _light = { devices: [], currentDevice: null };
-function _lightFmt(name) { return name.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()); }
+const _light = { gid: null, timer: null, open: false, msgTimer: null };
 function _lightScreen(id) {
   document.querySelectorAll('.light-screen').forEach(s => s.classList.remove('active'));
   const el = document.getElementById('light-screen-' + id);
   if (el) el.classList.add('active');
 }
+function _lightEl(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
+function _lightSay(t) {
+  const m = document.getElementById('light-msg'); m.textContent = t || '';
+  clearTimeout(_light.msgTimer); if (t) _light.msgTimer = setTimeout(() => { m.textContent = ''; }, 6000);
+}
+async function _lightLoop() {
+  if (!_light.open) return;
+  await LightsCore.refresh(); _lightRender();
+  _light.timer = setTimeout(_lightLoop, LightsCore.anyPending() ? 1000 : 3000);
+}
 async function lightOpen() {
   const overlay = document.getElementById('light-overlay');
-  overlay.style.display = 'flex';
-  overlay.style.flexDirection = 'column';
-  _lightScreen('list');
-  try {
-    const r = await fetch('/api/lights');
-    const data = await r.json();
-    _light.devices = data.devices || [];
-  } catch(e) { _light.devices = []; }
-  _lightRenderList();
+  overlay.style.display = 'flex'; overlay.style.flexDirection = 'column';
+  _light.gid = null; _light.open = true; _lightScreen('list');
+  clearTimeout(_light.timer); _lightLoop();
 }
-function lightClose() { if(_isMobile()) return _mobileClose(); document.getElementById('light-overlay').style.display = 'none'; }
-function lightBackToList() { _lightScreen('list'); _lightRenderList(); }
-function _lightRenderList() {
-  const el = document.getElementById('light-device-list');
-  if (!el) return;
-  if (_light.devices.length === 0) {
-    el.innerHTML = '<div class="light-empty"><span class="light-empty-icon">💡</span>No lighting devices registered.<br>Devices will appear here automatically<br>when connected via MQTT.</div>';
+function lightClose() {
+  _light.open = false; clearTimeout(_light.timer);
+  if (_isMobile()) return _mobileClose();
+  document.getElementById('light-overlay').style.display = 'none';
+}
+function lightBackToList() { _light.gid = null; _lightSay(''); _lightScreen('list'); _lightRender(); }
+function lightOpenGroup(gid) { _light.gid = gid; _lightSay(''); _lightScreen('group'); _lightRender(); }
+async function lightAll(state) { const r = await LightsCore.all(_light.gid, state); _lightSay(r.msg); _lightRender(); }
+async function _lightTap(id) { const r = await LightsCore.tap(id); if (r.msg) _lightSay(r.msg); _lightRender(); }
+
+function _lightRender() {
+  const err = LightsCore.error();
+  const list = document.getElementById('light-group-list'), devs = document.getElementById('light-device-list');
+  list.textContent = ''; devs.textContent = '';
+  if (err) { _lightScreen('list'); _light.gid = null; list.append(_lightEl('div', 'light-empty', err)); return; }
+  if (!_light.gid) {
+    const gs = LightsCore.groups();
+    if (!gs.length) { list.append(_lightEl('div', 'light-empty', 'No lights yet. A light appears here once it connects and sends its config.')); return; }
+    for (const g of gs) {
+      const r = _lightEl('div', 'light-device-item'); r.onclick = () => lightOpenGroup(g.gid);
+      const t = _lightEl('div', 'light-device-text');
+      t.append(_lightEl('span', 'light-device-name', g.name), _lightEl('span', 'light-device-line', g.line));
+      r.append(_lightEl('div', 'light-dot ' + (g.on ? 'on' : 'off')), t, _lightEl('span', 'light-chev', '›'));
+      list.append(r);
+    }
     return;
   }
-  el.innerHTML = _light.devices.map((dev, i) => {
-    const isOn = dev.state === 'on';
-    const brightness = dev.brightness !== undefined ? dev.brightness : 100;
-    return '<div class="light-device-item" onclick="lightOpenControl(' + i + ')">' +
-      '<div class="light-dot ' + (isOn ? 'on' : 'off') + '"></div>' +
-      '<span class="light-device-name">' + _lightFmt(dev.name) + '</span>' +
-      (dev.type === 'dimmer' || dev.type === 'rgb' ? '<div class="light-brightness-bar"><div class="light-brightness-fill" style="width:' + (isOn ? brightness : 0) + '%"></div></div>' : '') +
-      '<span class="light-device-state ' + (isOn ? 'on' : 'off') + '">' + (isOn ? 'ON' : 'OFF') + '</span></div>';
-  }).join('');
-}
-</script>
-
-<script>
-function lightOpenControl(idx) {
-  _light.currentDevice = _light.devices[idx];
-  const dev = _light.currentDevice;
-  document.getElementById('light-control-title').textContent = '💡 ' + _lightFmt(dev.name);
-  const isOn = dev.state === 'on';
-  const toggle = document.getElementById('light-power-toggle');
-  toggle.checked = isOn;
-  document.getElementById('light-power-label').textContent = isOn ? 'ON' : 'OFF';
-  const brightness = dev.brightness !== undefined ? dev.brightness : 100;
-  document.getElementById('light-brightness-slider').value = brightness;
-  document.getElementById('light-brightness-val').textContent = brightness + '%';
-  document.getElementById('light-dimmer-section').style.display = (dev.type === 'dimmer' || dev.type === 'rgb') ? 'flex' : 'none';
-  document.getElementById('light-color-section').style.display = dev.type === 'rgb' ? 'flex' : 'none';
-  if (dev.color) document.getElementById('light-color-picker').value = dev.color;
-  _lightScreen('control');
-}
-async function lightTogglePower(el) {
-  const dev = _light.currentDevice;
-  if (!dev) return;
-  const state = el.checked ? 'on' : 'off';
-  document.getElementById('light-power-label').textContent = state.toUpperCase();
-  dev.state = state;
-  try {
-    await fetch('/api/lights/' + dev.id + '/control', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ action: 'state', value: state })
-    });
-  } catch(e) {}
-}
-async function lightBrightnessChange(val) {
-  document.getElementById('light-brightness-val').textContent = val + '%';
-  const dev = _light.currentDevice;
-  if (!dev) return;
-  dev.brightness = parseInt(val);
-  try {
-    await fetch('/api/lights/' + dev.id + '/control', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ action: 'brightness', value: parseInt(val) })
-    });
-  } catch(e) {}
-}
-async function lightSetColor(hex) {
-  document.querySelectorAll('.light-swatch').forEach(s => s.classList.remove('active'));
-  const dev = _light.currentDevice;
-  if (!dev) return;
-  dev.color = hex;
-  document.getElementById('light-color-picker').value = hex;
-  try {
-    await fetch('/api/lights/' + dev.id + '/control', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ action: 'color', value: hex })
-    });
-  } catch(e) {}
+  const g = LightsCore.group(_light.gid);
+  if (!g) { lightBackToList(); return; }
+  document.getElementById('light-group-title').textContent = '💡 ' + g.name.toUpperCase();
+  document.getElementById('light-all-row').style.display = g.all ? 'flex' : 'none';
+  for (const id of g.members) {
+    const v = LightsCore.light(id);
+    const r = _lightEl('div', 'light-device-item' + (v.kind === 'ok' ? '' : ' ' + v.kind));
+    if (v.online) r.onclick = () => _lightTap(id);
+    const t = _lightEl('div', 'light-device-text');
+    t.append(_lightEl('span', 'light-device-name', v.name), _lightEl('span', 'light-device-line', v.line));
+    r.append(_lightEl('div', 'light-dot ' + (v.online && v.on ? 'on' : 'off')), t,
+             _lightEl('span', 'light-device-state ' + (v.on ? 'on' : 'off'), v.online ? (v.on ? 'ON' : 'OFF') : ''));
+    devs.append(r);
+  }
 }
 </script>
 
@@ -1111,11 +1041,11 @@ async function lightSetColor(hex) {
 </div>
 <div style="padding:12px 20px 0;display:flex;gap:8px;flex-shrink:0;">
 <select class="ops-btn" id="ops-hist-sensor" onchange="opsLoadGraph()" style="flex:1;">
-<option value="rak_temp">Temperature</option>
-<option value="rak_humidity">Humidity</option>
-<option value="rak_pressure">Barometric Pressure</option>
-<option value="rak_airquality">Air Quality</option>
-<option value="rak_dewpoint">Dew Point</option>
+<option value="wx_temp">Temperature</option>
+<option value="wx_humidity">Humidity</option>
+<option value="wx_pressure">Barometric Pressure</option>
+<option value="wx_airquality">Air Quality</option>
+<option value="wx_dewpoint">Dew Point</option>
 </select>
 </div>
 <div class="ops-range-bar" style="padding:8px 20px 0;" id="ops-hist-range">
@@ -1192,7 +1122,7 @@ async function opsOpenDetail(idx) {
   var sys = _ops.currentSystem;
   document.getElementById('ops-detail-title').textContent = _opsFmt(sys.name);
 
-  if (sys.type === 'weather_station' || sys.id === 'rak_weather_station') {
+  if (sys.type === 'weather_station' || sys.id === 'wx_station') {
     await _opsRenderWeatherStation();
   } else {
     _opsRenderGenericSystem(sys);
@@ -1219,11 +1149,11 @@ async function _opsRenderWeatherStation() {
     avgs = await r2.json();
   } catch(e) {}
 
-  var temp = readings.rak_temp;
-  var humid = readings.rak_humidity;
-  var pres = readings.rak_pressure;
-  var aqi = readings.rak_airquality;
-  var dew = readings.rak_dewpoint;
+  var temp = readings.wx_temp;
+  var humid = readings.wx_humidity;
+  var pres = readings.wx_pressure;
+  var aqi = readings.wx_airquality;
+  var dew = readings.wx_dewpoint;
 
   var lastSeen = '';
   if (temp && temp.last_seen) {
@@ -1355,7 +1285,7 @@ async function opsLoadGraph() {
     var sum = values.reduce(function(a, b) { return a + b; }, 0);
     var avg = sum / values.length;
 
-    var sensorInfo = {rak_temp: '\u00b0F', rak_humidity: '%', rak_pressure: ' hPa', rak_airquality: ' IAQ', rak_dewpoint: '\u00b0F'};
+    var sensorInfo = {wx_temp: '\u00b0F', wx_humidity: '%', wx_pressure: ' hPa', wx_airquality: ' IAQ', wx_dewpoint: '\u00b0F'};
     var unit = sensorInfo[sensor] || '';
 
     document.getElementById('ops-hist-stats').innerHTML =
@@ -1601,7 +1531,7 @@ async function opsLoadGraph() {
 <select class="settings-select" id="sys-log-service" style="flex:2;">
 <option value="dashboard-api">dashboard-api</option>
 <option value="frigate">Frigate</option>
-<option value="rak-reader">rak-reader</option>
+<option value="mesh-weather">mesh-weather</option>
 <option value="automation-engine">automation-engine</option>
 </select>
 <select class="settings-select" id="sys-log-lines" style="flex:1;">
@@ -1655,11 +1585,11 @@ async function opsLoadGraph() {
 <div id="notif-thresholds-list" style="display:flex;flex-direction:column;gap:8px;"></div>
 <div style="display:flex;gap:8px;margin-top:8px;">
 <select id="notif-thresh-sensor" class="settings-select" style="flex:2;">
-<option value="rak_temp">Temperature</option>
-<option value="rak_humidity">Humidity</option>
-<option value="rak_pressure">Barometric Pressure</option>
-<option value="rak_airquality">Air Quality</option>
-<option value="rak_dewpoint">Dew Point</option>
+<option value="wx_temp">Temperature</option>
+<option value="wx_humidity">Humidity</option>
+<option value="wx_pressure">Barometric Pressure</option>
+<option value="wx_airquality">Air Quality</option>
+<option value="wx_dewpoint">Dew Point</option>
 </select>
 <select id="notif-thresh-op" class="settings-select" style="flex:1;">
 <option value="below">Below</option>
@@ -1763,7 +1693,7 @@ async function opsLoadGraph() {
 
 <script>
 const _sensors = { sensors: [], currentSensor: null, currentRange: '24h', chart: null };
-const _sensorIcons = { rak_temp:'🌡', rak_humidity:'💧', rak_pressure:'🔵', rak_airquality:'💨' };
+const _sensorIcons = { wx_temp:'🌡', wx_humidity:'💧', wx_pressure:'🔵', wx_airquality:'💨' };
 function _sensorsScreen(id) {
   document.querySelectorAll('.sensors-screen').forEach(s => s.classList.remove('active'));
   const el = document.getElementById('sensors-screen-' + id);
@@ -2769,7 +2699,7 @@ function _isMobile() {
   return new URLSearchParams(window.location.search).has('mobile');
 }
 function _mobileClose() {
-  window.location.href = '/mobile.html';
+  window.location.href = '/m/';
 }
 </script>
 
@@ -3075,8 +3005,8 @@ async function notifSave() {
 
 function notifRenderThresholds() {
   var el = document.getElementById('notif-thresholds-list');
-  var names = {rak_temp: 'Temperature', rak_humidity: 'Humidity', rak_pressure: 'Pressure', rak_airquality: 'Air Quality', rak_dewpoint: 'Dew Point'};
-  var units = {rak_temp: '\u00b0F', rak_humidity: '%', rak_pressure: ' hPa', rak_airquality: ' IAQ', rak_dewpoint: '\u00b0F'};
+  var names = {wx_temp: 'Temperature', wx_humidity: 'Humidity', wx_pressure: 'Pressure', wx_airquality: 'Air Quality', wx_dewpoint: 'Dew Point'};
+  var units = {wx_temp: '\u00b0F', wx_humidity: '%', wx_pressure: ' hPa', wx_airquality: ' IAQ', wx_dewpoint: '\u00b0F'};
   if (_notifThresholds.length === 0) {
     el.innerHTML = '<div style="color:var(--text-sub);font-size:13px;padding:4px;">No thresholds set</div>';
     return;

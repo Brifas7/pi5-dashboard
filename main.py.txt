@@ -510,7 +510,16 @@ def _mqtt_subscriber():
         client.connect("localhost",1883,60); client.loop_forever()
     except: pass
 
+CPU_TEMP_KEEP_S=8*86400        # the temperature chart shows at most 7 days
+SENSOR_KEEP_S=365*86400        # the weather history chart shows at most 1 year
+def _trim_history():
+    now=int(_time.time()); conn=_db()
+    conn.execute("DELETE FROM system_readings WHERE timestamp<?",(now-CPU_TEMP_KEEP_S,))
+    conn.execute("DELETE FROM sensor_readings WHERE timestamp<?",(now-SENSOR_KEEP_S,))
+    conn.commit(); conn.close()
+
 def _cpu_temp_logger():
+    last_trim=0
     while True:
         try:
             t=subprocess.check_output(["vcgencmd","measure_temp"]).decode()
@@ -521,6 +530,10 @@ def _cpu_temp_logger():
             conn.execute("INSERT INTO system_readings (timestamp,metric,value) VALUES (?,?,?)",(now,"cpu_temp_f",cpu_temp_f))
             conn.commit(); conn.close()
         except: pass
+        if _time.time()-last_trim>3600:            # hourly: drop history older than the charts can show
+            last_trim=_time.time()
+            try: _trim_history()
+            except Exception as e: log.warning(f"history trim failed: {e}")
         _time.sleep(60)
 
 import fcntl
@@ -594,7 +607,7 @@ def get_network():
 @app.get("/api/system/services")
 def get_services():
     import subprocess as sp
-    services = ["dashboard-api", "rak-reader", "automation-engine"]
+    services = ["dashboard-api", "mesh-weather", "engine-v2"]
     result = []
     for svc in services:
         try:
@@ -750,22 +763,22 @@ def get_registered_devices():
     devices = []
     # RAK WisBlock
     try:
-        acm = glob.glob("/dev/ttyACM*")
+        acm = glob.glob("/dev/serial/by-id/*Espressif*")
         if acm:
-            devices.append({"name": "RAK WisBlock Weather Station",
+            devices.append({"name": "Weather Station",
                 "status": "online",
-                "detail": "RAK4631 + RAK1906 \u00b7 USB " + acm[0] + " \u00b7 Meshtastic 2.7.15",
-                "extra": "", "id": "rak_wisblock"})
+                "detail": "XIAO ESP32-S3 + Wio-SX1262 + BME680 \u00b7 USB \u00b7 Meshtastic",
+                "extra": "", "id": "wx_node"})
         else:
-            devices.append({"name": "RAK WisBlock Weather Station",
+            devices.append({"name": "Weather Station",
                 "status": "offline",
-                "detail": "RAK4631 + RAK1906 \u00b7 Not connected",
-                "extra": "", "id": "rak_wisblock"})
+                "detail": "XIAO ESP32-S3 + Wio-SX1262 + BME680 \u00b7 Not connected",
+                "extra": "", "id": "wx_node"})
     except:
-        devices.append({"name": "RAK WisBlock Weather Station",
+        devices.append({"name": "Weather Station",
             "status": "offline",
-            "detail": "RAK4631 + RAK1906 \u00b7 Not connected",
-            "extra": "", "id": "rak_wisblock"})
+            "detail": "XIAO ESP32-S3 + Wio-SX1262 + BME680 \u00b7 Not connected",
+            "extra": "", "id": "wx_node"})
     # Cameras
     for cam in CAMERAS:
         devices.append({"name": cam["name"],
@@ -797,7 +810,7 @@ def get_sensor_averages():
         for period, label, secs in [("24h", "24h", 86400), ("7d", "7d", 604800), ("30d", "30d", 2592000)]:
             since = now - secs
             row = conn.execute(
-                "SELECT AVG(value), MAX(value), MIN(value) FROM sensor_readings WHERE sensor_id='rak_temp' AND timestamp>?",
+                "SELECT AVG(value), MAX(value), MIN(value) FROM sensor_readings WHERE sensor_id='wx_temp' AND timestamp>?",
                 (since,)
             ).fetchone()
             if row and row[0] is not None:
@@ -807,21 +820,21 @@ def get_sensor_averages():
                     result["temp_24h_low"] = str(round(row[2], 1)) + " \u00b0F"
         # 24h humidity avg
         row = conn.execute(
-            "SELECT AVG(value) FROM sensor_readings WHERE sensor_id='rak_humidity' AND timestamp>?",
+            "SELECT AVG(value) FROM sensor_readings WHERE sensor_id='wx_humidity' AND timestamp>?",
             (now - 86400,)
         ).fetchone()
         if row and row[0] is not None:
             result["humid_24h"] = str(round(row[0], 1)) + " %"
         # 24h pressure avg
         row = conn.execute(
-            "SELECT AVG(value) FROM sensor_readings WHERE sensor_id='rak_pressure' AND timestamp>?",
+            "SELECT AVG(value) FROM sensor_readings WHERE sensor_id='wx_pressure' AND timestamp>?",
             (now - 86400,)
         ).fetchone()
         if row and row[0] is not None:
             result["pres_24h"] = str(round(row[0], 1)) + " hPa"
         # 24h dew point avg
         row = conn.execute(
-            "SELECT AVG(value) FROM sensor_readings WHERE sensor_id='rak_dewpoint' AND timestamp>?",
+            "SELECT AVG(value) FROM sensor_readings WHERE sensor_id='wx_dewpoint' AND timestamp>?",
             (now - 86400,)
         ).fetchone()
         if row and row[0] is not None:

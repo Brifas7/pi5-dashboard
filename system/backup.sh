@@ -11,8 +11,8 @@ sqlite3 /home/brifas/dashboard.db ".backup $BACKUP_DIR/dashboard_$DATE.db"
 # Config files
 cp /home/brifas/frigate/config/config.yml "$BACKUP_DIR/frigate_config_$DATE.yml"
 cp /home/brifas/backend/main.py "$BACKUP_DIR/main_py_$DATE.py"
-cp /home/brifas/automation_engine.py "$BACKUP_DIR/automation_engine_$DATE.py"
-cp /home/brifas/rak_reader.py "$BACKUP_DIR/rak_reader_$DATE.py"
+[ -f /home/brifas/engine-v2/rules.json ] && cp /home/brifas/engine-v2/rules.json "$BACKUP_DIR/engine_v2_rules_$DATE.json"
+tar czf "$BACKUP_DIR/mesh_weather_$DATE.tgz" -C /home/brifas --exclude=__pycache__ mesh-weather
 
 # Delete backups older than 30 days
 find "$BACKUP_DIR" -type f -mtime +$KEEP_DAYS -delete

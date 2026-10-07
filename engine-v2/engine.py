@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
-"""Automation engine v2, v0.2: clock and sun windows, groups, rules format v1, status.json.
-Talks only MQTT, per Lights-MQTT-Contract v1.2 (state is current only while online)."""
+"""Automation engine v2, v0.3: clock and sun windows, groups, rules format v1, status.json.
+Talks only MQTT, per Lights-MQTT-Contract v1.2 (state is current only while online).
+v0.3: a command from a screen (source not "engine") counts as a hand change at once;
+a light that stays online but won't confirm is retried every 5 min instead of abandoned;
+status.json gives each light "resume": when automation next touches it."""
 import json, os, re, time, logging, subprocess, threading
 from datetime import datetime
 import paho.mqtt.client as mqtt
 import ruleslib
 
-VERSION = '0.2'
+VERSION = '0.3'
 HOME = os.path.expanduser('~/engine-v2')
 RULES, STATE = f'{HOME}/rules.json', f'{HOME}/state.json'
 STATUS = '/dev/shm/engine-v2-status.json'           # RAM, rewritten every tick; never touches the NVMe
-CONFIRM_S, RETRY_S, TICK_S, RECHECK_S = 5, 30, 5, 5
+CONFIRM_S, RETRY_S, TICK_S, RECHECK_S, SLOW_S = 5, 30, 5, 5, 300
 logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m-%d %H:%M:%S', level=logging.INFO)
 log = logging.info
 dev, want, lock = {}, {}, threading.Lock()
@@ -109,6 +112,7 @@ def handle(m):
     p = m.topic.split('/')
     if len(p) != 4: return
     i, kind = p[2], p[3]
+    if kind == 'set': return hand_command(i, m)
     with lock:
         d = dev.setdefault(i, {'online': False, 'state': None, 'watts': 0.0, 'cfg': None})
         w = want.get(i)
@@ -144,6 +148,19 @@ def handle(m):
                 log(f"{i}: changed to {st} by {s.get('cause')}; leaving it until the next edge")
             elif w['recheck'] and not w['manual']:
                 log(f'{i}: came back {st}, re-applying {w["state"]}'); transmit(i)
+
+def hand_command(i, m):
+    """Someone else sent a command (a screen, simctl). If it goes against what a rule wants,
+    that's a hand change: stop enforcing now, not after the light confirms."""
+    s = json.loads(m.payload)
+    if not isinstance(s, dict) or s.get('source') == 'engine': return
+    st = s.get('state')
+    if st not in ('on', 'off'): return                # not a contract command (old API format): ignore
+    with lock:
+        w = want.get(i)
+        if not w or w['manual'] or st == w['state']: return
+        w.update(manual=True, ok=False, sent=None, recheck=None); MANUAL[i] = w['by']
+        log(f"{i}: {st} by hand ({s.get('source')}); leaving it until the next edge")
 
 # ---- the tick ----
 def end_targets(rid, tg, on_now, why):
@@ -207,11 +224,13 @@ def retry():
             log(f'{i}: back online but sent no state; re-sending'); transmit(i); continue
         if not w['sent']: continue
         age = time.time() - w['sent']
-        if age > CONFIRM_S and not w['warned']:
+        if age > CONFIRM_S and not w['warned'] and not w['gave_up']:
             w['warned'] = True; log(f"{i}: NOT RESPONDING (no confirm of {w['state']} in {CONFIRM_S}s)")
         if age > RETRY_S:
             if w['tries'] < 2: transmit(i)
-            elif not w['gave_up']: w['gave_up'] = True; log(f'{i}: giving up until it reconnects')
+            elif not w['gave_up']:
+                w['gave_up'] = True; log(f'{i}: still not responding; retrying every {SLOW_S // 60} min while it stays online')
+            elif age > SLOW_S: transmit(i)
 
 # ---- status.json: everything the screens read ----
 def iso(t): return t.strftime('%Y-%m-%dT%H:%M') if t else None
@@ -226,27 +245,34 @@ def write_status(rules, act, exp, inv, groups, now):
         rid, _, why = e.partition(': ')
         if ruleslib.ID.match(rid) and why: S['problems'][rid] = why
         else: S['problems']['_file'] = e
-    until = {}
+    until, resume = {}, {}
     for r in rules:
         rid, on = r['id'], r.get('enabled', True)
         w = ruleslib.next_window(r, now) if on and _clk['ok'] else None
         a = bool(act.get(rid))
+        tg, broken = exp.get(rid) or expand(r, inv, groups)
         S['rules'][rid] = {'active': a, 'next_start': iso(w and w[0]), 'next_end': iso(w and w[1]),
-                           'broken': (exp.get(rid) or expand(r, inv, groups))[1]}
+                           'broken': broken}
         if a and w: until[rid] = iso(w[1])
+        if w:                                          # this rule next touches its lights at its end if running, else its start
+            t = iso(w[1] if w[0] <= now else w[0])
+            for i in tg:
+                if not resume.get(i) or t < resume[i]: resume[i] = t
     for i, d in dev.items():
         w, cfg = want.get(i), d.get('cfg') or {}
         S['devices'][i] = {'name': cfg.get('name', i), 'group': cfg.get('group', ''), 'group_id': cfg.get('group_id', ''),
                            'in_inventory': bool(d.get('cfg')), 'online': d['online'], 'state': d['state'], 'watts': d['watts'],
                            'want': w and w['state'], 'confirmed': bool(w and w['ok']), 'manual': bool(w and w['manual']),
-                           'by': w and w['by'], 'until': w and w['state'] == 'on' and until.get(w['by']) or None}
+                           'by': w and w['by'], 'until': w and w['state'] == 'on' and until.get(w['by']) or None,
+                           'resume': resume.get(i), 'tries': w['tries'] if w else 0}
     write_atomic(STATUS, json.dumps(S), False)
 
 # ---- start ----
 try: c = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id='engine-v2')
 except AttributeError: c = mqtt.Client(client_id='engine-v2')
 c.on_connect = lambda cl, ud, fl, rc, *x: (log(f'broker connected (rc={rc})'),
-    cl.subscribe([('dashboard/lights/+/state', 1), ('dashboard/lights/+/availability', 1), ('dashboard/lights/+/config', 1)]))
+    cl.subscribe([('dashboard/lights/+/state', 1), ('dashboard/lights/+/availability', 1), ('dashboard/lights/+/config', 1),
+                  ('dashboard/lights/+/set', 1)]))
 c.on_message = on_message
 c.connect_async('127.0.0.1', 1883, 30); c.loop_start()   # keeps retrying if the broker is down
 log(f'engine-v2 v{VERSION} started'); time.sleep(2)

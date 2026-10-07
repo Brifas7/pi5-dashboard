@@ -15,13 +15,13 @@
 <script>
 document.getElementById('cam').href='http://'+location.hostname+':5000/';
 async function wx(){
- const s=await sensors(), t=s.rak_temp;
+ const s=await sensors(), t=s.wx_temp;
  if(!t){document.getElementById('s').textContent='weather station offline';return}
  document.getElementById('t').textContent=Math.round(t.last_value)+'°';
  const p=[];
- if(s.rak_humidity)p.push(Math.round(s.rak_humidity.last_value)+'%');
- if(s.rak_pressure)p.push(Math.round(s.rak_pressure.last_value)+' hPa');
- if(s.rak_airquality)p.push('AQI '+Math.round(s.rak_airquality.last_value));
+ if(s.wx_humidity)p.push(Math.round(s.wx_humidity.last_value)+'%');
+ if(s.wx_pressure)p.push(Math.round(s.wx_pressure.last_value)+' hPa');
+ if(s.wx_airquality)p.push('AQI '+Math.round(s.wx_airquality.last_value));
  document.getElementById('s').textContent=p.join(' · ');
  const old=ageMin(t.last_seen)>30;
  document.getElementById('wx').classList.toggle('stale',old);

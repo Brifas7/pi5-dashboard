@@ -191,8 +191,7 @@ body{display:flex;flex-direction:column;}
 <script>
 'use strict';
 /* ---------- basics ---------- */
-const DEMO = new URLSearchParams(location.search).has('demo') ||
-  !/^(localhost|127\.|192\.168\.|100\.)/.test(location.hostname);
+const DEMO = new URLSearchParams(location.search).has('demo');
 const TF = (localStorage.getItem('dashTimeFormat') || '24') === '12';
 const DAYS = ['mon','tue','wed','thu','fri','sat','sun'];
 const DAYNAME = {mon:'Mon',tue:'Tue',wed:'Wed',thu:'Thu',fri:'Fri',sat:'Sat',sun:'Sun'};
@@ -524,7 +523,7 @@ function renderBuilder() {
   const redo = () => renderBuilder();
   // 1. what
   add(body, sec('What do you want to automate?', field(B.cat ? 'Lights' : null, () => openList('What do you want to automate?',
-    [{v: 'lights', label: 'Lights'}, {v: 'coop', label: 'Coop door', desc: NOT_YET, dis: true}, {v: 'pumps', label: 'Pumps', desc: NOT_YET, dis: true}],
+    [{v: 'lights', label: 'Lights'}],
     B.cat, false, v => { B.cat = v; redo(); }))));
   if (B.cat) {
     // 2. which lights
@@ -533,8 +532,7 @@ function renderBuilder() {
       if (!B.trig) B.trig = 'time';                 // the only trigger that exists today
       // 3. when
       add(body, sec('When?', field('Time schedule', () => openList('When should it run?',
-        [{v: 'time', label: 'Time schedule'}, {v: 'motion', label: 'Motion', desc: NOT_YET, dis: true},
-         {v: 'sensor', label: 'Sensor reading', desc: NOT_YET, dis: true}], B.trig, false, v => { B.trig = v; redo(); }))));
+        [{v: 'time', label: 'Time schedule'}], B.trig, false, v => { B.trig = v; redo(); }))));
       // 4/5. from, to
       add(body, sec('Turns on at', ...edgeFields('start')));
       if (d.start) add(body, sec('Turns off at', ...edgeFields('end')));
@@ -543,8 +541,7 @@ function renderBuilder() {
         add(body, daysSec(), datesSec(), skipsSec());
         // 6. outcome
         add(body, sec('Then', field('Turn on, then off when the time ends', () => openList('What should the lights do?',
-          [{v: 'window', label: 'Turn on, then off when the time ends'}, {v: 'on', label: 'Turn on and leave on', desc: NOT_YET, dis: true},
-           {v: 'dim', label: 'Set a brightness', desc: NOT_YET, dis: true}], 'window', false, () => {}), 'wide')));
+          [{v: 'window', label: 'Turn on, then off when the time ends'}], 'window', false, () => {}), 'wide')));
         add(body, sec('Automation is', togRow(d.enabled !== false ? 'ON \u2014 runs on schedule' : 'OFF \u2014 saved but will not run',
           d.enabled !== false, () => { d.enabled = d.enabled === false; redo(); })));
       }
