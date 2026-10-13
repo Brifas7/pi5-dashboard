@@ -1,0 +1,15 @@
+[Unit]
+Description=Mesh weather reader (XIAO ESP32S3 + Wio-SX1262, Meshtastic)
+After=network.target dashboard-api.service
+Wants=dashboard-api.service
+
+[Service]
+Type=simple
+User=brifas
+WorkingDirectory=/home/brifas/mesh-weather
+ExecStart=/usr/bin/python3 -u /home/brifas/mesh-weather/mesh_weather.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

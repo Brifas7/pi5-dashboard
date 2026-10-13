@@ -37,4 +37,8 @@ m $H/engine-v2/t02.sh engine-v2/t02.sh
 m /etc/systemd/system/engine-v2.service system/systemd/engine-v2.service
 m /etc/logrotate.d/engine-v2 system/logrotate-engine-v2
 m $H/make-dump.py make-dump.py
+m $H/mesh-weather/mesh_weather.py mesh-weather/mesh_weather.py
+m $H/mesh-weather/node_setup.sh mesh-weather/node_setup.sh
+m $H/mesh-weather/remote_nodes.json mesh-weather/remote_nodes.json
+m /etc/systemd/system/mesh-weather.service system/systemd/mesh-weather.service
 git status --short

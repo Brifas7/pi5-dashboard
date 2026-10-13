@@ -23,7 +23,7 @@ async function wx(){
  if(s.wx_pressure)p.push(Math.round(s.wx_pressure.last_value)+' hPa');
  if(s.wx_airquality)p.push('AQI '+Math.round(s.wx_airquality.last_value));
  document.getElementById('s').textContent=p.join(' · ');
- const old=ageMin(t.last_seen)>30;
+ const old=ageMin(t.last_seen)>75;
  document.getElementById('wx').classList.toggle('stale',old);
  document.getElementById('a').textContent=old?'offline · last reading '+ago(t.last_seen):'';
 }

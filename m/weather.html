@@ -13,7 +13,7 @@ async function load(){
  if(!ids.length){el.textContent='No sensors reporting.';return}
  ids.forEach(id=>{
   const x=s[id], row=document.createElement('div'); row.className='row';
-  if(ageMin(x.last_seen)>30)row.classList.add('stale');
+  if(ageMin(x.last_seen)>75)row.classList.add('stale');
   const l=document.createElement('div');
   const n=document.createElement('div'); n.className='name'; n.textContent=x.name||id;
   const a=document.createElement('div'); a.className='age'; a.textContent=ago(x.last_seen);
