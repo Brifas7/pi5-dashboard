@@ -2,7 +2,20 @@ var _themeApplyTransient=false;
 const _settings = {
   themes: [
     {id:'void',name:'Void',color:'#00f0ff'},
-    {id:'aquatic',name:'Aquatic',color:'#00b8a9'}
+    {id:'aquatic',name:'Aquatic',color:'#00b8a9'},
+    {id:'abyss',name:'Abyss',color:'#06b6d4'},
+    {id:'aurora',name:'Aurora',color:'#22d3ee'},
+    {id:'autumn',name:'Autumn',color:'#f97316'},
+    {id:'canyon',name:'Canyon',color:'#d97706'},
+    {id:'cave',name:'Cave',color:'#22d3ee'},
+    {id:'cosmos',name:'Cosmos',color:'#8b5cf6'},
+    {id:'desert',name:'Desert',color:'#f59e0b'},
+    {id:'emerald',name:'Emerald',color:'#10b981'},
+    {id:'frost',name:'Frost',color:'#7dd3fc'},
+    {id:'glow',name:'Glow',color:'#84cc16'},
+    {id:'lava',name:'Lava',color:'#f97316'},
+    {id:'reef',name:'Reef',color:'#22d3ee'},
+    {id:'storm',name:'Storm',color:'#60a5fa'}
   ],
   activeTheme:'aquatic',
   navStack:[]
@@ -25,7 +38,20 @@ const _themeColors={
   valentine:{rgb:'190,18,60',accent:'#be123c',bg:'linear-gradient(to bottom, #1a0510 0%, #0f0208 40%, #1a0510 100%)',text:'#fff1f2',sub:'#fda4af',notif:'rgba(190,18,60,0.45)',overlay:'rgba(15,2,8,0.97)',gauge:'#f472b6',clock:'#f59e0b',navBg:'#be123c',widgetBg:'#be123c',bezelGlow:'#f472b6',clockFace:null,clockTicks:'#be123c',clockHands:'#f59e0b',clockSecond:'#ef4444'},
   newyears:{rgb:'245,158,11',accent:'#f59e0b',bg:'linear-gradient(to bottom, #0a0a0f 0%, #05050a 40%, #0a0a0f 100%)',text:'#f8fafc',sub:'#cbd5e1',notif:'rgba(245,158,11,0.45)',overlay:'rgba(5,5,10,0.97)',gauge:'#e2e8f0',clock:'#f59e0b',navBg:'#f59e0b',widgetBg:'#0f172a',bezelGlow:'#f59e0b',clockFace:null,clockTicks:'#f59e0b',clockHands:'#f59e0b',clockSecond:'#ef4444'},
   thanksgiving:{rgb:'146,64,14',accent:'#92400e',bg:'linear-gradient(to bottom, #1a0f05 0%, #0f0802 40%, #1a0f05 100%)',text:'#fef3c7',sub:'#fed7aa',notif:'rgba(146,64,14,0.45)',overlay:'rgba(15,8,2,0.97)',gauge:'#f97316',clock:'#f59e0b',navBg:'#92400e',widgetBg:'#92400e',bezelGlow:'#f59e0b',clockFace:null,clockTicks:'#92400e',clockHands:'#f59e0b',clockSecond:'#ef4444'},
-  halloween:{rgb:'168,85,247',accent:'#a855f7',bg:'linear-gradient(to bottom, #0a0010 0%, #050008 40%, #0a0010 100%)',text:'#f0e0ff',sub:'#c4a5e0',notif:'rgba(80,20,140,0.45)',overlay:'rgba(8,0,15,0.97)',gauge:'#ff4500',clock:'#ff4500',navBg:'#a855f7',widgetBg:'#0a0a0a',bezelGlow:'#ff9933',clockFace:null,clockTicks:'#a855f7',clockHands:'#ff4500',clockSecond:'#ef4444'}
+  halloween:{rgb:'168,85,247',accent:'#a855f7',bg:'linear-gradient(to bottom, #0a0010 0%, #050008 40%, #0a0010 100%)',text:'#f0e0ff',sub:'#c4a5e0',notif:'rgba(80,20,140,0.45)',overlay:'rgba(8,0,15,0.97)',gauge:'#ff4500',clock:'#ff4500',navBg:'#a855f7',widgetBg:'#0a0a0a',bezelGlow:'#ff9933',clockFace:null,clockTicks:'#a855f7',clockHands:'#ff4500',clockSecond:'#ef4444'},
+  abyss:{rgb:'6,182,212',accent:'#06b6d4',bg:'linear-gradient(to bottom, #021a24 0%, #011018 40%, #021a24 100%)',text:'#22d3ee',sub:'#0891b2',notif:'rgba(8,50,70,0.5)',overlay:'rgba(2,15,25,0.97)',gauge:'#06b6d4',clock:'#22d3ee',navBg:'#0e4d5e',widgetBg:'#083344',bezelGlow:'#22d3ee',clockFace:null,clockTicks:'#06b6d4',clockHands:'#22d3ee',clockSecond:'#ef4444'},
+  aurora:{rgb:'34,211,238',accent:'#22d3ee',bg:'linear-gradient(to bottom, #0a0a1a 0%, #050510 40%, #0a0a1a 100%)',text:'#a5f3fc',sub:'#67e8f9',notif:'rgba(15,30,60,0.5)',overlay:'rgba(5,10,25,0.97)',gauge:'#22d3ee',clock:'#67e8f9',navBg:'#0e7490',widgetBg:'#164e63',bezelGlow:'#67e8f9',clockFace:null,clockTicks:'#22d3ee',clockHands:'#67e8f9',clockSecond:'#ef4444'},
+  autumn:{rgb:'249,115,22',accent:'#f97316',bg:'linear-gradient(to bottom, #1a1008 0%, #0d0805 40%, #1a1008 100%)',text:'#fdba74',sub:'#fb923c',notif:'rgba(80,40,10,0.5)',overlay:'rgba(15,10,5,0.97)',gauge:'#f97316',clock:'#fb923c',navBg:'#7c2d12',widgetBg:'#431407',bezelGlow:'#fb923c',clockFace:null,clockTicks:'#f97316',clockHands:'#fb923c',clockSecond:'#ef4444'},
+  canyon:{rgb:'217,119,6',accent:'#d97706',bg:'linear-gradient(to bottom, #1a1208 0%, #0d0a05 40%, #1a1208 100%)',text:'#fde68a',sub:'#fbbf24',notif:'rgba(60,30,10,0.5)',overlay:'rgba(15,10,5,0.97)',gauge:'#d97706',clock:'#fde68a',navBg:'#92400e',widgetBg:'#451a03',bezelGlow:'#fbbf24',clockFace:null,clockTicks:'#d97706',clockHands:'#fde68a',clockSecond:'#ef4444'},
+  cave:{rgb:'34,211,238',accent:'#22d3ee',bg:'linear-gradient(to bottom, #0a1520 0%, #050c14 40%, #0a1520 100%)',text:'#ecfeff',sub:'#a5f3fc',notif:'rgba(10,40,60,0.5)',overlay:'rgba(5,15,25,0.97)',gauge:'#22d3ee',clock:'#67e8f9',navBg:'#155e75',widgetBg:'#0e3a4a',bezelGlow:'#67e8f9',clockFace:null,clockTicks:'#22d3ee',clockHands:'#67e8f9',clockSecond:'#ef4444'},
+  cosmos:{rgb:'139,92,246',accent:'#8b5cf6',bg:'linear-gradient(to bottom, #0a0612 0%, #050308 40%, #0a0612 100%)',text:'#c4b5fd',sub:'#a5b4fc',notif:'rgba(76,29,149,0.5)',overlay:'rgba(10,6,20,0.97)',gauge:'#a78bfa',clock:'#a78bfa',navBg:'#4c1d95',widgetBg:'#1e1b4b',bezelGlow:'#22d3ee',clockFace:null,clockTicks:'#8b5cf6',clockHands:'#a78bfa',clockSecond:'#ef4444'},
+  desert:{rgb:'245,158,11',accent:'#f59e0b',bg:'linear-gradient(to bottom, #1a1208 0%, #0d0a05 40%, #1a1208 100%)',text:'#fde68a',sub:'#fbbf24',notif:'rgba(60,40,10,0.5)',overlay:'rgba(15,10,5,0.97)',gauge:'#f59e0b',clock:'#fde68a',navBg:'#78350f',widgetBg:'#451a03',bezelGlow:'#fbbf24',clockFace:null,clockTicks:'#f59e0b',clockHands:'#fde68a',clockSecond:'#ef4444'},
+  emerald:{rgb:'16,185,129',accent:'#10b981',bg:'linear-gradient(to bottom, #022c22 0%, #011a14 40%, #022c22 100%)',text:'#ecfdf5',sub:'#6ee7b7',notif:'rgba(6,95,70,0.5)',overlay:'rgba(2,20,16,0.97)',gauge:'#10b981',clock:'#6ee7b7',navBg:'#065f46',widgetBg:'#064e3b',bezelGlow:'#34d399',clockFace:null,clockTicks:'#10b981',clockHands:'#6ee7b7',clockSecond:'#ef4444'},
+  frost:{rgb:'125,211,252',accent:'#7dd3fc',bg:'linear-gradient(to bottom, #0a1520 0%, #050a12 40%, #0a1520 100%)',text:'#bae6fd',sub:'#7dd3fc',notif:'rgba(15,40,60,0.5)',overlay:'rgba(5,15,25,0.97)',gauge:'#7dd3fc',clock:'#bae6fd',navBg:'#0c4a6e',widgetBg:'#082f49',bezelGlow:'#38bdf8',clockFace:null,clockTicks:'#7dd3fc',clockHands:'#bae6fd',clockSecond:'#ef4444'},
+  glow:{rgb:'132,204,22',accent:'#84cc16',bg:'linear-gradient(to bottom, #0a1a0a 0%, #050d05 40%, #0a1a0a 100%)',text:'#bbf7d0',sub:'#86efac',notif:'rgba(20,60,20,0.5)',overlay:'rgba(5,15,5,0.97)',gauge:'#84cc16',clock:'#a3e635',navBg:'#3f6212',widgetBg:'#1a2e05',bezelGlow:'#a3e635',clockFace:null,clockTicks:'#84cc16',clockHands:'#a3e635',clockSecond:'#ef4444'},
+  lava:{rgb:'249,115,22',accent:'#f97316',bg:'linear-gradient(to bottom, #1a0a05 0%, #0d0502 40%, #1a0a05 100%)',text:'#fdba74',sub:'#fb923c',notif:'rgba(80,30,10,0.5)',overlay:'rgba(15,5,2,0.97)',gauge:'#f97316',clock:'#fb923c',navBg:'#7c2d12',widgetBg:'#431407',bezelGlow:'#fb923c',clockFace:null,clockTicks:'#f97316',clockHands:'#fb923c',clockSecond:'#ef4444'},
+  reef:{rgb:'34,211,238',accent:'#22d3ee',bg:'linear-gradient(to bottom, #021a24 0%, #011018 40%, #021a24 100%)',text:'#a5f3fc',sub:'#22d3ee',notif:'rgba(8,50,70,0.5)',overlay:'rgba(2,15,25,0.97)',gauge:'#22d3ee',clock:'#67e8f9',navBg:'#0e4d5e',widgetBg:'#083344',bezelGlow:'#67e8f9',clockFace:null,clockTicks:'#22d3ee',clockHands:'#67e8f9',clockSecond:'#ef4444'},
+  storm:{rgb:'96,165,250',accent:'#60a5fa',bg:'linear-gradient(to bottom, #0a0f1a 0%, #050810 40%, #0a0f1a 100%)',text:'#eff6ff',sub:'#bfdbfe',notif:'rgba(20,40,80,0.5)',overlay:'rgba(5,10,20,0.97)',gauge:'#60a5fa',clock:'#93c5fd',navBg:'#1e3a8a',widgetBg:'#172554',bezelGlow:'#93c5fd',clockFace:null,clockTicks:'#60a5fa',clockHands:'#93c5fd',clockSecond:'#ef4444'}
 };
 
 function _settingsHideAll(){
