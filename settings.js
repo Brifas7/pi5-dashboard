@@ -15,7 +15,8 @@ const _settings = {
     {id:'glow',name:'Glow',color:'#84cc16'},
     {id:'lava',name:'Lava',color:'#f97316'},
     {id:'reef',name:'Reef',color:'#22d3ee'},
-    {id:'storm',name:'Storm',color:'#60a5fa'}
+    {id:'storm',name:'Storm',color:'#60a5fa'},
+    {id:'sakura',name:'Sakura',color:'#fb7185'}
   ],
   activeTheme:'aquatic',
   navStack:[]
@@ -51,7 +52,8 @@ const _themeColors={
   glow:{rgb:'132,204,22',accent:'#84cc16',bg:'linear-gradient(to bottom, #0a1a0a 0%, #050d05 40%, #0a1a0a 100%)',text:'#bbf7d0',sub:'#86efac',notif:'rgba(20,60,20,0.5)',overlay:'rgba(5,15,5,0.97)',gauge:'#84cc16',clock:'#a3e635',navBg:'#3f6212',widgetBg:'#1a2e05',bezelGlow:'#a3e635',clockFace:null,clockTicks:'#84cc16',clockHands:'#a3e635',clockSecond:'#ef4444'},
   lava:{rgb:'249,115,22',accent:'#f97316',bg:'linear-gradient(to bottom, #1a0a05 0%, #0d0502 40%, #1a0a05 100%)',text:'#fdba74',sub:'#fb923c',notif:'rgba(80,30,10,0.5)',overlay:'rgba(15,5,2,0.97)',gauge:'#f97316',clock:'#fb923c',navBg:'#7c2d12',widgetBg:'#431407',bezelGlow:'#fb923c',clockFace:null,clockTicks:'#f97316',clockHands:'#fb923c',clockSecond:'#ef4444'},
   reef:{rgb:'34,211,238',accent:'#22d3ee',bg:'linear-gradient(to bottom, #021a24 0%, #011018 40%, #021a24 100%)',text:'#a5f3fc',sub:'#22d3ee',notif:'rgba(8,50,70,0.5)',overlay:'rgba(2,15,25,0.97)',gauge:'#22d3ee',clock:'#67e8f9',navBg:'#0e4d5e',widgetBg:'#083344',bezelGlow:'#67e8f9',clockFace:null,clockTicks:'#22d3ee',clockHands:'#67e8f9',clockSecond:'#ef4444'},
-  storm:{rgb:'96,165,250',accent:'#60a5fa',bg:'linear-gradient(to bottom, #0a0f1a 0%, #050810 40%, #0a0f1a 100%)',text:'#eff6ff',sub:'#bfdbfe',notif:'rgba(20,40,80,0.5)',overlay:'rgba(5,10,20,0.97)',gauge:'#60a5fa',clock:'#93c5fd',navBg:'#1e3a8a',widgetBg:'#172554',bezelGlow:'#93c5fd',clockFace:null,clockTicks:'#60a5fa',clockHands:'#93c5fd',clockSecond:'#ef4444'}
+  storm:{rgb:'96,165,250',accent:'#60a5fa',bg:'linear-gradient(to bottom, #0a0f1a 0%, #050810 40%, #0a0f1a 100%)',text:'#eff6ff',sub:'#bfdbfe',notif:'rgba(20,40,80,0.5)',overlay:'rgba(5,10,20,0.97)',gauge:'#60a5fa',clock:'#93c5fd',navBg:'#1e3a8a',widgetBg:'#172554',bezelGlow:'#93c5fd',clockFace:null,clockTicks:'#60a5fa',clockHands:'#93c5fd',clockSecond:'#ef4444'},
+  sakura:{rgb:'251,113,133',accent:'#fb7185',bg:'linear-gradient(to bottom, #1a0a12 0%, #0d0508 40%, #1a0a12 100%)',text:'#fecdd3',sub:'#fb7185',notif:'rgba(120,40,60,0.5)',overlay:'rgba(15,5,10,0.97)',gauge:'#fb7185',clock:'#fda4af',navBg:'#9f1239',widgetBg:'#4c0519',bezelGlow:'#fda4af',clockFace:null,clockTicks:'#fb7185',clockHands:'#fda4af',clockSecond:'#ef4444'}
 };
 
 function _settingsHideAll(){
