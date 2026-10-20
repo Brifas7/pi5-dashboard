@@ -1,0 +1,15 @@
+[Unit]
+Description=Shelly adapter (real Shellys -> Lights MQTT contract)
+After=network-online.target mosquitto.service
+Wants=mosquitto.service
+
+[Service]
+User=brifas
+ExecStart=/usr/bin/python3 -u /home/brifas/shelly-adapter/shelly_adapter.py
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:/home/brifas/shelly-adapter/adapter.log
+StandardError=append:/home/brifas/shelly-adapter/adapter.log
+
+[Install]
+WantedBy=multi-user.target

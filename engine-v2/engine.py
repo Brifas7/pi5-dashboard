@@ -31,7 +31,9 @@ _clk = {'ok': False, 't': 0}
 def rtc_ok():
     """True if the kernel set the clock from the battery-backed RTC at boot and the year is sane.
     A dead or missing battery leaves the RTC invalid, the kernel skips it, and this stays False."""
-    try: return open('/sys/class/rtc/rtc0/hctosys').read().strip() == '1' and time.time() > 1767225600  # 2026-01-01
+    try:                                              # the RTC chip's own time: resets to 1970 after power loss
+        r = int(open('/sys/class/rtc/rtc0/since_epoch').read())   # without a battery, so fake-hwclock can't fool it
+        return r > 1767225600 and abs(r - time.time()) < 120      # 2026-01-01, and agrees with the system clock
     except OSError: return False
 
 def clock_ok():

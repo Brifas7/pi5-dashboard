@@ -41,4 +41,8 @@ m $H/mesh-weather/mesh_weather.py mesh-weather/mesh_weather.py
 m $H/mesh-weather/node_setup.sh mesh-weather/node_setup.sh
 m $H/mesh-weather/remote_nodes.json mesh-weather/remote_nodes.json
 m /etc/systemd/system/mesh-weather.service system/systemd/mesh-weather.service
+mkdir -p shelly-adapter
+m $H/shelly-adapter/shelly_adapter.py shelly-adapter/shelly_adapter.py
+m /etc/systemd/system/shelly-adapter.service system/systemd/shelly-adapter.service
+m /etc/logrotate.d/shelly-adapter system/logrotate-shelly-adapter
 git status --short
