@@ -44,10 +44,10 @@ const LightsCore = (() => {
 
   function group(gid) { return groups().find(g => g.gid === gid) || null; }
 
-  function when(iso) {                       // "2026-10-07T05:00" -> "5:00 AM", "tomorrow 5:00 AM", "Thu 5:00 AM"
+  function when(iso) {                       // "2026-10-07T05:00" -> "05:00", "tomorrow 05:00", "Thu 05:00" (24 h, like the automation screen)
     if (!iso) return '';
     const t = new Date(iso), now = new Date();
-    const hm = t.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    const hm = String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0');
     const days = Math.round((new Date(t.toDateString()) - new Date(now.toDateString())) / 86400000);
     if (days === 0) return hm;
     if (days === 1) return 'tomorrow ' + hm;
@@ -60,6 +60,7 @@ const LightsCore = (() => {
     if (!d) return null;
     const v = { id, name: d.name || id, online: d.online, on: d.state === 'on', kind: 'ok', line: '' };
     const now = Date.now(), p = pending[id];
+    const nxt = !d.want && d.resume ? ' · next automation ' + when(d.resume) : '';   // between runs: when a rule next acts on it
     if (p && d.online && d.state === p.state) delete pending[id];
     if (d.online && d.state === 'on' && typeof d.watts === 'number' && d.watts < DEAD_W) deadSince[id] = deadSince[id] || now;
     else delete deadSince[id];
@@ -84,8 +85,8 @@ const LightsCore = (() => {
       v.kind = 'warn'; v.line = 'On, but drawing ' + Math.round(d.watts) + ' W · check the fixture';
     } else if (v.on) {
       v.line = 'On' + (typeof d.watts === 'number' ? ' · ' + Math.round(d.watts) + ' W' : '')
-        + (d.until && d.want === 'on' && d.confirmed ? ' · automation until ' + when(d.until) : '');
-    } else v.line = 'Off';
+        + (d.until && d.want === 'on' && d.confirmed ? ' · automation until ' + when(d.until) : nxt);
+    } else v.line = 'Off' + nxt;
     if (failed[id] && now - failed[id] >= FAILED_MS) delete failed[id];
     return v;
   }
