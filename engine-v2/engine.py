@@ -3,13 +3,16 @@
 Talks only MQTT, per Lights-MQTT-Contract v1.2 (state is current only while online).
 v0.3: a command from a screen (source not "engine") counts as a hand change at once;
 a light that stays online but won't confirm is retried every 5 min instead of abandoned;
-status.json gives each light "resume": when automation next touches it."""
+status.json gives each light "resume": when automation next touches it.
+v0.4: between runs the engine has no opinion about a light. Once a run's end is confirmed off (or a person
+changes the light first), it is dropped, so switching it outside a window is not a "hand change".
+A wall-switch change also counts as a hand change before the engine's command is confirmed."""
 import json, os, re, time, logging, subprocess, threading
 from datetime import datetime
 import paho.mqtt.client as mqtt
 import ruleslib
 
-VERSION = '0.3'
+VERSION = '0.4'
 HOME = os.path.expanduser('~/engine-v2')
 RULES, STATE = f'{HOME}/rules.json', f'{HOME}/state.json'
 STATUS = '/dev/shm/engine-v2-status.json'           # RAM, rewritten every tick; never touches the NVMe
@@ -145,9 +148,9 @@ def handle(m):
             if st == w['state']:
                 if not w['ok']: log(f"{i}: confirmed {st} ({s.get('watts')} W)")
                 w.update(ok=True, manual=False, recheck=None); MANUAL.pop(i, None)
-            elif w['ok']:
-                w.update(ok=False, manual=True, sent=None); MANUAL[i] = w['by']
-                log(f"{i}: changed to {st} by {s.get('cause')}; leaving it until the next edge")
+                if st == 'off': del want[i]               # the run's end is done: no opinion until the next start
+            elif not w['manual'] and (w['ok'] or s.get('cause') == 'switch'):
+                hand_change(i, w, f"changed to {st} by {s.get('cause')}")
             elif w['recheck'] and not w['manual']:
                 log(f'{i}: came back {st}, re-applying {w["state"]}'); transmit(i)
 
@@ -161,8 +164,17 @@ def hand_command(i, m):
     with lock:
         w = want.get(i)
         if not w or w['manual'] or st == w['state']: return
-        w.update(manual=True, ok=False, sent=None, recheck=None); MANUAL[i] = w['by']
-        log(f"{i}: {st} by hand ({s.get('source')}); leaving it until the next edge")
+        hand_change(i, w, f"{st} by hand ({s.get('source')})")
+
+def hand_change(i, w, how):
+    """A person changed the light against what the engine wants (call with the lock held).
+    During a run: leave it alone until the next edge. After a run's end (want off): the run is over,
+    so drop the light; the engine has no opinion about it until the next start."""
+    if w['state'] == 'off':
+        del want[i]; log(f'{i}: {how} after its run ended; no automation until the next start')
+        return
+    w.update(manual=True, ok=False, sent=None, recheck=None); MANUAL[i] = w['by']
+    log(f'{i}: {how}; leaving it until the next edge')
 
 # ---- the tick ----
 def end_targets(rid, tg, on_now, why):

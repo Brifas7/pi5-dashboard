@@ -18,8 +18,8 @@ import paho.mqtt.client as mqtt
 DEVICES = {
     'side_deck_flood': {'shelly': 'shelly/side_deck_flood', 'name': 'Side Deck',
                         'group': 'Outdoor Flood Lights', 'group_id': 'outdoor_flood_lights'},
-    # 'front_door_flood': {'shelly': 'shelly/front_door_flood', 'name': 'Front Door',
-    #                      'group': 'Outdoor Flood Lights', 'group_id': 'outdoor_flood_lights'},
+    'front_door_flood': {'shelly': 'shelly/front_door_flood', 'name': 'Front Door',
+                         'group': 'Outdoor Flood Lights', 'group_id': 'outdoor_flood_lights'},
 }
 HOST, PORT = '127.0.0.1', 1883   # services on the Pi use 1883; the Shellys themselves use 1884
 WATTS_STEP = 2.0                 # republish state when watts move this much
